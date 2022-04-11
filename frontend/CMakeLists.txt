@@ -21,7 +21,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_LIST})
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC 3rdparty/glad/include
-    PUBLIC ${${Intl_INCLUDE_DIR}}
+    PUBLIC ${Intl_INCLUDE_DIR}
     PUBLIC include
 )
 
@@ -34,10 +34,19 @@ target_link_libraries(${PROJECT_NAME}
     glad
     glfw3
     imgui
-    ${Intl_LIBRARY}
+    ${Intl_LIBRARIES}
 )
 
-if (APPLE)
+
+if (${CMAKE_HOST_UNIX})
+    target_link_libraries(${PROJECT_NAME}
+        pthread
+        dl
+        X11
+    )
+endif()
+
+if (${CMAKE_HOST_APPLE})
   target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework IOKit")
 endif()
 
