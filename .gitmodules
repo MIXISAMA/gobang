@@ -1,0 +1,6 @@
+[submodule "frontend/3rdparty/imgui"]
+	path = frontend/3rdparty/imgui
+	url = https://github.com/ocornut/imgui
+[submodule "frontend/3rdparty/glad"]
+	path = frontend/3rdparty/glad
+	url = https://github.com/MIXISAMA/glad2-cpp-gl4.6-core
