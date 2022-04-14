@@ -13,6 +13,8 @@ find_package(glfw3 REQUIRED)
 find_package(Gettext REQUIRED)
 find_package(Intl REQUIRED)
 
+find_package(Boost REQUIRED COMPONENTS system)
+
 # ==========================
 
 file(GLOB_RECURSE SOURCE_LIST CONFIGURE_DEPENDS "src/*.cpp")
@@ -22,6 +24,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_LIST})
 target_include_directories(${PROJECT_NAME}
     PUBLIC 3rdparty/glad/include
     PUBLIC ${Intl_INCLUDE_DIR}
+    PUBLIC ${Boost_INCLUDE_DIR}
     PUBLIC include
 )
 
@@ -35,6 +38,7 @@ target_link_libraries(${PROJECT_NAME}
     glfw3
     imgui
     ${Intl_LIBRARIES}
+    ${Boost_SYSTEM_LIBRARY_RELEASE}
 )
 
 

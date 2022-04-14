@@ -8,6 +8,8 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <set>
+#include <shared_mutex>
 #include <sstream>
 #include <vector>
 
@@ -19,6 +21,10 @@
 #include "imgui_impl_opengl3.h"
 
 #include <libintl.h>
+
+#include <boost/array.hpp>
+#include <boost/asio.hpp>
+#include <boost/bind/bind.hpp>
 
 namespace mixi
 {

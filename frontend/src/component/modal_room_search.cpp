@@ -1,5 +1,7 @@
 #include "component/modal_room_search.h"
 
+#include "net/udp_server.h"
+
 namespace mixi
 {
 namespace gobang
@@ -20,7 +22,9 @@ void ModalRoomSearch::content()
 {
     ImGui::Text(gettext("Rooms List"));
     ImGui::SameLine();
-    ImGui::Button(gettext("Search"));
+    if (ImGui::Button(gettext("Search"))) {
+        on_search_();
+    }
     ImGui::Separator();
 
     const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO" };
@@ -40,6 +44,11 @@ void ModalRoomSearch::content()
         }
         ImGui::EndListBox();
     }
+}
+
+void ModalRoomSearch::on_search_()
+{
+    UdpServer::Instance()->boardcast_search_room();
 }
 
 

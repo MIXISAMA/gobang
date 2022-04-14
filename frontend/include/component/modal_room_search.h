@@ -3,6 +3,8 @@
 #include "pch.h"
 #include "gui/imgui/popup.h"
 
+#include "game/room.h"
+
 namespace mixi
 {
 namespace gobang
@@ -20,8 +22,11 @@ public:
 
 private:
 
+    void on_search_();
+
+    std::vector<Room> rooms_;
 
 };
 
-}
+} // namespace gobang
 } // namespace mixi
