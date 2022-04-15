@@ -4,6 +4,7 @@
 #include "gui/imgui/popup.h"
 
 #include "game/room.h"
+#include "net/server_room_search.h"
 
 namespace mixi
 {
@@ -25,6 +26,8 @@ private:
     void on_search_();
 
     std::vector<Room> rooms_;
+
+    ServerRoomSearch server_room_search_;
 
 };
 

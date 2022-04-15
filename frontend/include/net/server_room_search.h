@@ -8,24 +8,17 @@ namespace mixi
 namespace gobang
 {
 
-class UdpServer
+class ServerRoomSearch
 {
 
 public:
 
-    ~UdpServer();
-
-    static void Init(boost::asio::io_context& io_context);
-
-    static UdpServer* Instance();
+    ServerRoomSearch();
+    ~ServerRoomSearch();
 
     void boardcast_search_room();
 
 private:
-
-    UdpServer(boost::asio::io_context& io_context);
-
-    static UdpServer* instance_;
 
     void start_receive_();
     void handle_receive_(

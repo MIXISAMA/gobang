@@ -1,7 +1,5 @@
 #include "component/modal_room_search.h"
 
-#include "net/udp_server.h"
-
 namespace mixi
 {
 namespace gobang
@@ -48,7 +46,7 @@ void ModalRoomSearch::content()
 
 void ModalRoomSearch::on_search_()
 {
-    UdpServer::Instance()->boardcast_search_room();
+    server_room_search_.boardcast_search_room();
 }
 
 

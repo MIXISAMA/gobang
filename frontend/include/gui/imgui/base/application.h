@@ -16,7 +16,7 @@ public:
     Application(const char* app_name, int weight = 1280, int height = 720);
     ~Application();
 
-    void loop(BaseComponent* main_window) const;
+    void loop(BaseComponent* main_window, int ms);
 
 private:
 
@@ -57,6 +57,12 @@ private:
     Imgui imgui_;
 
     bool should_close_() const;
+
+    void on_render_(
+        boost::asio::steady_timer* timer,
+        BaseComponent* main_window,
+        int ms
+    ) const;
 
 };
 

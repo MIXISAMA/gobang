@@ -26,6 +26,8 @@
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
 
+#define VERSION "0.1"
+
 namespace mixi
 {
     namespace

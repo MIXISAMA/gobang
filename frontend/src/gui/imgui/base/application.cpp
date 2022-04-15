@@ -1,6 +1,7 @@
 #include "gui/imgui/base/application.h"
 
 #include "core/log.h"
+#include "core/io_context.h"
 
 namespace mixi
 {
@@ -145,23 +146,47 @@ Application::Application(const char* app_name, int weight, int height) :
     glfw_(app_name, weight, height),
     imgui_(glfw_.glfw_window())
 {
-
+    CreateIoContext();
 }
 
 Application::~Application()
 {
-
+    DestroyIoContext();
 }
 
-void Application::loop(BaseComponent* main_window) const
+void Application::on_render_(
+    boost::asio::steady_timer* timer,
+    BaseComponent* main_window,
+    int ms
+) const
 {
-    while (!should_close_()) {
-        glfw_.pre_render();
-        imgui_.pre_render();
-        main_window->render();
-        imgui_.post_render();
-        glfw_.post_render();
+    timer->expires_after(boost::asio::chrono::milliseconds(ms));
+
+    glfw_.pre_render();
+    imgui_.pre_render();
+    main_window->render();
+    imgui_.post_render();
+    glfw_.post_render();
+
+    if (should_close_()) {
+        Io_Context->stop();
+        return;
     }
+
+    timer->async_wait(boost::bind(
+        &Application::on_render_, this,
+        timer, main_window, ms
+    ));
+}
+
+void Application::loop(BaseComponent* main_window, int ms)
+{
+    boost::asio::steady_timer timer(*Io_Context);
+    timer.async_wait(boost::bind(
+        &Application::on_render_, this,
+        &timer, main_window, ms
+    ));
+    Io_Context->run();
 }
 
 bool Application::should_close_() const
