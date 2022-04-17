@@ -12,6 +12,7 @@ class Room
 
 public:
 
+    int id;
     std::string name;
     boost::asio::ip::tcp::endpoint endpoint;
 

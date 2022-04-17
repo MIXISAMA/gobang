@@ -28,7 +28,7 @@ private:
     void handle_send_(const boost::system::error_code& error);
 
     boost::asio::ip::udp::socket socket_;
-    boost::array<char, 128>  recv_buffer_;
+    std::vector<std::byte>  recv_buffer_;
     boost::asio::ip::udp::endpoint sender_endpoint_;
 
     std::set<Room> rooms_;

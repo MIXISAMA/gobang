@@ -4,28 +4,25 @@ import (
 	"errors"
 )
 
-type User interface {
-}
-
-type Onlooker struct {
-	Name string
-}
+const (
+	BLACK = 0x00
+	WHITE = 0x01
+)
 
 type Player struct {
-	Name  string
-	Ready bool
+	Name          string
+	Ready         bool
+	Color         byte
+	RegretRequest bool
+	Room          *Room
 }
 
 type Room struct {
-	Name          string
-	Players       []*Player
-	Onlookers     []*Onlooker
-	BlackPlayer   *Player
-	IsPlaying     bool
-	ChessBoard    [15][15]byte
-	Record        []byte
-	MaxOnlookers  int
-	RegretRequest bool
+	Name       string
+	Players    [2]*Player
+	IsPlaying  bool
+	ChessBoard [15][15]byte
+	Record     []byte
 }
 
 func (room *Room) initChessBoard() {
@@ -37,140 +34,126 @@ func (room *Room) initChessBoard() {
 }
 
 func (room *Room) Clean() {
+
 	room.IsPlaying = false
-	room.RegretRequest = false
-	room.initChessBoard()
-	room.Record = nil
-}
 
-func (room *Room) SwitchColor() {
+	p1 := room.Players[0]
+	p2 := room.Players[1]
 
-	for i := range room.Players {
-		if room.BlackPlayer != room.Players[i] {
-			room.BlackPlayer = room.Players[i]
-			return
-		}
+	if p1 != nil && p2 != nil {
+		p1.Color, p2.Color = p2.Color, p1.Color
 	}
 
-	room.BlackPlayer = nil
+	if p1 != nil {
+		p1.RegretRequest = false
+	}
+
+	if p2 != nil {
+		p2.RegretRequest = false
+	}
+
+	room.initChessBoard()
+	room.Record = nil
 
 }
 
-func NewRoom(name string, maxOnlookers int) *Room {
+func NewRoom(name string) *Room {
 	room := new(Room)
 	room.Name = name
-	room.MaxOnlookers = maxOnlookers
 	room.Clean()
 	return room
 }
 
-func (room *Room) FindOnlookerByName(name string) *Onlooker {
-	for i := range room.Onlookers {
-		onlooker := room.Onlookers[i]
-		if onlooker.Name == name {
-			return onlooker
-		}
+func (room *Room) PlayerJoin(playerName string) (joinPlayer *Player, err error) {
+
+	if room.IsPlaying {
+		return nil, errors.New("this room is playing")
 	}
-	return nil
-}
 
-func (room *Room) FindPlayerByName(name string) *Player {
-	for i := range room.Players {
-		player := room.Players[i]
-		if player.Name == name {
-			return player
-		}
-	}
-	return nil
-}
+	p1 := room.Players[0]
+	p2 := room.Players[1]
 
-func (room *Room) JoinPlayer(playerName string) (joinPlayer *Player, err error) {
-
-	playerCount := len(room.Players)
-
-	if playerCount >= 2 {
+	if p1 != nil && p2 != nil {
 		return nil, errors.New("this room is full")
 	}
 
-	joinPlayer = room.FindPlayerByName(playerName)
-
-	if joinPlayer != nil {
-		return nil, errors.New("same name player has been exist in this room")
+	joinPlayer = &Player{
+		Name:          playerName,
+		Color:         BLACK,
+		Ready:         false,
+		RegretRequest: false,
+		Room:          room,
 	}
 
-	joinPlayer = new(Player)
-	joinPlayer.Name = playerName
-	joinPlayer.Ready = false
-
-	if room.BlackPlayer == nil {
-		room.BlackPlayer = joinPlayer
+	if p1 == nil && p2 == nil {
+		room.Players[0] = joinPlayer
+		return joinPlayer, nil
 	}
 
-	room.Players = append(room.Players, joinPlayer)
+	if p1 == nil && p2 != nil {
+		if p2.Name == playerName {
+			return nil, errors.New("same name player has been exist in this room")
+		}
+		room.Players[0] = joinPlayer
+	} else { // p1 != nil && p2 == nil
+		if p1.Name == playerName {
+			return nil, errors.New("same name player has been exist in this room")
+		}
+		room.Players[1] = joinPlayer
+	}
+
+	if p1.Color == p2.Color {
+		joinPlayer.Color = WHITE
+	}
 
 	return joinPlayer, nil
 }
 
-func (room *Room) LeavePlayer(name string) (leavePlayer *Player, err error) {
-
+func (room *Room) FindPlayer(playerName string) (player *Player, err error) {
 	for i := range room.Players {
-		if room.Players[i].Name == name {
-			leavePlayer = room.Players[i]
-			room.Players = append(room.Players[:i], room.Players[i+1:]...)
-			break
+		if room.Players[i].Name == playerName {
+			return room.Players[i], nil
 		}
 	}
-
-	if leavePlayer == nil {
-		return nil, errors.New("this player is not exist in this room")
-	}
-
-	return leavePlayer, nil
-
+	return nil, errors.New("this player is not exist in this room")
 }
 
-func (room *Room) JoinOnlooker(onlookerName string) (joinOnlooker *Onlooker, err error) {
-
-	if len(room.Onlookers) >= room.MaxOnlookers {
-		return nil, errors.New("this room is full")
-	}
-
-	joinOnlooker = room.FindOnlookerByName(onlookerName)
-
-	if joinOnlooker != nil {
-		return nil, errors.New("same name player has been exist in this room")
-	}
-
-	joinOnlooker = new(Onlooker)
-	joinOnlooker.Name = onlookerName
-	room.Onlookers = append(room.Onlookers, joinOnlooker)
-
-	return joinOnlooker, nil
-
-}
-
-func (room *Room) LeaveOnlooker(name string) (leaveOnlooker *Onlooker, err error) {
-
-	for i := range room.Onlookers {
-		if room.Onlookers[i].Name == name {
-			leaveOnlooker = room.Onlookers[i]
-			room.Onlookers = append(room.Onlookers[:i], room.Onlookers[i+1:]...)
-			break
+func (room *Room) FindPlayerIndex(playerName string) (i int, err error) {
+	for i = range room.Players {
+		if room.Players[i].Name == playerName {
+			return i, nil
 		}
 	}
+	return -1, errors.New("this player is not exist in this room")
+}
 
-	if leaveOnlooker == nil {
-		return nil, errors.New("this player is not exist in this room")
+func (room *Room) PlayerLeave(playerName string) (leavePlayer *Player, err error) {
+
+	if room.IsPlaying {
+		return nil, errors.New("this room is playing")
 	}
 
-	return leaveOnlooker, nil
+	i, err := room.FindPlayerIndex(playerName)
+	if err != nil {
+		return nil, err
+	}
+
+	leavePlayer = room.Players[i]
+	room.Players[i] = nil
+	return
 
 }
 
-func (room *Room) Stone(coor byte) error {
+func (player Player) Stone(coor byte) error {
+
+	room := player.Room
 
 	if !room.IsPlaying {
 		return errors.New("this room is not playing")
+	}
+
+	if (len(room.Record)%2 == 0) == (player.Color == WHITE) {
+		return errors.New("not correct player")
 	}
 
 	r := coor & 0x0F
@@ -184,31 +167,8 @@ func (room *Room) Stone(coor byte) error {
 	}
 
 	room.Record = append(room.Record, coor)
-	room.ChessBoard[r][c] = byte(len(room.Record) % 2)
+	room.ChessBoard[r][c] = player.Color
 
 	return nil
-}
 
-func (room *Room) PlayerStone(player *Player, step byte, coor byte) error {
-
-	if !room.IsPlaying {
-		return errors.New("this room is not playing")
-	}
-
-	if int(step) != len(room.Record) {
-		return errors.New("wrong step")
-	}
-
-	var correctPlayer *Player
-	if (room.BlackPlayer == room.Players[0]) == (len(room.Record)%2 == 0) {
-		correctPlayer = room.Players[0]
-	} else {
-		correctPlayer = room.Players[1]
-	}
-
-	if player != correctPlayer {
-		return errors.New("not correct player")
-	}
-
-	return room.Stone(coor)
 }

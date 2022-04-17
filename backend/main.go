@@ -9,27 +9,38 @@ import (
 	"github.com/MIXISAMA/gobang/backend/server"
 )
 
-var serverAddress = flag.String("address", "127.0.0.1:9759", "server address")
-
 func main() {
 
-	var err error
-	var serverAddr *net.TCPAddr
-	var tcpListener *net.TCPListener
+	var serverAddress string
+
+	flag.StringVar(&serverAddress, "address", "127.0.0.1:9759", "server address")
+	flag.Var(&server.RoomList, "roomname", "gobang room name")
 
 	flag.Parse()
-	server.OnReady()
 
-	serverAddr, err = net.ResolveTCPAddr("tcp", *serverAddress)
+	serverTcpAddr, err := net.ResolveTCPAddr("tcp", serverAddress)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	tcpListener, err = net.ListenTCP("tcp", serverAddr)
+	serverUdpAddr, err := net.ResolveUDPAddr("udp", serverAddress)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	tcpListener, err := net.ListenTCP("tcp", serverTcpAddr)
 	if err != nil {
 		panic(err.Error())
 	}
 	defer tcpListener.Close()
+
+	udpConn, err := net.ListenUDP("udp", serverUdpAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer udpConn.Close()
+
+	go udpPipe(udpConn)
 
 	for {
 
@@ -73,6 +84,27 @@ func messagePipe(msg *idtcp.Message) {
 
 	if err != nil {
 		fmt.Println(err.Error())
+	}
+
+}
+
+func udpPipe(conn *net.UDPConn) {
+
+	buffer := make([]byte, 65536)
+
+	for {
+
+		n, remoteAddr, err := conn.ReadFromUDP(buffer)
+
+		data := buffer[:n]
+
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
+		}
+
+		go server.SendAllRoom(data, conn, remoteAddr)
+
 	}
 
 }
