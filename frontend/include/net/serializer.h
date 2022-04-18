@@ -15,15 +15,20 @@ public:
     std::vector<std::byte> raw;
 
     Serializer();
-    Serializer(const std::vector<std::byte> &buffer);
+    Serializer(const std::vector<std::byte>& buffer);
     ~Serializer() = default;
 
-    std::byte read_byte();
-    bool read_boolean();
-    u_int16_t read_uint16();
-    std::string read_string();
+    Serializer& operator >> (std::byte&   ret);
+    Serializer& operator >> (bool&        ret);
+    Serializer& operator >> (u_int16_t&   ret);
+    Serializer& operator >> (std::string& ret);
 
 private:
+
+    // std::byte read_byte_();
+    // bool read_boolean_();
+    // u_int16_t read_uint16_();
+    // std::string read_string_();
 
     size_t cursor_;
 

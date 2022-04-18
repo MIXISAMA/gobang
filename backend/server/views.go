@@ -303,6 +303,8 @@ func SendAllRoom(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 			return
 		}
 
+		s.WriteBoolean(room.IsPlaying)
+
 		for j := range room.Players {
 			player := room.Players[j]
 			if player != nil {
@@ -312,7 +314,16 @@ func SendAllRoom(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 				s.WriteByte(0x00)
 			}
 		}
-		s.WriteUint16_Int(len(room.Onlookers))
+
+		err = s.WriteUint16_Int(len(room.Onlookers))
+		if err != nil {
+			return
+		}
+
+		err = s.WriteUint16_Int(room.MaxOnlookers)
+		if err != nil {
+			return
+		}
 
 	}
 	conn.WriteToUDP(s.Raw, addr)

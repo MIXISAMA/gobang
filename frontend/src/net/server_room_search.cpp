@@ -12,7 +12,8 @@ namespace gobang
 
 ServerRoomSearch::ServerRoomSearch() :
     recv_buffer_(1 << 16),
-    socket_(*Io_Context, boost::asio::ip::udp::endpoint())
+    socket_(*Io_Context, boost::asio::ip::udp::endpoint()),
+    has_new_rooms_(false)
 {
     socket_.set_option(boost::asio::ip::udp::socket::broadcast(true));
 }
@@ -55,35 +56,34 @@ void ServerRoomSearch::handle_receive_(
         << ":" << sender_endpoint_.port() << std::endl;
 
     Serializer s(recv_buffer_);
-
-    int room_num = s.read_uint16(); 
-    std::cout << "room number: " << room_num << std::endl;
-
-    for (int i = 0; i < room_num; i++) {
-        int room_id = s.read_uint16();
-        std::string room_name = s.read_string();
-        std::cout << room_id << ": " << room_name << std::endl;
+    u_int16_t room_num;// = s.read_uint16();
+    s >> room_num;
+    for (u_int16_t i = 0; i < room_num; i++) {
+        ConciseRoom room;
+        s >> room.id >> room.name >> room.is_playing;
         for (int j = 0; j < 2; j++) {
-            std::cout << "p" << j + 1 << std::endl;
-            if (s.read_boolean()) {
-                std::string player_name = s.read_string();
-                std::cout << player_name << std::endl;
+            bool exist_player;
+            s >> exist_player;
+            if (exist_player) {
+                s >> room.player_name[j];
             }
         }
-        int onlooker_num = s.read_uint16();
-        std::cout << "onlooker number: " << onlooker_num << std::endl;
+        s >> room.onlooker_num >> room.max_onlooker_num;
+        room.endpoint.address(sender_endpoint_.address());
+        room.endpoint.port(sender_endpoint_.port());
+
+        std::unique_lock lock(room_set_mutex_);
+        auto [_, success] = room_set_.insert(room);
+        if (success) {
+            has_new_rooms_ = true;
+        }
     }
 
     start_receive_();
 }
 
-void ServerRoomSearch::boardcast_search_room()// const
+void ServerRoomSearch::search_room(const boost::asio::ip::udp::endpoint &endpoint)
 {
-    boost::asio::ip::udp::endpoint endpoint(
-        boost::asio::ip::address_v4::broadcast(),
-        52039 // Todo: remove hard code
-    );
-
     socket_.async_send_to(
         boost::asio::buffer(VERSION),
         endpoint,
@@ -93,11 +93,29 @@ void ServerRoomSearch::boardcast_search_room()// const
     );
 }
 
+const std::vector<ConciseRoom>& ServerRoomSearch::rooms()
+{
+    if (has_new_rooms_) {
+        std::shared_lock lock(room_set_mutex_);
+        rooms_.assign(room_set_.begin(), room_set_.end());
+        has_new_rooms_ = false;
+    }
+    return rooms_;
+}
+
 void ServerRoomSearch::handle_send_(
     const boost::system::error_code& error
     // std::size_t /*bytes_transferred*/
 ) {
     start_receive_();
+}
+
+bool ConciseRoom::operator < (const ConciseRoom& room) const
+{
+    if (this->id == room.id) {
+        return this->endpoint < room.endpoint;
+    }
+    return this->id < room.id;
 }
 
 } // namespace gobang

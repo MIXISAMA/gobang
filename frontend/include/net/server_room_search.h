@@ -8,6 +8,21 @@ namespace mixi
 namespace gobang
 {
 
+struct ConciseRoom
+{
+    u_int16_t   id;
+    std::string name;
+    bool        is_playing;
+    std::string player_name[2];
+    u_int16_t   onlooker_num;
+    u_int16_t   max_onlooker_num;
+
+    boost::asio::ip::tcp::endpoint endpoint;
+
+    bool operator < (const ConciseRoom& room) const;
+};
+
+
 class ServerRoomSearch
 {
 
@@ -16,7 +31,9 @@ public:
     ServerRoomSearch();
     ~ServerRoomSearch();
 
-    void boardcast_search_room();
+    void search_room(const boost::asio::ip::udp::endpoint &endpoint);
+
+    const std::vector<ConciseRoom>& rooms();
 
 private:
 
@@ -31,8 +48,13 @@ private:
     std::vector<std::byte>  recv_buffer_;
     boost::asio::ip::udp::endpoint sender_endpoint_;
 
-    std::set<Room> rooms_;
-    std::shared_mutex rooms_mutex_;
+    
+    std::set<ConciseRoom> room_set_;
+    std::shared_mutex room_set_mutex_;
+
+    std::atomic_bool has_new_rooms_;
+    std::vector<ConciseRoom> rooms_;
+    
 
 };
 

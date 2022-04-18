@@ -19,33 +19,63 @@ Serializer::Serializer(const std::vector<std::byte> &buffer) :
 
 }
 
-std::byte Serializer::read_byte()
-{
-    // Todo throw cursor exception
-    return raw[cursor_++];
+Serializer& Serializer::operator >> (std::byte& ret) {
+    ret = raw[cursor_++];
+    return *this;
 }
 
-bool Serializer::read_boolean()
-{
-    return (bool)read_byte();
+Serializer& Serializer::operator >> (bool& ret) {
+    std::byte b;
+    *this >> b;
+    ret = (bool)b;
+    return *this;
 }
 
-u_int16_t Serializer::read_uint16()
-{
-    u_int16_t val = 0;
-    val = (u_int16_t)raw[cursor_ + 1] << 8 | (u_int16_t)raw[cursor_];
+Serializer& Serializer::operator >> (u_int16_t& ret) {
+    ret = (u_int16_t)raw[cursor_ + 1] << 8 | (u_int16_t)raw[cursor_];
     cursor_ += 2;
-    return val;
+    return *this;
 }
 
-std::string Serializer::read_string(){
-    size_t length = read_uint16();
+Serializer& Serializer::operator >> (std::string& ret) {
+    u_int16_t length;
     // throw exception
+    *this >> length;
     char* buffer = (char*)raw.data();
-    std::string str(buffer + cursor_, length);
+    ret.assign(buffer + cursor_, length);
     cursor_ += length;
-    return str;
+    return *this;
 }
+
+
+// std::byte Serializer::read_byte_()
+// {
+//     // Todo throw cursor exception
+//     return raw[cursor_++];
+// }
+
+// bool Serializer::read_boolean_()
+// {
+//     return (bool)read_byte_();
+// }
+
+// u_int16_t Serializer::read_uint16()
+// {
+//     u_int16_t val = 0;
+//     val = (u_int16_t)raw[cursor_ + 1] << 8 | (u_int16_t)raw[cursor_];
+//     cursor_ += 2;
+//     return val;
+// }
+
+// std::string Serializer::read_string(){
+//     size_t length = read_uint16();
+//     // throw exception
+//     char* buffer = (char*)raw.data();
+//     std::string str(buffer + cursor_, length);
+//     cursor_ += length;
+//     return str;
+// }
+
 
 } // namespace gobang
 } // namespace mixi
