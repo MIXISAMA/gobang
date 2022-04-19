@@ -21,6 +21,7 @@ ModalRoomSearch::~ModalRoomSearch()
 
 void ModalRoomSearch::content()
 {
+    ImGui::AlignTextToFramePadding();
     ImGui::Text(gettext("Server Address"));
     for (int i = 0; i < 4; i++) {
         ImGui::SameLine();
@@ -34,16 +35,14 @@ void ModalRoomSearch::content()
     ImGui::SameLine();
     ImGui::PushItemWidth(70);
     ImGui::InputScalar("##empty", ImGuiDataType_U16, &search_port_,  NULL, NULL, "%u");
-
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text(gettext("Rooms List"));
     ImGui::SameLine();
     if (ImGui::Button(gettext("Search"))) {
         on_search_();
     }
 
-    const std::vector<ConciseRoom>& rooms = server_room_search_.rooms();
+    ImGui::Text(gettext("Rooms List"));
 
+    const std::vector<ConciseRoom>& rooms = server_room_search_.rooms();
     if (ImGui::BeginListBox("##listbox 2",
         ImVec2(600, 5 * ImGui::GetTextLineHeightWithSpacing())
     )) {

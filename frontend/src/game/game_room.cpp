@@ -1,11 +1,10 @@
-#pragma once
-
-#include "pch.h"
+#include "game/game_room.h"
 
 namespace mixi
 {
 namespace gobang
 {
+
 
 
 } // namespace gobang

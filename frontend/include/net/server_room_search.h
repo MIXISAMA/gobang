@@ -1,7 +1,6 @@
 #pragma once
 
 #include "pch.h"
-#include "game/room.h"
 
 namespace mixi
 {
