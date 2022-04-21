@@ -3,6 +3,7 @@ package idtcp
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"net"
 )
 
@@ -37,31 +38,44 @@ func (conn *Conn) Write(instruction uint16, data []byte) (int, error) {
 	return conn.TCPConn.Write(payload)
 }
 
+func (conn *Conn) ReadN(buffer []byte) error {
+	var req_n = len(buffer)
+	var cur_n = 0
+	for cur_n != req_n {
+		tmp_buf := make([]byte, req_n-cur_n)
+		read_n, err := conn.TCPConn.Read(tmp_buf)
+		if err != nil {
+			return err
+		}
+		for i := 0; i < read_n; i++ {
+			buffer[cur_n+i] = tmp_buf[i]
+		}
+		cur_n += read_n
+	}
+	return nil
+}
+
 func (conn *Conn) Read(instruction *uint16, data *[]byte) (int, error) {
 
-	for {
-
-		bufferLength := len(conn.buffer)
-
-		if bufferLength >= 4 {
-			len := binary.LittleEndian.Uint16(conn.buffer[0:2])
-			ins := binary.LittleEndian.Uint16(conn.buffer[2:4])
-
-			if bufferLength > int(len) {
-				*data = conn.buffer[4:bufferLength]
-				*instruction = ins
-				return bufferLength, nil
-			}
-		}
-
-		bufLen, err := conn.TCPConn.Read(conn.tmpbuf)
-		if err != nil {
-			return bufLen, err
-		}
-		conn.buffer = append(conn.buffer, conn.tmpbuf[:bufLen]...)
-
+	conn.buffer = nil
+	fmt.Printf("Read 1: %d \n", 2)
+	package_bytes := make([]byte, 2)
+	err := conn.ReadN(package_bytes)
+	if err != nil {
+		return -1, err
 	}
+	length := int(binary.LittleEndian.Uint16(package_bytes))
+	fmt.Printf("Read 2: %d \n", length)
+	buffer := make([]byte, length-2)
+	err = conn.ReadN(buffer)
+	if err != nil {
+		return -1, err
+	}
+	fmt.Println("Done")
+	*instruction = binary.LittleEndian.Uint16(buffer[:2])
+	*data = buffer[2:]
 
+	return length, nil
 }
 
 type Message struct {

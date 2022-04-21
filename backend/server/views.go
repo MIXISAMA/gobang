@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/MIXISAMA/gobang/backend/game"
@@ -50,7 +51,7 @@ func (room *Room) checkInConnMap(conn *idtcp.Conn, name string) bool {
 }
 
 func JoinRoomAsPlayer(msg *idtcp.Message) error {
-
+	fmt.Println("someone join room as player")
 	s := MakeSerializer(msg.Data)
 
 	roomId, err := s.ReadUint16()
@@ -66,7 +67,7 @@ func JoinRoomAsPlayer(msg *idtcp.Message) error {
 	if len(playerName) > 64 {
 		return errors.New("name is too long")
 	}
-
+	fmt.Println(playerName)
 	if room.checkInConnMap(msg.Connect, playerName) {
 		return errors.New(playerName + " has been in this room")
 	}

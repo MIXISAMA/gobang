@@ -25,6 +25,7 @@
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/function.hpp>
 
 #define VERSION "0.1"
 

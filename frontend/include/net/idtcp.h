@@ -27,55 +27,45 @@ public:
     );
     ~IdtcpSocket() = default;
 
-    template <
-        BOOST_ASIO_COMPLETION_TOKEN_FOR(
-            void (boost::system::error_code, std::size_t)
-        ) WriteHandler BOOST_ASIO_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type)
-    >
-    BOOST_ASIO_INITFN_AUTO_RESULT_TYPE(
-        WriteHandler, void (boost::system::error_code, std::size_t)
-    )
-    async_send_instrution_data(
+    void async_send_instrution_data(
         u_int16_t instruction,
         const std::vector<byte>& buffers,
-        socket_base::message_flags flags,
-        BOOST_ASIO_MOVE_ARG(WriteHandler) handler
-            BOOST_ASIO_DEFAULT_COMPLETION_TOKEN(executor_type)
-    ) {
-        std::vector<byte> data = pack_(instruction, buffers);
-        return async_send(boost::asio::buffer(data), flags, handler);
-    }
+        const boost::function<void(const boost::system::error_code&, std::size_t)>& handler
+    );
 
-    template <
-        typename MutableBufferSequence,
-        BOOST_ASIO_COMPLETION_TOKEN_FOR(
-            void (boost::system::error_code, std::size_t)
-        ) ReadHandler BOOST_ASIO_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type)
-    >
-    BOOST_ASIO_INITFN_AUTO_RESULT_TYPE(
-        ReadHandler, void (boost::system::error_code, std::size_t)
-    )
-    async_receive_instrution_data(
-        const MutableBufferSequence& buffers,
-        socket_base::message_flags flags,
-        BOOST_ASIO_MOVE_ARG(ReadHandler) handler
-            BOOST_ASIO_DEFAULT_COMPLETION_TOKEN(executor_type)
-    ) {
-        return async_initiate<ReadHandler,
-        void (boost::system::error_code, std::size_t)>(
-            initiate_async_receive(this), handler, buffers, flags);
-    }
+    void async_receive_instrution_data(
+        u_int16_t& instruction,
+        std::vector<std::byte>& data,
+        const boost::function<void(const boost::system::error_code&)>& handler
+    );
 
 protected:
 
-    std::vector<byte> pack_(
+    std::byte send_buffer_[65536];
+    std::byte buffer_[65536];
+
+    void pack_(
         u_int16_t instruction,
-        const std::vector<byte>& data
+        const std::vector<byte>& data,
+        std::byte* idtcp_raw,
+        u_int16_t& idtcp_raw_bytes
     );
 
-    std::pair<uint16_t, std::vector<byte>> unpack(
-        const std::vector<byte>& idtcp_raw
+    void unpack_(
+        const byte* idtcp_raw,
+        u_int16_t data_bytes,
+        u_int16_t& instruction,
+        std::vector<byte>& data
     );
+
+    void handle_receive_(
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred,
+        u_int16_t& instruction,
+        std::vector<std::byte>& data,
+        const boost::function<void(const boost::system::error_code&)>& handler
+    );
+
 
 };
 

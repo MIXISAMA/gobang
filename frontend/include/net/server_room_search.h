@@ -33,6 +33,7 @@ public:
     void search_room(const boost::asio::ip::udp::endpoint &endpoint);
 
     const std::vector<ConciseRoom>& rooms();
+    void update_rooms();
 
 private:
 

@@ -17,6 +17,8 @@ public:
     void render() override;
 
     void open();
+    void close();
+    bool is_opening();
 
 protected:
 
@@ -28,6 +30,8 @@ protected:
 private:
 
     static long long Id_;
+
+    bool should_close_;
 
 };
 

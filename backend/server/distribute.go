@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/MIXISAMA/gobang/backend/idtcp"
 )
@@ -35,7 +36,11 @@ func Distribute(msg *idtcp.Message) error {
 		return errors.New("error instruction")
 	}
 
-	endpoints[msg.Instruction](msg)
+	err := endpoints[msg.Instruction](msg)
+	if err != nil {
+		fmt.Println(err.Error())
+		// return err
+	}
 
 	return nil
 }

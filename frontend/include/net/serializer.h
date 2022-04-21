@@ -23,6 +23,11 @@ public:
     Serializer& operator >> (u_int16_t&   ret);
     Serializer& operator >> (std::string& ret);
 
+    Serializer& operator << (const std::byte&   val);
+    Serializer& operator << (const bool&        val);
+    Serializer& operator << (const u_int16_t&   val);
+    Serializer& operator << (const std::string& val);
+
 private:
 
     // std::byte read_byte_();

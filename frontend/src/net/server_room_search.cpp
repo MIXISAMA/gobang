@@ -16,6 +16,7 @@ ServerRoomSearch::ServerRoomSearch() :
     has_new_rooms_(false)
 {
     socket_.set_option(boost::asio::ip::udp::socket::broadcast(true));
+    start_receive_();
 }
 
 ServerRoomSearch::~ServerRoomSearch()
@@ -23,6 +24,31 @@ ServerRoomSearch::~ServerRoomSearch()
     socket_.close();
 }
 
+void ServerRoomSearch::update_rooms()
+{
+    if (has_new_rooms_) {
+        std::shared_lock lock(room_set_mutex_);
+        rooms_.assign(room_set_.begin(), room_set_.end());
+        has_new_rooms_ = false;
+    }
+}
+
+void ServerRoomSearch::search_room(const boost::asio::ip::udp::endpoint &endpoint)
+{
+    socket_.async_send_to(
+        boost::asio::buffer(VERSION),
+        endpoint,
+        boost::bind(&ServerRoomSearch::handle_send_, this,
+            boost::asio::placeholders::error//,
+            // boost::asio::placeholders::bytes_transferred
+        )
+    );
+}
+
+const std::vector<ConciseRoom>& ServerRoomSearch::rooms()
+{
+    return rooms_;
+}
 
 void ServerRoomSearch::start_receive_()
 {
@@ -48,7 +74,7 @@ void ServerRoomSearch::handle_receive_(
 ) {
     if (error) {
         Log::Error(error.to_string());
-        // return;
+        return;
     }
     std::cout
         << "sender endpoint " 
@@ -82,32 +108,11 @@ void ServerRoomSearch::handle_receive_(
     start_receive_();
 }
 
-void ServerRoomSearch::search_room(const boost::asio::ip::udp::endpoint &endpoint)
-{
-    socket_.async_send_to(
-        boost::asio::buffer(VERSION),
-        endpoint,
-        boost::bind(&ServerRoomSearch::handle_send_, this,
-            boost::asio::placeholders::error
-        )
-    );
-}
-
-const std::vector<ConciseRoom>& ServerRoomSearch::rooms()
-{
-    if (has_new_rooms_) {
-        std::shared_lock lock(room_set_mutex_);
-        rooms_.assign(room_set_.begin(), room_set_.end());
-        has_new_rooms_ = false;
-    }
-    return rooms_;
-}
-
 void ServerRoomSearch::handle_send_(
     const boost::system::error_code& error
     // std::size_t /*bytes_transferred*/
 ) {
-    start_receive_();
+    // start_receive_();
 }
 
 bool ConciseRoom::operator < (const ConciseRoom& room) const

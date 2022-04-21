@@ -20,8 +20,8 @@ public:
 
 private:
 
-    ModalRoomCreate room_create_modal_;
-    ModalRoomSearch room_search_modal_;
+    std::shared_ptr<ModalRoomCreate> room_create_modal_;
+    std::shared_ptr<ModalRoomSearch> room_search_modal_;
 
 };
 

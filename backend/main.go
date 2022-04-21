@@ -67,13 +67,13 @@ func idtcpPipe(conn *idtcp.Conn) {
 	for {
 
 		msg, err := conn.ReadMessage()
-
+		fmt.Printf("read msg%d\n", msg.Instruction)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
 
-		go messagePipe(msg)
+		messagePipe(msg)
 
 	}
 }

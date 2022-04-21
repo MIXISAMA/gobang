@@ -9,14 +9,26 @@ ModalRoomSearch::ModalRoomSearch() :
     PopupModal(gettext("Search Room"), ImGuiWindowFlags_AlwaysAutoResize),
     item_current_idx_(-1),
     search_ip_{0xFF, 0xFF, 0xFF, 0xFF},
-    search_port_(52039)
+    search_port_(52039),
+    rooms_(server_room_search_.rooms()),
+    join_done_(false)
 {
-
+    player_name_[0] = '\0';
 }
 
 ModalRoomSearch::~ModalRoomSearch()
 {
 
+}
+
+bool ModalRoomSearch::join_done()
+{
+    return join_done_;
+}
+
+std::shared_ptr<ServerGameRoom> ModalRoomSearch::server_game_room()
+{
+    return server_game_room_;
 }
 
 void ModalRoomSearch::content()
@@ -28,6 +40,7 @@ void ModalRoomSearch::content()
         ImGui::PushID(i);
         ImGui::PushItemWidth(40);
         ImGui::InputScalar("##empty", ImGuiDataType_U8, &search_ip_[i],  NULL, NULL, "%u");
+        ImGui::PopItemWidth();
         ImGui::PopID();
     }
     ImGui::SameLine();
@@ -35,6 +48,7 @@ void ModalRoomSearch::content()
     ImGui::SameLine();
     ImGui::PushItemWidth(70);
     ImGui::InputScalar("##empty", ImGuiDataType_U16, &search_port_,  NULL, NULL, "%u");
+    ImGui::PopItemWidth();
     ImGui::SameLine();
     if (ImGui::Button(gettext("Search"))) {
         on_search_();
@@ -42,13 +56,14 @@ void ModalRoomSearch::content()
 
     ImGui::Text(gettext("Rooms List"));
 
-    const std::vector<ConciseRoom>& rooms = server_room_search_.rooms();
+    server_room_search_.update_rooms();
+    
     if (ImGui::BeginListBox("##listbox 2",
         ImVec2(600, 5 * ImGui::GetTextLineHeightWithSpacing())
     )) {
-        for (int i = 0; i < rooms.size(); i++) {
+        for (int i = 0; i < rooms_.size(); i++) {
             const bool is_selected = (item_current_idx_ == i);
-            if (ImGui::Selectable(rooms[i].name.c_str(), is_selected)) {
+            if (ImGui::Selectable(rooms_[i].name.c_str(), is_selected)) {
                 item_current_idx_ = i;
             }
             // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -56,9 +71,9 @@ void ModalRoomSearch::content()
                 ImGui::SetItemDefaultFocus();
             }
             ImGui::SameLine(280);
-            ImGui::Text("%s", rooms[i].endpoint.address().to_string().c_str());
+            ImGui::Text("%s", rooms_[i].endpoint.address().to_string().c_str());
             ImGui::SameLine(450);
-            if (rooms[i].is_playing) {
+            if (rooms_[i].is_playing) {
                 ImGui::Text("%s", gettext("Playing"));
             } else {
                 ImGui::Text("%s", gettext("Waiting"));
@@ -70,8 +85,8 @@ void ModalRoomSearch::content()
     ImGui::Separator();
 
     const ConciseRoom* select_room = nullptr;
-    if (item_current_idx_ >= 0 && item_current_idx_ < rooms.size()) {
-        select_room = &rooms[item_current_idx_];
+    if (item_current_idx_ >= 0 && item_current_idx_ < rooms_.size()) {
+        select_room = &rooms_[item_current_idx_];
     }
     ImGui::Text("%s:", gettext("Room Name"));
     if (select_room != nullptr) {
@@ -116,13 +131,36 @@ void ModalRoomSearch::content()
     }
 
     ImGui::NewLine();
-    ImGui::SameLine(0, 100);
+    ImGui::Text("%s:", gettext("Your Nickname"));
+    ImGui::SameLine(200);
+    ImGui::PushItemWidth(180);
+    ImGui::InputText("##playername", player_name_, 64);
+    ImGui::PopItemWidth();
+    ImGui::SameLine();
+
+    ImGui::BeginDisabled(select_room == nullptr);
     if (ImGui::Button(gettext("Join Game"))) {
-        on_join_as_player_();
+        on_click_join_as_player_();
     }
-    ImGui::SameLine(0, 50);
+    ImGui::SameLine();
     if (ImGui::Button(gettext("Watch Just"))) {
-        on_join_as_onlooker_();
+        on_click_join_as_onlooker_();
+    }
+    ImGui::EndDisabled();
+
+    if (server_game_room_.get() != nullptr) {
+        switch (server_game_room_->state()) {
+        case ServerGameRoom::State::Loading:
+            ImGui::Text("%s", Hint_Joining_);
+            break;
+        case ServerGameRoom::State::Fail:
+            ImGui::Text("%s", Hint_Failed_);
+            break;
+        case ServerGameRoom::State::Done:
+            join_done_ = true;
+        }
+    } else {
+        ImGui::Text("%s", Hint_Search_);
     }
 
 }
@@ -133,15 +171,26 @@ void ModalRoomSearch::on_search_()
     server_room_search_.search_room(boost::asio::ip::udp::endpoint(address, search_port_));
 }
 
-void ModalRoomSearch::on_join_as_player_()
+void ModalRoomSearch::on_click_join_as_player_()
 {
-
+    join_done_ = false;
+    server_game_room_ = std::shared_ptr<ServerGameRoom>(
+        new ServerGameRoom(
+            player_name_, true,
+            rooms_[item_current_idx_].endpoint
+        )
+    );
 }
 
-void ModalRoomSearch::on_join_as_onlooker_()
+void ModalRoomSearch::on_click_join_as_onlooker_()
 {
     
 }
+
+const char* ModalRoomSearch::Hint_Search_  = gettext("Please search rooms and choose one to join");
+const char* ModalRoomSearch::Hint_Joining_ = gettext("Joining room, please wait");
+const char* ModalRoomSearch::Hint_Failed_  = gettext("Failed to join room");
+
 
 } // namespace gobang
 } // namespace mixi
