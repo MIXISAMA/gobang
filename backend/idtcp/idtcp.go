@@ -77,19 +77,3 @@ func (conn *Conn) Read(instruction *uint16, data *[]byte) (int, error) {
 
 	return length, nil
 }
-
-type Message struct {
-	Connect     *Conn
-	Instruction uint16
-	Data        []byte
-}
-
-func (conn *Conn) ReadMessage() (*Message, error) {
-	msg := new(Message)
-	_, err := conn.Read(&msg.Instruction, &msg.Data)
-	if err != nil {
-		return nil, err
-	}
-	msg.Connect = conn
-	return msg, nil
-}

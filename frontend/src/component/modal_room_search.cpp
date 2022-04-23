@@ -176,6 +176,7 @@ void ModalRoomSearch::on_click_join_as_player_()
     join_done_ = false;
     server_game_room_ = std::shared_ptr<ServerGameRoom>(
         new ServerGameRoom(
+            rooms_[item_current_idx_].id,
             player_name_, true,
             rooms_[item_current_idx_].endpoint
         )

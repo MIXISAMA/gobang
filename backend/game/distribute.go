@@ -1,10 +1,7 @@
-package server
+package game
 
 import (
-	"errors"
-	"fmt"
-
-	"github.com/MIXISAMA/gobang/backend/idtcp"
+	"github.com/MIXISAMA/gobang/backend/server"
 )
 
 const (
@@ -21,26 +18,11 @@ const (
 	S_OnlookerLeaveRoom uint16 = 0x0003
 )
 
-var endpoints = [...]func(*idtcp.Message) error{
-	S_PlayerJoinRoom:   JoinRoomAsPlayer,
-	S_OnlookerJoinRoom: JoinRoomAsOnlooker,
+var Endpoints = []func(*server.IdtcpMessage) error{
+	S_PlayerJoinRoom: JoinRoomAsPlayer,
+	// S_OnlookerJoinRoom: JoinRoomAsOnlooker,
 	// S_PlayerReady:      PlayerReady,
 	// 0x03: RetractRequest,
 	// 0x04: Resign,
 	// 0x05: Stone,
-}
-
-func Distribute(msg *idtcp.Message) error {
-
-	if int(msg.Instruction) >= len(endpoints) {
-		return errors.New("error instruction")
-	}
-
-	err := endpoints[msg.Instruction](msg)
-	if err != nil {
-		fmt.Println(err.Error())
-		// return err
-	}
-
-	return nil
 }

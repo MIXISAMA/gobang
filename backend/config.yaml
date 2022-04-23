@@ -1,0 +1,10 @@
+server: 0.0.0.0:52039
+
+rooms:
+
+  - name: gobang room 1
+    max_users: 64
+
+  - name: gobang room 2
+    max_users: 64
+

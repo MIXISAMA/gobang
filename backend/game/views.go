@@ -1,5 +1,72 @@
-package server
+package game
 
+import (
+	"errors"
+
+	"github.com/MIXISAMA/gobang/backend/config"
+	"github.com/MIXISAMA/gobang/backend/server"
+)
+
+var RoomList []Room
+
+func LoadRoomListFromConfig(conf *config.Config) error {
+
+	RoomList = make([]Room, 0)
+	for i := range conf.Rooms {
+
+		roomName := conf.Rooms[i].Name
+		maxUsers := conf.Rooms[i].MaxUsers
+		if len(roomName) >= 64 {
+			return errors.New("the length of the room name cannot exceed 64 bytes")
+		}
+		if maxUsers >= 256 || maxUsers <= 2 {
+			return errors.New("the max nubmer of users is between 2 and 255")
+		}
+
+		room := NewRoom(roomName, maxUsers)
+		RoomList = append(RoomList, *room)
+
+	}
+	return nil
+
+}
+
+func JoinRoomAsPlayer(msg *server.IdtcpMessage) error {
+
+	roomId, playerName, err := SerializerUint16String(msg.Data)
+	if err != nil {
+		return err
+	}
+
+	if int(roomId) >= len(RoomList) {
+		return errors.New("wrong room id")
+	}
+	room := RoomList[roomId]
+
+	err = msg.User.Rename(playerName)
+	if err != nil {
+		return err
+	}
+
+	err = room.PlayerJoin(msg.User)
+	if err != nil {
+		return err
+	}
+
+	// err = room.sendAll(msg.Connect)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// err = room.sendJoinPlayerToOthers(joinPlayer)
+	// if err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+/*
 import (
 	"errors"
 	"fmt"
@@ -16,10 +83,13 @@ type Room struct {
 	ConnMap      map[string]*idtcp.Conn
 }
 
+var RoomMap map[*idtcp.Conn]*Room = make(map[*idtcp.Conn]*Room)
+
 func NewRoom(name string, maxOnlookers int) *Room {
 	return &Room{
 		Room:         *game.NewRoom(name),
 		MaxOnlookers: maxOnlookers,
+		ConnMap:      make(map[string]*idtcp.Conn),
 	}
 }
 
@@ -50,47 +120,7 @@ func (room *Room) checkInConnMap(conn *idtcp.Conn, name string) bool {
 	return false
 }
 
-func JoinRoomAsPlayer(msg *idtcp.Message) error {
-	fmt.Println("someone join room as player")
-	s := MakeSerializer(msg.Data)
 
-	roomId, err := s.ReadUint16()
-	if err != nil || int(roomId) >= len(RoomList) {
-		return errors.New("wrong room id")
-	}
-	room := RoomList[roomId]
-
-	playerName, err := s.ReadString()
-	if err != nil {
-		return err
-	}
-	if len(playerName) > 64 {
-		return errors.New("name is too long")
-	}
-	fmt.Println(playerName)
-	if room.checkInConnMap(msg.Connect, playerName) {
-		return errors.New(playerName + " has been in this room")
-	}
-
-	joinPlayer, err := room.PlayerJoin(playerName)
-	if err != nil {
-		return err
-	}
-
-	room.ConnMap[playerName] = msg.Connect
-
-	err = room.sendAll(msg.Connect)
-	if err != nil {
-		return err
-	}
-
-	err = room.sendJoinPlayerToOthers(joinPlayer)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func JoinRoomAsOnlooker(msg *idtcp.Message) error {
 
@@ -328,4 +358,15 @@ func SendAllRoom(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 
 	}
 	conn.WriteToUDP(s.Raw, addr)
+}
+
+// func disconnection(idtcp.Conn)
+// {
+
+// }
+
+*/
+
+func UdpPipe(msg *server.UdpMessage) error {
+	return nil
 }

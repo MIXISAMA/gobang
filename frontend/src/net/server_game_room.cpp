@@ -10,11 +10,13 @@ namespace gobang
 {
 
 ServerGameRoom::ServerGameRoom(
+    u_int16_t room_id,
     const std::string& nickname,
     bool is_player,
     const boost::asio::ip::tcp::endpoint& remote_endpoint
 ) :
     room_(nullptr),
+    room_id_(room_id),
     is_player_(is_player),
     state_(State::Loading),
     nickname_(nickname),
@@ -100,7 +102,7 @@ void ServerGameRoom::handle_join_(const boost::system::error_code& error, std::s
 void ServerGameRoom::join_()
 {
     Serializer s;
-    s << nickname_;
+    s << room_id_ << nickname_;
     u_int16_t instruction = (u_int16_t)(is_player_ ?
         Instruction::Join_As_Player :
         Instruction::Join_As_Onlooker

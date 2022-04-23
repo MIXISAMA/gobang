@@ -29,6 +29,7 @@ public:
     };
 
     ServerGameRoom(
+        u_int16_t room_id,
         const std::string& nickname,
         bool is_player,
         const boost::asio::ip::tcp::endpoint& remote_endpoint
@@ -43,13 +44,14 @@ public:
 
 private:
 
+    net::IdtcpSocket socket_;
+    u_int16_t room_id_;
+    const std::string nickname_;
+    bool is_player_;
+    const boost::asio::ip::tcp::endpoint remote_endpoint_;
+
     GameRoom* room_;
     std::atomic<State> state_;
-    bool is_player_;
-
-    net::IdtcpSocket socket_;
-    const std::string nickname_;
-    const boost::asio::ip::tcp::endpoint remote_endpoint_;
 
     u_int16_t receive_instruction_;
     std::vector<std::byte> receive_data_;
