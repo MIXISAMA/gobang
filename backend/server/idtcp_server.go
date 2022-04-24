@@ -16,9 +16,14 @@ type IdtcpMessage struct {
 type IdtcpServer struct {
 	Listener   *net.TCPListener
 	Distribute []func(*IdtcpMessage) error
+	Disconnect func(*User)
 }
 
-func NewIdtcpServer(address string, distribute []func(*IdtcpMessage) error) *IdtcpServer {
+func NewIdtcpServer(
+	address string,
+	distribute []func(*IdtcpMessage) error,
+	disconnect func(*User),
+) *IdtcpServer {
 
 	serverTcpAddr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
@@ -33,6 +38,7 @@ func NewIdtcpServer(address string, distribute []func(*IdtcpMessage) error) *Idt
 	return &IdtcpServer{
 		Listener:   tcpListener,
 		Distribute: distribute,
+		Disconnect: disconnect,
 	}
 }
 
@@ -56,6 +62,7 @@ func (server *IdtcpServer) ConnPipe(conn *idtcp.Conn) {
 	log.Println("A client connected : " + remoteAddress)
 	defer func() {
 		log.Println("disconnected :" + remoteAddress)
+		server.Disconnect(user)
 		conn.TCPConn.Close()
 	}()
 
@@ -74,11 +81,11 @@ func (server *IdtcpServer) ConnPipe(conn *idtcp.Conn) {
 			return
 		}
 
-		log.Printf("Receive User[%s]'s Instruction: %d", user.Name, msg.Instruction)
+		log.Printf("Received User[%s]'s Instruction: %d", user.Name, msg.Instruction)
 		err = server.Distribute[msg.Instruction](&msg)
 		if err != nil {
 			log.Println(err.Error())
-			return
+			continue
 		}
 
 	}

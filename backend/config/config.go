@@ -6,12 +6,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type ConfigRoom struct {
+	Name     string
+	MaxUsers int
+}
+
 type Config struct {
 	Server string
-	Rooms  []struct {
-		Name     string
-		MaxUsers int
-	}
+	Rooms  []ConfigRoom `yaml:",flow"`
 }
 
 func ReadConfig(path string) (conf *Config, err error) {

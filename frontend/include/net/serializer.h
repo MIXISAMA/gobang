@@ -27,6 +27,7 @@ public:
     Serializer& operator << (const bool&        val);
     Serializer& operator << (const u_int16_t&   val);
     Serializer& operator << (const std::string& val);
+    Serializer& operator << (const char*        val);
 
 private:
 

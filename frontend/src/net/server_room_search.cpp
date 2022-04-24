@@ -35,8 +35,11 @@ void ServerRoomSearch::update_rooms()
 
 void ServerRoomSearch::search_room(const boost::asio::ip::udp::endpoint &endpoint)
 {
+    room_set_.clear();
+    Serializer s;
+    s << VERSION;
     socket_.async_send_to(
-        boost::asio::buffer(VERSION),
+        boost::asio::buffer(s.raw),
         endpoint,
         boost::bind(&ServerRoomSearch::handle_send_, this,
             boost::asio::placeholders::error//,

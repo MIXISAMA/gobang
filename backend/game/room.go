@@ -46,7 +46,7 @@ func (room *Room) LocateUser(user *server.User) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, errors.New("User not found")
+	return -1, errors.New("user not found")
 
 }
 
@@ -57,43 +57,47 @@ func (room *Room) LocatePlayer(player *server.User) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, errors.New("Player not found")
+	return -1, errors.New("player not found")
 
 }
 
-func (room *Room) PlayerJoin(player *server.User) error {
+func (room *Room) UserJoin(user *server.User, isPlayer bool) error {
 
-	if room.IsPlaying {
-		return errors.New("This room is playing")
+	if _, err := room.LocateUser(user); err == nil {
+		return errors.New("this user is exist")
 	}
 
-	if _, err := room.LocateUser(player); err != nil {
-		return errors.New("Exist this user")
+	if isPlayer {
+
+		if room.IsPlaying {
+			return errors.New("this room is playing")
+		}
+
+		p1 := room.Players[BLACK]
+		p2 := room.Players[WHITE]
+
+		if p1 != nil && p2 != nil {
+			return errors.New("this room is full")
+		}
+
+		if p1 == nil {
+			room.Players[BLACK] = user
+		} else if p2 == nil {
+			room.Players[WHITE] = user
+		}
+
 	}
 
-	p1 := room.Players[BLACK]
-	p2 := room.Players[WHITE]
-
-	if p1 != nil && p2 != nil {
-		return errors.New("This room is full")
-	}
-
-	if p1 == nil {
-		room.Players[BLACK] = player
-	} else if p2 == nil {
-		room.Players[WHITE] = player
-	}
-
-	room.Users = append(room.Users, player)
-
+	room.Users = append(room.Users, user)
 	return nil
+
 }
 
 func (room *Room) UserLeave(user *server.User) error {
 
 	userIdx, err := room.LocateUser(user)
-	if err == nil {
-		return errors.New("This room has not this user")
+	if err != nil {
+		return errors.New("this room has not this user")
 	}
 
 	room.Users = append(room.Users[:userIdx], room.Users[userIdx+1:]...)
@@ -112,12 +116,12 @@ func (room *Room) UserLeave(user *server.User) error {
 func (room *Room) Stone(player *server.User, coor byte) error {
 
 	if !room.IsPlaying {
-		return errors.New("This room is not playing")
+		return errors.New("this room is not playing")
 	}
 
 	idx, err := room.LocatePlayer(player)
 	if err != nil {
-		return errors.New("This user is not a player")
+		return errors.New("this user is not a player")
 	}
 
 	color := byte(idx)

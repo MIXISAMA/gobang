@@ -2,16 +2,23 @@ package game
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/MIXISAMA/gobang/backend/config"
 	"github.com/MIXISAMA/gobang/backend/server"
 )
 
-var RoomList []Room
+const Version = "0.1"
 
-func LoadRoomListFromConfig(conf *config.Config) error {
+var Gd = GlobalData{
+	Rooms:     make([]*Room, 0),
+	UserWho:   make(map[string]*server.User),
+	RoomWhose: make(map[*server.User]*Room),
+}
 
-	RoomList = make([]Room, 0)
+func LoadGdFromConfig(conf *config.Config) error {
+
+	Gd.Rooms = make([]*Room, 0)
 	for i := range conf.Rooms {
 
 		roomName := conf.Rooms[i].Name
@@ -24,7 +31,7 @@ func LoadRoomListFromConfig(conf *config.Config) error {
 		}
 
 		room := NewRoom(roomName, maxUsers)
-		RoomList = append(RoomList, *room)
+		Gd.Rooms = append(Gd.Rooms, room)
 
 	}
 	return nil
@@ -33,23 +40,26 @@ func LoadRoomListFromConfig(conf *config.Config) error {
 
 func JoinRoomAsPlayer(msg *server.IdtcpMessage) error {
 
-	roomId, playerName, err := SerializerUint16String(msg.Data)
+	room, playerName, err := DecodeRoomName(msg.Data)
 	if err != nil {
 		return err
 	}
-
-	if int(roomId) >= len(RoomList) {
-		return errors.New("wrong room id")
-	}
-	room := RoomList[roomId]
 
 	err = msg.User.Rename(playerName)
 	if err != nil {
 		return err
 	}
 
-	err = room.PlayerJoin(msg.User)
+	err = Gd.AddUserRoom(msg.User, room)
 	if err != nil {
+		// push msg
+		return err
+	}
+
+	err = room.UserJoin(msg.User, true)
+	if err != nil {
+		// push msg
+		Gd.RemoveUser(msg.User)
 		return err
 	}
 
@@ -313,53 +323,6 @@ func LeaveRoomAsOnlooker(msg *idtcp.Message) error {
 // 	return nil
 // }
 
-func SendAllRoom(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-	var s Serializer
-	err := s.WriteUint16_Int(len(RoomList))
-	if err != nil {
-		return
-	}
-
-	for i := range RoomList {
-
-		room := &RoomList[i]
-
-		err = s.WriteUint16_Int(i)
-		if err != nil {
-			return
-		}
-
-		err = s.WriteString(room.Name)
-		if err != nil {
-			return
-		}
-
-		s.WriteBoolean(room.IsPlaying)
-
-		for j := range room.Players {
-			player := room.Players[j]
-			if player != nil {
-				s.WriteByte(0xFF)
-				s.WriteString(player.Name)
-			} else {
-				s.WriteByte(0x00)
-			}
-		}
-
-		err = s.WriteUint16_Int(len(room.Onlookers))
-		if err != nil {
-			return
-		}
-
-		err = s.WriteUint16_Int(room.MaxOnlookers)
-		if err != nil {
-			return
-		}
-
-	}
-	conn.WriteToUDP(s.Raw, addr)
-}
-
 // func disconnection(idtcp.Conn)
 // {
 
@@ -367,6 +330,34 @@ func SendAllRoom(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 
 */
 
+func OnDisconnect(user *server.User) {
+
+	if room, ok := Gd.RoomWhose[user]; ok {
+		room.UserLeave(user)
+	}
+	Gd.RemoveUser(user)
+
+}
+
 func UdpPipe(msg *server.UdpMessage) error {
-	return nil
+
+	s := server.MakeSerializer(msg.Data)
+
+	version, err := s.ReadString()
+	if err != nil {
+		return err
+	}
+
+	if version != Version {
+		return fmt.Errorf("inconsistent version %s", version)
+	}
+
+	data, err := EncodeRooms()
+	if err != nil {
+		return err
+	}
+
+	_, err = msg.Conn.WriteToUDP(data, msg.Addr)
+	return err
+
 }

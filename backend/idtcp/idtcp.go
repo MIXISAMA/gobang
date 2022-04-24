@@ -3,7 +3,6 @@ package idtcp
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"net"
 )
 
@@ -58,20 +57,20 @@ func (conn *Conn) ReadN(buffer []byte) error {
 func (conn *Conn) Read(instruction *uint16, data *[]byte) (int, error) {
 
 	conn.buffer = nil
-	fmt.Printf("Read 1: %d \n", 2)
+
 	package_bytes := make([]byte, 2)
 	err := conn.ReadN(package_bytes)
 	if err != nil {
 		return -1, err
 	}
 	length := int(binary.LittleEndian.Uint16(package_bytes))
-	fmt.Printf("Read 2: %d \n", length)
+
 	buffer := make([]byte, length-2)
 	err = conn.ReadN(buffer)
 	if err != nil {
 		return -1, err
 	}
-	fmt.Println("Done")
+
 	*instruction = binary.LittleEndian.Uint16(buffer[:2])
 	*data = buffer[2:]
 

@@ -19,12 +19,16 @@ func main() {
 		panic(err.Error())
 	}
 
-	game.LoadRoomListFromConfig(conf)
+	game.LoadGdFromConfig(conf)
 
 	var udpServer = server.NewUdpServer(conf.Server, game.UdpPipe)
 	go udpServer.Run()
 
-	var idtcpServer = server.NewIdtcpServer(conf.Server, game.Endpoints)
+	var idtcpServer = server.NewIdtcpServer(
+		conf.Server,
+		game.Endpoints,
+		game.OnDisconnect,
+	)
 	idtcpServer.Run()
 
 }

@@ -7,7 +7,8 @@ import (
 
 type UdpMessage struct {
 	Data []byte
-	Conn *net.UDPAddr
+	Conn *net.UDPConn
+	Addr *net.UDPAddr
 }
 
 type UdpServer struct {
@@ -26,7 +27,10 @@ func NewUdpServer(address string, pipe func(*UdpMessage) error) *UdpServer {
 		panic(err.Error())
 	}
 
-	return &UdpServer{Conn: udpConn}
+	return &UdpServer{
+		Conn: udpConn,
+		Pipe: pipe,
+	}
 }
 
 func (server *UdpServer) Run() {
@@ -40,8 +44,15 @@ func (server *UdpServer) Run() {
 		}
 		msg := UdpMessage{
 			Data: buffer[:n],
-			Conn: remoteAddr,
+			Conn: server.Conn,
+			Addr: remoteAddr,
 		}
-		go server.Pipe(&msg)
+		log.Println("Received UDP package")
+		go func() {
+			err := server.Pipe(&msg)
+			if err != nil {
+				log.Println("UDP err:", err.Error())
+			}
+		}()
 	}
 }

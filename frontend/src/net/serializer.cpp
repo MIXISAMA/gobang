@@ -89,5 +89,10 @@ Serializer& Serializer::operator << (const std::string& val)
     return *this;
 }
 
+Serializer& Serializer::operator << (const char* val)
+{
+    return *this << std::string(val);
+}
+
 } // namespace gobang
 } // namespace mixi

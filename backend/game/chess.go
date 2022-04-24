@@ -30,17 +30,17 @@ func (chess *Chess) WhosTurn() byte {
 func (chess *Chess) Stone(coor byte, color byte) error {
 
 	if color != chess.WhosTurn() {
-		return errors.New("Wrong color")
+		return errors.New("wrong color")
 	}
 
 	r := coor & 0x0F
 	c := (coor >> 4) & 0x0F
 
 	if r >= 15 || c >= 15 {
-		return errors.New("Out of chess board")
+		return errors.New("out of chess board")
 	}
 	if chess.Board[r][c] != SPACE {
-		return errors.New("There is already a chess piece here")
+		return errors.New("there is already a chess piece here")
 	}
 
 	chess.Record = append(chess.Record, coor)

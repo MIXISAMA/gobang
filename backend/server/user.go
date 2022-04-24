@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/MIXISAMA/gobang/backend/idtcp"
 )
@@ -21,10 +22,17 @@ func NewAnonymousUser(conn *idtcp.Conn) *User {
 }
 
 func (user *User) Rename(name string) error {
+
+	name = strings.Trim(name, " ")
+	if len(name) == 0 {
+		return errors.New("name can not be blank")
+	}
 	if len(name) > 64 {
 		return errors.New("name is too long")
 	}
+
 	user.Name = name
 	user.Anonymous = false
+
 	return nil
 }
