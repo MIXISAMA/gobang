@@ -7,25 +7,11 @@ package game
 // 	"github.com/MIXISAMA/gobang/backend/idtcp"
 // )
 
-// const (
-// 	C_PlayerJoinRoom        uint16 = 0x0000
-// 	C_PlayerJoinRoomSuccess uint16 = 0x0000
-// 	C_PlayerLeaveRoom       uint16 = 0x0001
-// 	C_PlayerBlack           uint16 = 0x0002
-// 	C_PlayerReady           uint16 = 0x0001
-// 	C_PlayerStone           uint16 = 0x0000
-// 	C_PlayerRegretRequest   uint16 = 0x0003
-// 	C_PlayerAdmitDefeat     uint16 = 0x0000
-
-// 	C_OnlookerAll             uint16 = 0x0000
-// 	C_OnlookerJoinRoom        uint16 = 0x0002
-// 	C_OnlookerJoinRoomSuccess uint16 = 0x0000
-// 	C_OnlookerLeaveRoom       uint16 = 0x0000
-
-// 	C_GameRoom  uint16 = 0x0001
-// 	C_GameStart uint16 = 0x0005
-// 	C_GameEnd   uint16 = 0x0006
-// )
+const (
+	C_GenericErrorNotification uint16 = 0x0000
+	C_AllRoomInformation       uint16 = 0x0001
+	C_Join_Room                uint16 = 0x0002
+)
 
 // func (s *Serializer) writePlayer(player *game.Player) error {
 // 	err := s.WriteString(player.Name)

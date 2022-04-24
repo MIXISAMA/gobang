@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "game/game_room.h"
 
-#include "net/idtcp.h"
+#include "net/idtcp_client.h"
 
 namespace mixi
 {
@@ -15,55 +15,63 @@ class ServerGameRoom
 
 public:
 
-    enum class State
+    enum class JoinRoomState
     {
-        Loading,
+        Pending,
         Done,
-        Fail,
+        Failed,
     };
 
-    enum class Instruction: u_int16_t
-    {
-        Join_As_Player = 0x0000,
-        Join_As_Onlooker,
-    };
-
-    ServerGameRoom(
-        u_int16_t room_id,
-        const std::string& nickname,
-        bool is_player,
-        const boost::asio::ip::tcp::endpoint& remote_endpoint
-    );
+    ServerGameRoom();
     ~ServerGameRoom();
 
-    State state();
+    void join_room(
+        const boost::asio::ip::tcp::endpoint& remote_endpoint,
+        u_int16_t room_id,
+        const std::string& nickname,
+        bool is_player
+    );
 
-    void request_room();
+    JoinRoomState join_room_state();
 
-    const GameRoom* room() const;
+protected:
+
+    enum class C_Instruction: u_int16_t
+    {
+        Generic_Error_Notification = 0x0000,
+        All_Room_Information,
+        Join_Room,
+    };
+
+    enum class S_Instruction: u_int16_t
+    {
+        Generic_Error_Notification = 0x0000,
+        Join_Room,
+    };
+
+    std::shared_ptr<net::IdtcpClient> client_;
+
+    const net::IdtcpClient::Distribute distribute_;
+
+    JoinRoomState join_room_state_;
+
+    void connect_error_notice_(
+        bool error,
+        u_int16_t room_id,
+        const std::string& nickname,
+        bool is_player
+    );
 
 private:
 
-    net::IdtcpSocket socket_;
-    u_int16_t room_id_;
-    const std::string nickname_;
-    bool is_player_;
-    const boost::asio::ip::tcp::endpoint remote_endpoint_;
+    void send_join_room_(
+        u_int16_t room_id,
+        const std::string& nickname,
+        bool is_player
+    );
 
-    GameRoom* room_;
-    std::atomic<State> state_;
-
-    u_int16_t receive_instruction_;
-    std::vector<std::byte> receive_data_;
-
-    void start_receive_();
-
-    void handle_connect_(const boost::system::error_code& error);
-    void handle_send_(const boost::system::error_code& error);
-    void handle_receive_(const boost::system::error_code& error);
-    void handle_join_(const boost::system::error_code& error, std::size_t);
-
-    void join_();
+    void receive_generic_error_notification_(const std::vector<std::byte>& data);
+    void receive_all_room_information_      (const std::vector<std::byte>& data);
 
 };
 

@@ -17,7 +17,7 @@ ComponentRoot::ComponentRoot()
     ImGui::GetStyle().FrameRounding = 6.0f;
     ImGui::GetStyle().PopupRounding = 12.0f;
 
-    window_home_ = WindowHome::Ptr(new WindowHome());
+    window_home_ = WindowHome::Ptr(new WindowHome(server_game_room_));
 
 }
 

@@ -38,5 +38,6 @@ namespace mixi
         using std::uint32_t;
         namespace fs = std::filesystem;
         // namespace bp = boost::process;
+        using AsioCallback = boost::function<void(const boost::system::error_code& error)>;
     }
 }

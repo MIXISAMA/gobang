@@ -5,13 +5,14 @@ namespace mixi
 namespace gobang
 {
 
-ModalRoomSearch::ModalRoomSearch() :
+ModalRoomSearch::ModalRoomSearch(ServerGameRoom& server_game_room) :
     PopupModal(gettext("Search Room"), ImGuiWindowFlags_AlwaysAutoResize),
     item_current_idx_(-1),
     search_ip_{0xFF, 0xFF, 0xFF, 0xFF},
     search_port_(52039),
     rooms_(server_room_search_.rooms()),
-    join_done_(false)
+    server_game_room_(server_game_room),
+    hint_(Hint_Search_)
 {
     player_name_[0] = '\0';
 }
@@ -23,12 +24,8 @@ ModalRoomSearch::~ModalRoomSearch()
 
 bool ModalRoomSearch::join_done()
 {
-    return join_done_;
-}
-
-std::shared_ptr<ServerGameRoom> ModalRoomSearch::server_game_room()
-{
-    return server_game_room_;
+    return server_game_room_.join_room_state()
+        == ServerGameRoom::JoinRoomState::Done;
 }
 
 void ModalRoomSearch::content()
@@ -140,29 +137,15 @@ void ModalRoomSearch::content()
 
     ImGui::BeginDisabled(select_room == nullptr);
     if (ImGui::Button(gettext("Join Game"))) {
-        on_click_join_as_player_();
+        join_room_(true);
     }
     ImGui::SameLine();
     if (ImGui::Button(gettext("Watch Just"))) {
-        on_click_join_as_onlooker_();
+        join_room_(false);
     }
     ImGui::EndDisabled();
 
-    if (server_game_room_.get() != nullptr) {
-        switch (server_game_room_->state()) {
-        case ServerGameRoom::State::Loading:
-            ImGui::Text("%s", Hint_Joining_);
-            break;
-        case ServerGameRoom::State::Fail:
-            ImGui::Text("%s", Hint_Failed_);
-            break;
-        case ServerGameRoom::State::Done:
-            join_done_ = true;
-        }
-    } else {
-        ImGui::Text("%s", Hint_Search_);
-    }
-
+    ImGui::Text("%s", hint_);
 }
 
 void ModalRoomSearch::on_search_()
@@ -171,21 +154,15 @@ void ModalRoomSearch::on_search_()
     server_room_search_.search_room(boost::asio::ip::udp::endpoint(address, search_port_));
 }
 
-void ModalRoomSearch::on_click_join_as_player_()
+void ModalRoomSearch::join_room_(bool is_player)
 {
-    join_done_ = false;
-    server_game_room_ = std::shared_ptr<ServerGameRoom>(
-        new ServerGameRoom(
-            rooms_[item_current_idx_].id,
-            player_name_, true,
-            rooms_[item_current_idx_].endpoint
-        )
+    hint_ = Hint_Joining_;
+    server_game_room_.join_room(
+        rooms_[item_current_idx_].endpoint,
+        rooms_[item_current_idx_].id,
+        player_name_,
+        is_player
     );
-}
-
-void ModalRoomSearch::on_click_join_as_onlooker_()
-{
-    
 }
 
 const char* ModalRoomSearch::Hint_Search_  = gettext("Please search rooms and choose one to join");

@@ -5,24 +5,22 @@ import (
 )
 
 const (
-	S_PlayerJoinRoom      uint16 = 0x0000
-	S_PlayerLeaveRoom     uint16 = 0x0002
-	S_PlayerReady         uint16 = 0x0004
-	S_PlayerStone         uint16 = 0x0000
-	S_PlayerRegretRequest uint16 = 0x0000
-	S_PlayerRegretPermit  uint16 = 0x0000
-	S_PlayerRegretReject  uint16 = 0x0000
-	S_PlayerAdmitDefeat   uint16 = 0x0000
-
-	S_OnlookerJoinRoom  uint16 = 0x0001
-	S_OnlookerLeaveRoom uint16 = 0x0003
+	S_GenericErrorNotification uint16 = 0x0000
+	S_AllRoomInformation       uint16 = 0x0001
+	S_Join_Room                uint16 = 0x0002
+	// S_PlayerReady              uint16 = 0x0004
+	// S_PlayerStone              uint16 = 0x0000
+	// S_PlayerRegretRequest      uint16 = 0x0000
+	// S_PlayerRegretPermit       uint16 = 0x0000
+	// S_PlayerRegretReject       uint16 = 0x0000
+	// S_PlayerAdmitDefeat        uint16 = 0x0000
 )
 
+func Empty(*server.IdtcpMessage) error {
+	return nil
+}
+
 var Endpoints = []func(*server.IdtcpMessage) error{
-	S_PlayerJoinRoom: JoinRoomAsPlayer,
-	// S_OnlookerJoinRoom: JoinRoomAsOnlooker,
-	// S_PlayerReady:      PlayerReady,
-	// 0x03: RetractRequest,
-	// 0x04: Resign,
-	// 0x05: Stone,
+	S_GenericErrorNotification: Empty,
+	S_AllRoomInformation:       JoinRoomAsPlayer,
 }

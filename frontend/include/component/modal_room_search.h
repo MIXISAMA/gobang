@@ -16,17 +16,18 @@ class ModalRoomSearch : public imgui::PopupModal
 
 public:
 
-    ModalRoomSearch();
+    ModalRoomSearch(ServerGameRoom& server_game_room);
     ~ModalRoomSearch();
 
     void content() override;
 
     bool join_done();
-    std::shared_ptr<ServerGameRoom> server_game_room();
 
 private:
 
     ServerRoomSearch server_room_search_;
+    ServerGameRoom& server_game_room_;
+
     const std::vector<ConciseRoom>& rooms_;
     int item_current_idx_;
 
@@ -34,13 +35,11 @@ private:
     u_int16_t search_port_;
     char player_name_[64];
 
-    bool join_done_;
-    std::shared_ptr<ServerGameRoom> server_game_room_;
-
     void on_search_();
 
-    void on_click_join_as_player_();
-    void on_click_join_as_onlooker_();
+    void join_room_(bool is_player);
+
+    const char* hint_;
 
     static const char* Hint_Search_;
     static const char* Hint_Joining_;
