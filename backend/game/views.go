@@ -3,6 +3,7 @@ package game
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/MIXISAMA/gobang/backend/config"
 	"github.com/MIXISAMA/gobang/backend/server"
@@ -38,14 +39,14 @@ func LoadGdFromConfig(conf *config.Config) error {
 
 }
 
-func JoinRoomAsPlayer(msg *server.IdtcpMessage) error {
+func JoinRoom(msg *server.IdtcpMessage) error {
 
-	room, playerName, err := DecodeRoomName(msg.Data)
+	room, name, is_player, err := DecodeJoinRoom(msg.Data)
 	if err != nil {
 		return err
 	}
 
-	err = msg.User.Rename(playerName)
+	err = msg.User.Rename(name)
 	if err != nil {
 		return err
 	}
@@ -56,197 +57,31 @@ func JoinRoomAsPlayer(msg *server.IdtcpMessage) error {
 		return err
 	}
 
-	err = room.UserJoin(msg.User, true)
+	err = room.UserJoin(msg.User, is_player)
 	if err != nil {
 		// push msg
 		Gd.RemoveUser(msg.User)
 		return err
 	}
 
-	// err = room.sendAll(msg.Connect)
-	// if err != nil {
-	// 	return err
-	// }
+	err = SendAllRoomInformation(msg.User.Conn, room)
+	if err != nil {
+		Gd.RemoveUser(msg.User)
+		log.Println("failed to send all room info")
+		return err
+	}
 
-	// err = room.sendJoinPlayerToOthers(joinPlayer)
-	// if err != nil {
-	// 	return err
-	// }
+	for i := range room.Users {
+		err := SendJoinRoom(room.Users[i].Conn, room, msg.User)
+		if err != nil {
+			continue
+		}
+	}
 
 	return nil
 }
 
 /*
-import (
-	"errors"
-	"fmt"
-	"net"
-
-	"github.com/MIXISAMA/gobang/backend/game"
-	"github.com/MIXISAMA/gobang/backend/idtcp"
-)
-
-type Room struct {
-	game.Room
-	MaxOnlookers int
-	Onlookers    []string
-	ConnMap      map[string]*idtcp.Conn
-}
-
-var RoomMap map[*idtcp.Conn]*Room = make(map[*idtcp.Conn]*Room)
-
-func NewRoom(name string, maxOnlookers int) *Room {
-	return &Room{
-		Room:         *game.NewRoom(name),
-		MaxOnlookers: maxOnlookers,
-		ConnMap:      make(map[string]*idtcp.Conn),
-	}
-}
-
-type Rooms []Room
-
-func (rooms *Rooms) String() string {
-	var str string
-	for i := range *rooms {
-		str += (*rooms)[i].Name
-		str += " | "
-	}
-	return str
-}
-
-func (rooms *Rooms) Set(value string) error {
-	*rooms = append(*rooms, *NewRoom(value, 256))
-	return nil
-}
-
-var RoomList Rooms
-
-func (room *Room) checkInConnMap(conn *idtcp.Conn, name string) bool {
-	for n, c := range room.ConnMap {
-		if conn == c || name == n {
-			return true
-		}
-	}
-	return false
-}
-
-
-
-func JoinRoomAsOnlooker(msg *idtcp.Message) error {
-
-	s := MakeSerializer(msg.Data)
-
-	roomId, err := s.ReadUint16()
-	if err != nil || int(roomId) >= len(RoomList) {
-		return errors.New("wrong room id")
-	}
-	room := RoomList[roomId]
-
-	onlookerName, err := s.ReadString()
-	if err != nil {
-		return err
-	}
-	if len(onlookerName) > 64 {
-		return errors.New("name is too long")
-	}
-
-	if room.checkInConnMap(msg.Connect, onlookerName) {
-		return errors.New(onlookerName + " has been in this room")
-	}
-
-	err = room.sendAll(msg.Connect)
-	if err != nil {
-		return err
-	}
-
-	err = room.sendJoinOnlookerToOthers(onlookerName)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
-func LeaveRoomAsPlayer(msg *idtcp.Message) error {
-
-	s := MakeSerializer(msg.Data)
-
-	roomId, err := s.ReadUint16()
-	if err != nil || int(roomId) >= len(RoomList) {
-		return errors.New("wrong room id")
-	}
-	room := RoomList[roomId]
-
-	playerName, err := s.ReadString()
-	if err != nil {
-		return err
-	}
-	if len(playerName) > 64 {
-		return errors.New("name is too long")
-	}
-
-	if !room.checkInConnMap(msg.Connect, playerName) {
-		return errors.New(playerName + " is not in this room")
-	}
-
-	leavePlayer, err := room.PlayerLeave(playerName)
-	if err != nil {
-		return err
-	}
-
-	delete(room.ConnMap, leavePlayer.Name)
-
-	room.sendLeavePlayerToOthers(playerName)
-	sendPlayerLeaveSuccess(msg.Connect)
-
-	return nil
-}
-
-func (room *Room) LeaveOnlooker(name string) error {
-	for i := range room.Onlookers {
-		if name == room.Onlookers[i] {
-			room.Onlookers = append(room.Onlookers[:i], room.Onlookers[i+1:]...)
-			return nil
-		}
-	}
-	return errors.New(name + " is not in onlookers")
-}
-
-func LeaveRoomAsOnlooker(msg *idtcp.Message) error {
-
-	s := MakeSerializer(msg.Data)
-
-	roomId, err := s.ReadUint16()
-	if err != nil || int(roomId) >= len(RoomList) {
-		return errors.New("wrong room id")
-	}
-	room := RoomList[roomId]
-
-	onlookerName, err := s.ReadString()
-	if err != nil {
-		return err
-	}
-	if len(onlookerName) > 64 {
-		return errors.New("name is too long")
-	}
-
-	if !room.checkInConnMap(msg.Connect, onlookerName) {
-		return errors.New(onlookerName + " is not in this room")
-	}
-
-	err = room.LeaveOnlooker(onlookerName)
-	if err != nil {
-		return err
-	}
-
-	delete(room.ConnMap, onlookerName)
-
-	room.sendLeaveOnlookerToOthers(onlookerName)
-	sendOnlookerLeaveSuccess(msg.Connect)
-
-	return nil
-}
 
 // func PlayerReady(msg *idtcp.Message) error {
 
@@ -321,11 +156,6 @@ func LeaveRoomAsOnlooker(msg *idtcp.Message) error {
 // 	}
 
 // 	return nil
-// }
-
-// func disconnection(idtcp.Conn)
-// {
-
 // }
 
 */

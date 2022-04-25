@@ -34,13 +34,10 @@ protected:
     void start_receive_();
     
     void handle_connect_(const boost::system::error_code& error);
-    void handle_receive_(const boost::system::error_code& error);
+    void handle_receive_(u_int16_t instruction, const std::vector<std::byte>& data);
     void handle_send_   (const boost::system::error_code& error);
 
 private:
-
-    u_int16_t receive_instruction_;
-    std::vector<std::byte> receive_data_;
 
 };
 

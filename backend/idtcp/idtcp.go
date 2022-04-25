@@ -3,6 +3,7 @@ package idtcp
 import (
 	"encoding/binary"
 	"errors"
+	"log"
 	"net"
 )
 
@@ -33,7 +34,7 @@ func (conn *Conn) Write(instruction uint16, data []byte) (int, error) {
 
 	payload := append(bufferLength, bufferInstruction...)
 	payload = append(payload, data...)
-
+	log.Printf("payload len: %d", len(payload))
 	return conn.TCPConn.Write(payload)
 }
 

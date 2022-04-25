@@ -6,16 +6,6 @@ namespace mixi
 namespace net
 {
 
-// std::vector<byte> IdtcpPack(
-//     u_int16_t instruction,
-//     const std::vector<byte>& data
-// );
-
-// std::pair<uint16_t, std::vector<byte>> IdtcpUnpack(
-//     const std::vector<byte>& idtcp_raw
-// );
-
-
 class IdtcpSocket : public boost::asio::ip::tcp::socket
 {
 
@@ -34,9 +24,9 @@ public:
     );
 
     void async_receive_instrution_data(
-        u_int16_t& instruction,
-        std::vector<std::byte>& data,
-        const boost::function<void(const boost::system::error_code&)>& handler
+        const std::function<
+            void(u_int16_t, const std::vector<std::byte>&)
+        >& handler
     );
 
 protected:
@@ -61,9 +51,9 @@ protected:
     void handle_receive_(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
-        u_int16_t& instruction,
-        std::vector<std::byte>& data,
-        const boost::function<void(const boost::system::error_code&)>& handler
+        const std::function<
+            void(u_int16_t, const std::vector<std::byte>&)
+        >& handler
     );
 
 

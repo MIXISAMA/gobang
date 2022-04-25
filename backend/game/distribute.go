@@ -22,5 +22,5 @@ func Empty(*server.IdtcpMessage) error {
 
 var Endpoints = []func(*server.IdtcpMessage) error{
 	S_GenericErrorNotification: Empty,
-	S_AllRoomInformation:       JoinRoomAsPlayer,
+	S_AllRoomInformation:       JoinRoom,
 }

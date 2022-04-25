@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pch.h"
-#include "game/game_room.h"
+#include "game/room.h"
 
 #include "net/idtcp_client.h"
 
@@ -50,10 +50,13 @@ protected:
     };
 
     std::shared_ptr<net::IdtcpClient> client_;
+    std::shared_ptr<game::Room> game_room_;
 
     const net::IdtcpClient::Distribute distribute_;
 
     JoinRoomState join_room_state_;
+
+    std::string nickname_;
 
     void connect_error_notice_(
         bool error,
@@ -72,6 +75,8 @@ private:
 
     void receive_generic_error_notification_(const std::vector<std::byte>& data);
     void receive_all_room_information_      (const std::vector<std::byte>& data);
+    void receive_join_room_                 (const std::vector<std::byte>& data);
+    void receive_leave_room_                (const std::vector<std::byte>& data);
 
 };
 

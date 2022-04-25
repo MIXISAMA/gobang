@@ -26,15 +26,15 @@ void IdtcpSocket::async_send_instrution_data(
 }
 
 void IdtcpSocket::async_receive_instrution_data(
-    u_int16_t& instruction,
-    std::vector<std::byte>& data,
-    const boost::function<void(const boost::system::error_code&)>& handler
+    const std::function<
+        void(u_int16_t, const std::vector<std::byte>&)
+    >& handler
 ) {
     async_receive(boost::asio::buffer(buffer_, 2),
         boost::bind(&IdtcpSocket::handle_receive_, this,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred,
-            instruction, data, handler
+            handler
         )
     );
 }
@@ -69,9 +69,9 @@ void IdtcpSocket::unpack_(
 void IdtcpSocket::handle_receive_(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
-    u_int16_t& instruction,
-    std::vector<std::byte>& data,
-    const boost::function<void(const boost::system::error_code&)>& handler
+    const std::function<
+        void(u_int16_t, const std::vector<std::byte>&)
+    >& handler
 ) {
     if (error) {
         Log::Error(error.to_string());
@@ -94,8 +94,11 @@ void IdtcpSocket::handle_receive_(
         );
     }
 
+    u_int16_t instruction;
+    std::vector<std::byte> data;
     unpack_(buffer_, package_bytes_, instruction, data);
-    handler(boost::system::error_code());
+    std::cout << "data len: " << data.size() << std::endl;
+    handler(instruction, data);
 }
 
 } // namespace net

@@ -54,26 +54,19 @@ void IdtcpClient::handle_connect_(const boost::system::error_code& error)
     start_receive_();
 }
 
-void IdtcpClient::handle_receive_(const boost::system::error_code& error)
-{
-    if (error) {
-        std::ostringstream oss;
-        oss << "IDTCP Client Receive Error: "
-            << error.to_string();
-        Log::Error(oss.str());
-        return;
-    }
-    
+void IdtcpClient::handle_receive_(
+    u_int16_t instruction,
+    const std::vector<std::byte>& data
+) {
+
     std::ostringstream oss;
-    oss << "IDTCP Client Received ["
-        << receive_instruction_
-        << "]";
+    oss << "IDTCP Client Received [" << instruction << "]";
     Log::Info(oss.str());
 
-    if (receive_instruction_ >= distribute_.size()) {
+    if (instruction >= distribute_.size()) {
         Log::Error("Instruction out of distribute size");
     } else {
-        distribute_[receive_instruction_](receive_data_);
+        distribute_[instruction](data);
     }
 
     start_receive_();
@@ -93,10 +86,10 @@ void IdtcpClient::handle_send_(const boost::system::error_code& error)
 void IdtcpClient::start_receive_()
 {
     socket_.async_receive_instrution_data(
-        receive_instruction_, receive_data_,
-        boost::bind(
+        std::bind(
             &IdtcpClient::handle_receive_, this,
-            boost::asio::placeholders::error
+            std::placeholders::_1,
+            std::placeholders::_2
         )
     );
 }

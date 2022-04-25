@@ -17,6 +17,23 @@ func MakeSerializer(Raw []byte) *Serializer {
 	return s
 }
 
+func (s *Serializer) ReadByte() (byte, error) {
+	if s.cursor >= len(s.Raw) {
+		return 0x00, errors.New("ReadByte error")
+	}
+	b := s.Raw[s.cursor]
+	s.cursor++
+	return b, nil
+}
+
+func (s *Serializer) ReadBoolean() (bool, error) {
+	b, err := s.ReadByte()
+	if err != nil {
+		return false, err
+	}
+	return b != 0x00, nil
+}
+
 func (s *Serializer) ReadUint16() (uint16, error) {
 	var data = s.Raw[s.cursor : s.cursor+2]
 	if len(data) != 2 {
