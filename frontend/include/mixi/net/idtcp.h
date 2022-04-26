@@ -19,7 +19,7 @@ public:
 
     void async_send_instrution_data(
         u_int16_t instruction,
-        const std::vector<byte>& buffers,
+        const std::vector<std::byte>& buffers,
         const boost::function<void(const boost::system::error_code&, std::size_t)>& handler
     );
 
@@ -36,16 +36,16 @@ protected:
 
     void pack_(
         u_int16_t instruction,
-        const std::vector<byte>& data,
+        const std::vector<std::byte>& data,
         std::byte* idtcp_raw,
         u_int16_t& idtcp_raw_bytes
     );
 
     void unpack_(
-        const byte* idtcp_raw,
+        const std::byte* idtcp_raw,
         u_int16_t data_bytes,
         u_int16_t& instruction,
-        std::vector<byte>& data
+        std::vector<std::byte>& data
     );
 
     void handle_receive_(

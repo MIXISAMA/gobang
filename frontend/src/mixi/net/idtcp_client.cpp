@@ -34,7 +34,7 @@ IdtcpClient::~IdtcpClient()
 
 void IdtcpClient::send(
     u_int16_t instruction,
-    const std::vector<byte>& buffers
+    const std::vector<std::byte>& buffers
 ) {
     socket_.async_send_instrution_data(
         instruction, buffers,

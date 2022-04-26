@@ -23,9 +23,11 @@ add_executable(${PROJECT_NAME} ${SOURCE_LIST})
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC 3rdparty/glad/include
+    PUBLIC 3rdparty/stb
     PUBLIC ${Intl_INCLUDE_DIR}
     PUBLIC ${Boost_INCLUDE_DIR}
     PUBLIC include
+    PUBLIC include/mixi
 )
 
 target_link_directories(${PROJECT_NAME}

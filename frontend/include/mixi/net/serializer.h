@@ -4,7 +4,7 @@
 
 namespace mixi
 {
-namespace gobang
+namespace net
 {
 
 class Serializer
@@ -31,14 +31,9 @@ public:
 
 private:
 
-    // std::byte read_byte_();
-    // bool read_boolean_();
-    // u_int16_t read_uint16_();
-    // std::string read_string_();
-
     size_t cursor_;
 
 };
 
-} // namespace gobang
+} // namespace net
 } // namespace mixi

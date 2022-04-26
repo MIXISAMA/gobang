@@ -1,4 +1,4 @@
-#include "net/server_game_room.h"
+#include "server/server_game_room.h"
 
 #include "core/io_context.h"
 #include "core/log.h"
@@ -25,6 +25,11 @@ ServerGameRoom::ServerGameRoom() :
 ServerGameRoom::~ServerGameRoom()
 {
 
+}
+
+const game::Room& ServerGameRoom::game_room()
+{
+    return *game_room_.get();
 }
 
 void ServerGameRoom::join_room(
@@ -70,7 +75,7 @@ void ServerGameRoom::send_join_room_(
     const std::string& nickname,
     bool is_player
 ) {
-    Serializer s;
+    net::Serializer s;
     s << room_id << nickname << is_player;
     client_->send((u_int16_t)S_Instruction::Join_Room, s.raw);
     nickname_ = nickname;
@@ -85,7 +90,7 @@ void ServerGameRoom::receive_generic_error_notification_(
 void ServerGameRoom::receive_all_room_information_(
     const std::vector<std::byte>& data
 ) {
-    Serializer s(data);
+    net::Serializer s(data);
     
     std::string name;
     u_int16_t max_users, cur_users;
@@ -156,7 +161,7 @@ void ServerGameRoom::receive_join_room_(
 ) {
     std::string nickname;
     bool is_player;
-    Serializer s(data);
+    net::Serializer s(data);
     s >> nickname >> is_player;
     if (nickname == nickname_) {
         join_room_state_ = JoinRoomState::Done;

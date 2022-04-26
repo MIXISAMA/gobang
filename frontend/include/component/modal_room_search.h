@@ -3,8 +3,8 @@
 #include "pch.h"
 #include "gui/imgui/popup.h"
 
-#include "net/server_room_search.h"
-#include "net/server_game_room.h"
+#include "server/server_room_search.h"
+#include "server/server_game_room.h"
 
 namespace mixi
 {

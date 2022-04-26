@@ -5,7 +5,8 @@
 
 #include "component/window_home.h"
 #include "component/component_room.h"
-#include "net/server_game_room.h"
+
+#include "server/server_game_room.h"
 
 namespace mixi {
 namespace gobang {
@@ -23,6 +24,7 @@ private:
 
     WindowHome::Ptr window_home_;
     ComponentRoom::Ptr component_room_;
+
     ServerGameRoom server_game_room_;
 
     bool gaming_;

@@ -33,11 +33,11 @@ namespace mixi
 {
     namespace
     {
-        using std::byte;
-        using std::int32_t;
-        using std::uint32_t;
-        namespace fs = std::filesystem;
+        // using std::byte;
+        // using std::int32_t;
+        // using std::uint32_t;
+        // namespace fs = std::filesystem;
         // namespace bp = boost::process;
-        using AsioCallback = boost::function<void(const boost::system::error_code& error)>;
+        // using AsioCallback = boost::function<void(const boost::system::error_code& error)>;
     }
 }

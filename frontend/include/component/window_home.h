@@ -6,7 +6,7 @@
 #include "component/modal_room_search.h"
 #include "component/modal_room_create.h"
 
-#include "net/server_game_room.h"
+#include "server/server_game_room.h"
 
 namespace mixi {
 namespace gobang {

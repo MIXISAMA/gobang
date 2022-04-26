@@ -6,7 +6,8 @@ namespace gobang
 {
 
 ComponentRoom::ComponentRoom(ServerGameRoom& server_game_room) :
-    server_game_room_(server_game_room)
+    server_game_room_(server_game_room),
+    window_dashboard_(server_game_room.game_room())
 {
 
 }

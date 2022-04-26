@@ -2,7 +2,7 @@
 #include "pch.h"
 #include "gui/imgui/base/component.h"
 
-#include "net/server_game_room.h"
+#include "server/server_game_room.h"
 
 #include "component/window_dashboard.h"
 #include "component/window_game.h"

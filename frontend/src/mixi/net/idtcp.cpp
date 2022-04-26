@@ -17,7 +17,7 @@ IdtcpSocket::IdtcpSocket(
 
 void IdtcpSocket::async_send_instrution_data(
     u_int16_t instruction,
-    const std::vector<byte>& buffers,
+    const std::vector<std::byte>& buffers,
     const boost::function<void(const boost::system::error_code&, std::size_t)>& handler
 ) {
     u_int16_t send_buf_bytes;
@@ -42,7 +42,7 @@ void IdtcpSocket::async_receive_instrution_data(
 
 void IdtcpSocket::pack_(
     u_int16_t instruction,
-    const std::vector<byte>& data,
+    const std::vector<std::byte>& data,
     std::byte* idtcp_raw,
     u_int16_t& idtcp_raw_bytes
 ) {
@@ -56,10 +56,10 @@ void IdtcpSocket::pack_(
 }
 
 void IdtcpSocket::unpack_(
-    const byte* idtcp_raw,
+    const std::byte* idtcp_raw,
     u_int16_t idtcp_raw_bytes,
     u_int16_t& instruction,
-    std::vector<byte>& data
+    std::vector<std::byte>& data
 ) {
     data.resize(idtcp_raw_bytes - 4);
     instruction = *(u_int16_t*)&buffer_[2];

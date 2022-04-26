@@ -22,7 +22,7 @@ public:
     );
     ~IdtcpClient();
 
-    void send(u_int16_t instruction, const std::vector<byte>& buffers);
+    void send(u_int16_t instruction, const std::vector<std::byte>& buffers);
 
 protected:
 

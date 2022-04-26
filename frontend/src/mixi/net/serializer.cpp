@@ -3,7 +3,7 @@
 
 namespace mixi
 {
-namespace gobang
+namespace net
 {
 
 Serializer::Serializer() :
@@ -94,5 +94,5 @@ Serializer& Serializer::operator << (const char* val)
     return *this << std::string(val);
 }
 
-} // namespace gobang
+} // namespace net
 } // namespace mixi

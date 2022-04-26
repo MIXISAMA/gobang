@@ -34,6 +34,8 @@ public:
 
     JoinRoomState join_room_state();
 
+    const game::Room& game_room();
+
 protected:
 
     enum class C_Instruction: u_int16_t

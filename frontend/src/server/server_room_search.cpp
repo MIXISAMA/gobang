@@ -1,4 +1,4 @@
-#include "net/server_room_search.h"
+#include "server/server_room_search.h"
 
 #include "core/io_context.h"
 #include "core/log.h"
@@ -36,7 +36,7 @@ void ServerRoomSearch::update_rooms()
 void ServerRoomSearch::search_room(const boost::asio::ip::udp::endpoint &endpoint)
 {
     room_set_.clear();
-    Serializer s;
+    net::Serializer s;
     s << VERSION;
     socket_.async_send_to(
         boost::asio::buffer(s.raw),
@@ -74,7 +74,7 @@ void ServerRoomSearch::handle_receive_(
         return;
     }
 
-    Serializer s(recv_buffer_);
+    net::Serializer s(recv_buffer_);
     u_int16_t room_num;// = s.read_uint16();
     s >> room_num;
     for (u_int16_t i = 0; i < room_num; i++) {

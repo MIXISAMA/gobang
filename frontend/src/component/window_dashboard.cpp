@@ -4,8 +4,9 @@
 namespace mixi {
 namespace gobang {
 
-WindowDashboard::WindowDashboard() :
-    imgui::Window(gettext("Dashboard"))
+WindowDashboard::WindowDashboard(const game::Room& room) :
+    imgui::Window(gettext("Dashboard")),
+    room_(room)
 {
 
 }
