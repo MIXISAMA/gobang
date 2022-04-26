@@ -34,14 +34,18 @@ u_int16_t Room::max_users() const
     return max_users_;
 }
 
-std::vector<User::Ptr> Room::users() const
+std::vector<User::Ptr>& Room::users()
 {
     return users_;
 }
 
 User::Ptr Room::user(const std::string& name) const
 {
-    return *user_iter_(name);
+    auto iter = user_iter_(name);
+    if (iter == users_.end()) {
+        return nullptr;
+    }
+    return *iter;
 }
 
 User::Ptr Room::player(Chess::Color color) const

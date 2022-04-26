@@ -4,6 +4,7 @@
 #include "gui/imgui/base/component.h"
 
 #include "component/window_home.h"
+#include "component/component_room.h"
 #include "net/server_game_room.h"
 
 namespace mixi {
@@ -21,7 +22,10 @@ public:
 private:
 
     WindowHome::Ptr window_home_;
+    ComponentRoom::Ptr component_room_;
     ServerGameRoom server_game_room_;
+
+    bool gaming_;
 
 };
 

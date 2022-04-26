@@ -5,7 +5,8 @@
 namespace mixi {
 namespace gobang {
 
-ComponentRoot::ComponentRoot()
+ComponentRoot::ComponentRoot() :
+    gaming_(false)
 {
     ImGuiIO &io = ImGui::GetIO();
 
@@ -17,8 +18,6 @@ ComponentRoot::ComponentRoot()
     ImGui::GetStyle().FrameRounding = 6.0f;
     ImGui::GetStyle().PopupRounding = 12.0f;
 
-    window_home_ = WindowHome::Ptr(new WindowHome(server_game_room_));
-
 }
 
 ComponentRoot::~ComponentRoot()
@@ -28,7 +27,20 @@ ComponentRoot::~ComponentRoot()
 
 void ComponentRoot::content()
 {
-    window_home_->render();
+    if (gaming_) {
+        if (component_room_.get() == nullptr) {
+            window_home_.reset();
+            component_room_.reset(new ComponentRoom(server_game_room_));
+        }
+        component_room_->render();
+    } else {
+        if (window_home_.get() == nullptr) {
+            component_room_.reset();
+            window_home_.reset(new WindowHome(server_game_room_));
+        }
+        window_home_->render();
+        gaming_ = window_home_->join_done();
+    }
 }
 
 } // namespace gobang

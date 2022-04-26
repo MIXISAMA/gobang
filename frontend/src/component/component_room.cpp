@@ -5,7 +5,8 @@ namespace mixi
 namespace gobang
 {
 
-ComponentRoom::ComponentRoom()
+ComponentRoom::ComponentRoom(ServerGameRoom& server_game_room) :
+    server_game_room_(server_game_room)
 {
 
 }
@@ -17,7 +18,9 @@ ComponentRoom::~ComponentRoom()
 
 void ComponentRoom::content()
 {
-
+    window_dashboard_.render();
+    window_game_.render();
+    window_chat_.render();
 }
 
 } // namespace gobang

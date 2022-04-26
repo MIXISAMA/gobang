@@ -55,12 +55,6 @@ const std::vector<ConciseRoom>& ServerRoomSearch::rooms()
 
 void ServerRoomSearch::start_receive_()
 {
-    std::cout << "start_receive_" << std::endl;
-    std::cout 
-        << "local_endpoint "
-        << socket_.local_endpoint().address().to_string()
-        << ":" << socket_.local_endpoint().port() << std::endl;
-
     socket_.async_receive_from(
         boost::asio::buffer(recv_buffer_),
         sender_endpoint_,
@@ -79,10 +73,6 @@ void ServerRoomSearch::handle_receive_(
         Log::Error(error.to_string());
         return;
     }
-    std::cout
-        << "sender endpoint " 
-        << sender_endpoint_.address().to_string()
-        << ":" << sender_endpoint_.port() << std::endl;
 
     Serializer s(recv_buffer_);
     u_int16_t room_num;// = s.read_uint16();

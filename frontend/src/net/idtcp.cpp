@@ -97,7 +97,6 @@ void IdtcpSocket::handle_receive_(
     u_int16_t instruction;
     std::vector<std::byte> data;
     unpack_(buffer_, package_bytes_, instruction, data);
-    std::cout << "data len: " << data.size() << std::endl;
     handler(instruction, data);
 }
 

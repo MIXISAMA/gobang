@@ -16,8 +16,8 @@ Window::Window(const std::string &name, ImGuiWindowFlags flags) :
 void Window::render() {
     if (ImGui::Begin(name_.c_str(), p_open_, flags_)) {
         content();
-        ImGui::End();
     }
+    ImGui::End();
 }
 
 

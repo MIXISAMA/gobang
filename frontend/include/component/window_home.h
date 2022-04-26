@@ -15,17 +15,21 @@ class WindowHome : public imgui::Window
 {
 public:
 
+    using Ptr = std::shared_ptr<WindowHome>;
+
     WindowHome(ServerGameRoom& server_game_room);
     ~WindowHome();
 
     void content() override;
 
+    bool join_done();
+
 private:
 
-    std::shared_ptr<ModalRoomCreate> room_create_modal_;
-    std::shared_ptr<ModalRoomSearch> room_search_modal_;
-
     ServerGameRoom& server_game_room_;
+
+    ModalRoomCreate room_create_modal_;
+    ModalRoomSearch room_search_modal_;
 
 };
 

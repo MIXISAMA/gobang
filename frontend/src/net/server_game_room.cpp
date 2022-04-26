@@ -85,7 +85,7 @@ void ServerGameRoom::receive_generic_error_notification_(
 void ServerGameRoom::receive_all_room_information_(
     const std::vector<std::byte>& data
 ) {
-    Serializer s;
+    Serializer s(data);
     
     std::string name;
     u_int16_t max_users, cur_users;

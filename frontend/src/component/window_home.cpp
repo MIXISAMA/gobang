@@ -5,9 +5,8 @@ namespace gobang {
 
 WindowHome::WindowHome(ServerGameRoom& server_game_room) :
     imgui::Window(gettext("Home")),
-    room_create_modal_(nullptr),
-    room_search_modal_(nullptr),
-    server_game_room_(server_game_room)
+    server_game_room_(server_game_room),
+    room_search_modal_(server_game_room_)
 {
 
 }
@@ -29,30 +28,22 @@ void WindowHome::content()
     ImVec2 button_pos = ImVec2(window_size.x * 0.5f - 160.0f, window_size.y * 0.6f - 40.0f);
     ImGui::SetCursorPos(button_pos);
     if (ImGui::Button(gettext("Create Room"), ImVec2(160, 80))) {
-        room_create_modal_ = std::shared_ptr<ModalRoomCreate>(
-            new ModalRoomCreate()
-        );
-        room_create_modal_->open();
+        room_create_modal_.open();
     }
     ImGui::SameLine();
     if (ImGui::Button(gettext("Search Room"), ImVec2(160, 80))) {
-        room_search_modal_ = std::shared_ptr<ModalRoomSearch>(
-            new ModalRoomSearch(server_game_room_)
-        );
-        room_search_modal_->open();
+        room_search_modal_.open();
     }
 
-    if (room_create_modal_.get() != nullptr) {
-        room_create_modal_->render();
-    }
+    room_create_modal_.render();
 
-    if (room_search_modal_.get() != nullptr) {
-        room_search_modal_->render();
-        if (room_search_modal_->join_done()) {
-            room_create_modal_->close();
-        }
-    }
+    room_search_modal_.render();
 
+}
+
+bool WindowHome::join_done()
+{
+    return room_search_modal_.join_done();
 }
 
 } // namespace gobang
