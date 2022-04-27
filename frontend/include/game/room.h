@@ -33,6 +33,7 @@ public:
     u_int16_t max_users() const;
 
     std::vector<User::Ptr>& users();
+    const std::vector<User::Ptr>& users() const;
 
     User::Ptr user(const std::string& name) const;
 

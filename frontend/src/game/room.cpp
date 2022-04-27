@@ -39,6 +39,11 @@ std::vector<User::Ptr>& Room::users()
     return users_;
 }
 
+const std::vector<User::Ptr>& Room::users() const
+{
+    return users_;
+}
+
 User::Ptr Room::user(const std::string& name) const
 {
     auto iter = user_iter_(name);

@@ -7,7 +7,10 @@ namespace mixi
 namespace glfw
 {
 
-Glfw::Glfw(const char* title, int weight, int height)
+Glfw::Glfw(const char* title, int width, int height) :
+    full_screen_(false),
+    default_width_(width),
+    default_height_(height)
 {
     glfwSetErrorCallback(Error_Callback_);
     if (!glfwInit()) {
@@ -22,7 +25,7 @@ Glfw::Glfw(const char* title, int weight, int height)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
 #endif
 
-    glfw_window_ = (GLFWwindow*)glfwCreateWindow(weight, height, title, NULL, NULL);
+    glfw_window_ = (GLFWwindow*)glfwCreateWindow(width, height, title, NULL, NULL);
     if (glfw_window_ == nullptr) {
         glfwTerminate();
         throw std::runtime_error("create main window error!");
@@ -66,6 +69,25 @@ void Glfw::post_render() const
     glfwSwapBuffers(glfw_window_);
 }
 
+void Glfw::full_screen(bool is_full_screen)
+{
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    glfwSetWindowMonitor(
+        glfw_window_,
+        is_full_screen ? monitor : NULL,
+        0, 0,
+        is_full_screen ? mode->width: default_width_,
+        is_full_screen ? mode->height: default_height_,
+        GLFW_DONT_CARE
+    );
+    full_screen_ = is_full_screen;
+}
+
+bool Glfw::full_screen()
+{
+    return full_screen_;
+}
 
 void Glfw::Error_Callback_(int error, const char* description)
 {

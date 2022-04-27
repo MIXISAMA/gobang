@@ -12,7 +12,7 @@ Application::Application(const char* app_name, int weight, int height) :
     glfw_(app_name, weight, height),
     imgui_(glfw_.glfw_window()),
     context_{
-        .glfw_window = glfw_.glfw_window(),
+        .glfw = glfw_,
         .io_context = io_context_,
     }
 {
