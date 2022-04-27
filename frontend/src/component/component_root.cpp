@@ -37,6 +37,7 @@ void ComponentRoot::content()
             );
         }
         component_room_->render();
+        gaming_ = !component_room_->leave_done();
     } else {
         if (window_home_.get() == nullptr) {
             component_room_.reset();

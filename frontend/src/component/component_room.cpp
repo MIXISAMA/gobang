@@ -30,5 +30,14 @@ void ComponentRoom::content()
     window_chat_.render();
 }
 
+bool ComponentRoom::leave_done()
+{
+    if (window_dashboard_.leave()) {
+        server_game_room_.leave_room();
+        return true;
+    }
+    return false;
+}
+
 } // namespace gobang
 } // namespace mixi

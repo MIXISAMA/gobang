@@ -96,17 +96,6 @@ void Room::onlooker_join_(const User::Ptr& user)
 void Room::onlooker_join(const std::string& name)
 {
     // no exception, because of thin client
-    // 
-    // bool found = true;
-    // try {
-    //     locate_user_by_name_(name);
-    // } catch (Exception& e) {
-    //     found = false;    
-    // }
-
-    // if (found) {
-    //     throw Exception();
-    // }
 
     User::Ptr user = User::Ptr(new User{.name = name});
     onlooker_join_(user);
@@ -133,6 +122,7 @@ void Room::user_leave(const std::string& name)
     for (int i = 0; i < 2; i++) {
         if (players_[i] == user) {
             players_[i].reset();
+            clean_();
         }
     }
     if (repentant_ == user) {
@@ -165,6 +155,15 @@ Room::user_iter_(const std::string& name) const
             return user->name == name;
         }
     );
+}
+
+void Room::clean_()
+{
+    is_playing_ = false;
+    repentant_.reset();
+    ready_user_.reset();
+    chess_.clean();
+    std::swap(players_[0], players_[1]);
 }
 
 } // namespace game

@@ -5,6 +5,7 @@
 #include "render/opengl/texture.h"
 
 #include "game/room.h"
+#include "component/modal_confirm_leave.h"
 
 namespace mixi
 {
@@ -21,6 +22,8 @@ public:
     );
     ~WindowDashboard();
 
+    bool leave();
+
     void content() override;
 
 private:
@@ -30,6 +33,8 @@ private:
     gl::Texture2D tex_exit_;
     gl::Texture2D tex_window_;
     gl::Texture2D tex_full_screen_;
+
+    ModalConfirmLeave modal_confirm_leave_;
 
     void load_texture_by_image_(
         gl::Texture2D& tex,

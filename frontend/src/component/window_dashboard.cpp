@@ -10,7 +10,8 @@ WindowDashboard::WindowDashboard(
     const game::Room& room
 ) :
     imgui::Window(context, gettext("Dashboard")),
-    room_(room)
+    room_(room),
+    modal_confirm_leave_(context)
 {
     load_texture_by_image_(tex_exit_, "resource/image/exit.png");
     load_texture_by_image_(tex_window_, "resource/image/exit-full-screen.png");
@@ -38,7 +39,7 @@ void WindowDashboard::content()
             (void*)(intptr_t)tex_exit_.id(),
             ImVec2(32, 32)
     )) {
-        
+        modal_confirm_leave_.open();
     }
 
     ImGui::Separator();
@@ -71,6 +72,8 @@ void WindowDashboard::content()
         }
         ImGui::EndListBox();
     }
+
+    modal_confirm_leave_.render();
 }
 
 void WindowDashboard::load_texture_by_image_(
@@ -93,6 +96,11 @@ void WindowDashboard::load_texture_by_image_(
         gl::Texture2D::Format::RGBA,
         icon.data()
     );
+}
+
+bool WindowDashboard::leave()
+{
+    return modal_confirm_leave_.leave();
 }
 
 } // namespace gobang

@@ -34,6 +34,8 @@ public:
 
     JoinRoomState join_room_state();
 
+    void leave_room();
+
     const game::Room& game_room();
 
 protected:
@@ -43,12 +45,15 @@ protected:
         Generic_Error_Notification = 0x0000,
         All_Room_Information,
         Join_Room,
+        Leave_Room,
     };
 
     enum class S_Instruction: u_int16_t
     {
         Generic_Error_Notification = 0x0000,
+        All_Room_Information,
         Join_Room,
+        Leave_Room,
     };
 
     boost::asio::io_context& io_context_;
@@ -76,6 +81,7 @@ private:
         const std::string& nickname,
         bool is_player
     );
+    void send_leave_room();
 
     void receive_generic_error_notification_(const std::vector<std::byte>& data);
     void receive_all_room_information_      (const std::vector<std::byte>& data);

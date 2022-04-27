@@ -70,6 +70,8 @@ protected:
     std::vector<User::Ptr>::const_iterator
     user_iter_(const std::string& name) const;
 
+    void clean_();
+
     void onlooker_join_(const User::Ptr& user);
     void player_join_(const User::Ptr& player, Chess::Color color);
 

@@ -12,7 +12,7 @@ const std::byte Chess::SPACE = std::byte(0xFF);
 
 Chess::Chess()
 {
-    memset(board, (int)SPACE, sizeof(board));
+    clean();
 }
 
 Chess::Color Chess::whos_turn() const
@@ -40,6 +40,12 @@ void Chess::stone(std::byte coor, Color color)
     record.push_back(coor);
     board[r][c] = (std::byte)color;
 
+}
+
+void Chess::clean()
+{
+    memset(board, (int)SPACE, sizeof(board));
+    record.clear();
 }
 
 } // namespace game

@@ -58,6 +58,12 @@ ServerGameRoom::JoinRoomState ServerGameRoom::join_room_state()
     return join_room_state_;
 }
 
+void ServerGameRoom::leave_room()
+{
+    send_leave_room();
+    join_room_state_ = JoinRoomState::Pending;
+}
+
 void ServerGameRoom::connect_error_notice_(
     bool error,
     u_int16_t room_id,
@@ -80,6 +86,11 @@ void ServerGameRoom::send_join_room_(
     s << room_id << nickname << is_player;
     client_->send((u_int16_t)S_Instruction::Join_Room, s.raw);
     nickname_ = nickname;
+}
+
+void ServerGameRoom::send_leave_room()
+{
+    client_->send((u_int16_t)S_Instruction::Leave_Room, {});
 }
 
 void ServerGameRoom::receive_generic_error_notification_(
@@ -112,14 +123,14 @@ void ServerGameRoom::receive_all_room_information_(
     if (has_player) {
         s >> nickname;
         game::User::Ptr player = game_room_->user(nickname);
-        game_room_->player(game::Chess::Color::WHITE, player);
+        game_room_->player(game::Chess::Color::BLACK, player);
     }
 
     s >> has_player;
     if (has_player) {
         s >> nickname;
         game::User::Ptr player = game_room_->user(nickname);
-        game_room_->player(game::Chess::Color::BLACK, player);
+        game_room_->player(game::Chess::Color::WHITE, player);
     }
 
     s >> has_player;
@@ -180,8 +191,10 @@ void ServerGameRoom::receive_join_room_(
 void ServerGameRoom::receive_leave_room_(
     const std::vector<std::byte>& data
 ) {
-    // Todo
-    join_room_state_ = JoinRoomState::Done;
+    std::string nickname;
+    net::Serializer s(data);
+    s >> nickname;
+    game_room_->user_leave(nickname);
 }
 
 } // namespace gobang

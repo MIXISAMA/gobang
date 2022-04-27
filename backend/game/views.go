@@ -39,7 +39,7 @@ func LoadGdFromConfig(conf *config.Config) error {
 
 }
 
-func JoinRoom(msg *server.IdtcpMessage) error {
+func ReceiveJoinRoom(msg *server.IdtcpMessage) error {
 
 	room, name, is_player, err := DecodeJoinRoom(msg.Data)
 	if err != nil {
@@ -51,16 +51,9 @@ func JoinRoom(msg *server.IdtcpMessage) error {
 		return err
 	}
 
-	err = Gd.AddUserRoom(msg.User, room)
+	err = Gd.AddUserRoom(msg.User, room, is_player)
 	if err != nil {
 		// push msg
-		return err
-	}
-
-	err = room.UserJoin(msg.User, is_player)
-	if err != nil {
-		// push msg
-		Gd.RemoveUser(msg.User)
 		return err
 	}
 
@@ -79,6 +72,26 @@ func JoinRoom(msg *server.IdtcpMessage) error {
 	}
 
 	return nil
+}
+
+func LeaveRoom(user *server.User) error {
+
+	room, err := Gd.RemoveUser(user)
+	if err != nil {
+		return err
+	}
+
+	for i := range room.Users {
+		err := SendLeaveRoom(room.Users[i].Conn, user)
+		if err != nil {
+			continue
+		}
+	}
+	return nil
+}
+
+func ReceiveLeaveRoom(msg *server.IdtcpMessage) error {
+	return LeaveRoom(msg.User)
 }
 
 /*
@@ -162,10 +175,7 @@ func JoinRoom(msg *server.IdtcpMessage) error {
 
 func OnDisconnect(user *server.User) {
 
-	if room, ok := Gd.RoomWhose[user]; ok {
-		room.UserLeave(user)
-	}
-	Gd.RemoveUser(user)
+	LeaveRoom(user)
 
 }
 

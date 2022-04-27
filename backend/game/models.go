@@ -12,7 +12,11 @@ type GlobalData struct {
 	UserWho   map[string]*server.User
 }
 
-func (gd *GlobalData) AddUserRoom(user *server.User, room *Room) error {
+func (gd *GlobalData) AddUserRoom(
+	user *server.User,
+	room *Room,
+	is_player bool,
+) error {
 
 	if _, ok := gd.RoomWhose[user]; ok {
 		return errors.New("this user is exist")
@@ -22,15 +26,30 @@ func (gd *GlobalData) AddUserRoom(user *server.User, room *Room) error {
 		return errors.New("same name user is exist")
 	}
 
+	err := room.UserJoin(user, is_player)
+	if err != nil {
+		return err
+	}
+
 	gd.RoomWhose[user] = room
 	gd.UserWho[user.Name] = user
 
 	return nil
 }
 
-func (gd *GlobalData) RemoveUser(user *server.User) {
+func (gd *GlobalData) RemoveUser(user *server.User) (*Room, error) {
+
+	room, ok := Gd.RoomWhose[user]
+	if !ok {
+		return nil, errors.New("this user is not in any room")
+	}
+
+	err := room.UserLeave(user)
+	if err != nil {
+		return nil, err
+	}
 
 	delete(gd.RoomWhose, user)
 	delete(gd.UserWho, user.Name)
-
+	return room, nil
 }

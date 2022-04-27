@@ -31,6 +31,8 @@ public:
 
     void stone(std::byte coor, Color color);
 
+    void clean();
+
 };
 
 } // namespace game

@@ -104,6 +104,7 @@ func (room *Room) UserLeave(user *server.User) error {
 
 	playerIdx, err := room.LocatePlayer(user)
 	if err != nil {
+		// yes! it return nil
 		return nil
 	}
 
