@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pch.h"
-#include "gui/imgui/popup.h"
+#include "gui/imgui/component/popup.h"
 
 
 namespace mixi
@@ -14,7 +14,7 @@ class ModalRoomCreate : public imgui::PopupModal
 
 public:
 
-    ModalRoomCreate();
+    ModalRoomCreate(imgui::Context& context);
     ~ModalRoomCreate();
 
     void content() override;

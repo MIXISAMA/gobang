@@ -27,7 +27,7 @@ class ServerRoomSearch
 
 public:
 
-    ServerRoomSearch();
+    ServerRoomSearch(boost::asio::io_context& io_context);
     ~ServerRoomSearch();
 
     void search_room(const boost::asio::ip::udp::endpoint &endpoint);

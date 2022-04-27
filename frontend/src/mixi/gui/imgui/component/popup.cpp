@@ -1,4 +1,4 @@
-#include "gui/imgui/popup.h"
+#include "gui/imgui/component/popup.h"
 
 namespace mixi
 {
@@ -7,7 +7,12 @@ namespace imgui
 
 long long PopupModal::Id_ = 0;
 
-PopupModal::PopupModal(const std::string &name, ImGuiWindowFlags flags) :
+PopupModal::PopupModal(
+    Context& context,
+    const std::string &name,
+    ImGuiWindowFlags flags
+) :
+    BaseComponent(context_),
     name_(name),
     flags_(flags),
     should_close_(false)

@@ -5,8 +5,8 @@ namespace mixi
 namespace gobang
 {
 
-ModalRoomCreate::ModalRoomCreate() :
-    PopupModal(gettext("Create Room"))
+ModalRoomCreate::ModalRoomCreate(imgui::Context& context) :
+    PopupModal(context, gettext("Create Room"))
 {
 
 }

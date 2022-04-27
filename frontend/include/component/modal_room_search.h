@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pch.h"
-#include "gui/imgui/popup.h"
+#include "gui/imgui/component/popup.h"
 
 #include "server/server_room_search.h"
 #include "server/server_game_room.h"
@@ -16,7 +16,10 @@ class ModalRoomSearch : public imgui::PopupModal
 
 public:
 
-    ModalRoomSearch(ServerGameRoom& server_game_room);
+    ModalRoomSearch(
+        imgui::Context& context,
+        ServerGameRoom& server_game_room
+    );
     ~ModalRoomSearch();
 
     void content() override;

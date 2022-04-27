@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-#include "gui/imgui/window.h"
+#include "gui/imgui/component/window.h"
 
 #include "component/modal_room_search.h"
 #include "component/modal_room_create.h"
@@ -17,7 +17,10 @@ public:
 
     using Ptr = std::shared_ptr<WindowHome>;
 
-    WindowHome(ServerGameRoom& server_game_room);
+    WindowHome(
+        imgui::Context& context,
+        ServerGameRoom& server_game_room
+    );
     ~WindowHome();
 
     void content() override;

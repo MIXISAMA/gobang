@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "gui/imgui/base/component.h"
+#include "gui/imgui/component/component.h"
 
 
 namespace mixi
@@ -12,7 +12,11 @@ class Window : public BaseComponent
 {
 public:
 
-    Window(const std::string &name, ImGuiWindowFlags flags = 0);
+    Window(
+        Context& context,
+        const std::string &name,
+        ImGuiWindowFlags flags = 0
+    );
 
     void render() override;
 

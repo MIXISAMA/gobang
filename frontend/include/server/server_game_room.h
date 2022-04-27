@@ -22,7 +22,7 @@ public:
         Failed,
     };
 
-    ServerGameRoom();
+    ServerGameRoom(boost::asio::io_context& io_context);
     ~ServerGameRoom();
 
     void join_room(
@@ -50,6 +50,8 @@ protected:
         Generic_Error_Notification = 0x0000,
         Join_Room,
     };
+
+    boost::asio::io_context& io_context_;
 
     std::shared_ptr<net::IdtcpClient> client_;
     std::shared_ptr<game::Room> game_room_;

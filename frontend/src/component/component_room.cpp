@@ -5,9 +5,15 @@ namespace mixi
 namespace gobang
 {
 
-ComponentRoom::ComponentRoom(ServerGameRoom& server_game_room) :
+ComponentRoom::ComponentRoom(
+    imgui::Context& context,
+    ServerGameRoom& server_game_room
+) :
+    imgui::BaseComponent(context),
     server_game_room_(server_game_room),
-    window_dashboard_(server_game_room.game_room())
+    window_game_(context),
+    window_chat_(context),
+    window_dashboard_(context, server_game_room.game_room())
 {
 
 }

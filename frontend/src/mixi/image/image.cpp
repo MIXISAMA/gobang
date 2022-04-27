@@ -34,6 +34,11 @@ Image::Image(int width, int height, int comp, void* data) :
     memcpy(data_, data, bytes);
 }
 
+Image::~Image()
+{
+    stbi_image_free(data_);
+}
+
 int Image::width() const
 {
     return width_;
@@ -62,7 +67,7 @@ void Image::inverted_color()
         }
     } else if (comp_ == 4) {
         for (int i = height_ * width_ - 1; i >= 0; i--) {
-            ((int32_t*)data_)[i] ^= 0x00FFFFF;
+            ((int32_t*)data_)[i] ^= 0x00FFFFFF;
         }
     }
 }

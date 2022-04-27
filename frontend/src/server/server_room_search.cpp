@@ -1,6 +1,5 @@
 #include "server/server_room_search.h"
 
-#include "core/io_context.h"
 #include "core/log.h"
 
 #include "net/serializer.h"
@@ -10,9 +9,9 @@ namespace mixi
 namespace gobang
 {
 
-ServerRoomSearch::ServerRoomSearch() :
+ServerRoomSearch::ServerRoomSearch(boost::asio::io_context& io_context) :
     recv_buffer_(1 << 16),
-    socket_(*Io_Context, boost::asio::ip::udp::endpoint()),
+    socket_(io_context, boost::asio::ip::udp::endpoint()),
     has_new_rooms_(false)
 {
     socket_.set_option(boost::asio::ip::udp::socket::broadcast(true));

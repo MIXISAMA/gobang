@@ -5,11 +5,19 @@ namespace mixi
 namespace gobang
 {
 
-ModalRoomSearch::ModalRoomSearch(ServerGameRoom& server_game_room) :
-    PopupModal(gettext("Search Room"), ImGuiWindowFlags_AlwaysAutoResize),
+ModalRoomSearch::ModalRoomSearch(
+    imgui::Context& context,
+    ServerGameRoom& server_game_room
+) :
+    PopupModal(
+        context,
+        gettext("Search Room"),
+        ImGuiWindowFlags_AlwaysAutoResize
+    ),
     item_current_idx_(-1),
     search_ip_{0xFF, 0xFF, 0xFF, 0xFF},
     search_port_(52039),
+    server_room_search_(context.io_context),
     rooms_(server_room_search_.rooms()),
     server_game_room_(server_game_room),
     hint_(Hint_Search_)

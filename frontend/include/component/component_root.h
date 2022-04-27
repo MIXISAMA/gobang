@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-#include "gui/imgui/base/component.h"
+#include "gui/imgui/component/component.h"
 
 #include "component/window_home.h"
 #include "component/component_room.h"
@@ -15,7 +15,7 @@ class ComponentRoot : public imgui::BaseComponent
 {
 public:
 
-    ComponentRoot();
+    ComponentRoot(imgui::Context& context);
     ~ComponentRoot();
 
     void content() override;

@@ -12,7 +12,7 @@ class Texture2D : public Bindable
 {
 public:
 
-    enum class Format : GLint
+    enum class Format : GLuint
     {
         RED             = GL_RED,
         RG              = GL_RG,

@@ -1,9 +1,15 @@
-#include "gui/imgui/base/component.h"
+#include "gui/imgui/component/component.h"
 
 namespace mixi
 {
 namespace imgui
 {
+
+BaseComponent::BaseComponent(Context& context) :
+    context_(context)
+{
+
+}
 
 void BaseComponent::render() {
     content();

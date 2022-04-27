@@ -5,7 +5,9 @@
 namespace mixi {
 namespace gobang {
 
-ComponentRoot::ComponentRoot() :
+ComponentRoot::ComponentRoot(imgui::Context& context) :
+    imgui::BaseComponent(context),
+    server_game_room_(context_.io_context),
     gaming_(false)
 {
     ImGuiIO &io = ImGui::GetIO();
@@ -30,13 +32,17 @@ void ComponentRoot::content()
     if (gaming_) {
         if (component_room_.get() == nullptr) {
             window_home_.reset();
-            component_room_.reset(new ComponentRoom(server_game_room_));
+            component_room_.reset(
+                new ComponentRoom(context_, server_game_room_)
+            );
         }
         component_room_->render();
     } else {
         if (window_home_.get() == nullptr) {
             component_room_.reset();
-            window_home_.reset(new WindowHome(server_game_room_));
+            window_home_.reset(
+                new WindowHome(context_, server_game_room_)
+            );
         }
         window_home_->render();
         gaming_ = window_home_->join_done();

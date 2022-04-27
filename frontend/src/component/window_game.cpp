@@ -4,8 +4,8 @@
 namespace mixi {
 namespace gobang {
 
-WindowGame::WindowGame() :
-    imgui::Window(gettext("Gobang Game"))
+WindowGame::WindowGame(imgui::Context& context) :
+    imgui::Window(context, gettext("Gobang Game"))
 {
 
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "gui/imgui/base/component.h"
+#include "gui/imgui/component/component.h"
 
 #include "server/server_game_room.h"
 
@@ -19,7 +19,10 @@ public:
 
     using Ptr = std::shared_ptr<ComponentRoom>;
 
-    ComponentRoom(ServerGameRoom& server_game_room);
+    ComponentRoom(
+        imgui::Context& context,
+        ServerGameRoom& server_game_room
+    );
     ~ComponentRoom();
 
     void content() override;

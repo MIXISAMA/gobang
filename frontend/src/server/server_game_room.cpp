@@ -1,6 +1,5 @@
 #include "server/server_game_room.h"
 
-#include "core/io_context.h"
 #include "core/log.h"
 #include "net/serializer.h"
 
@@ -9,7 +8,8 @@ namespace mixi
 namespace gobang
 {
 
-ServerGameRoom::ServerGameRoom() :
+ServerGameRoom::ServerGameRoom(boost::asio::io_context& io_context) :
+    io_context_(io_context),
     game_room_(new game::Room("Unknown Room", 16)),
     join_room_state_(JoinRoomState::Pending),
     distribute_{
@@ -41,6 +41,7 @@ void ServerGameRoom::join_room(
     join_room_state_ = JoinRoomState::Pending;
     client_ = std::shared_ptr<net::IdtcpClient>(
         new net::IdtcpClient(
+            io_context_,
             remote_endpoint,
             std::bind(
                 &ServerGameRoom::connect_error_notice_, this,

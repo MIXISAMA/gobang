@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "gui/imgui/window.h"
+#include "gui/imgui/component/window.h"
 
 namespace mixi
 {
@@ -11,7 +11,7 @@ class WindowGame : public imgui::Window
 {
 public:
 
-    WindowGame();
+    WindowGame(imgui::Context& context);
     ~WindowGame();
 
     void content() override;

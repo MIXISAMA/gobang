@@ -31,7 +31,7 @@ void Texture2D::update_image(
     Format format,
     const void *data
 ) {
-    Bind(*this);
+    Bind bind(*this);
 
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
@@ -40,11 +40,11 @@ void Texture2D::update_image(
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        (GLint)format,
+        (GLuint)format,
         width,
         height,
         0,
-        (GLint)format,
+        (GLuint)format,
         GL_UNSIGNED_BYTE,
         data
     );

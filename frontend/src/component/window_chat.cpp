@@ -4,8 +4,8 @@
 namespace mixi {
 namespace gobang {
 
-WindowChat::WindowChat() :
-    imgui::Window(gettext("Chat"))
+WindowChat::WindowChat(imgui::Context& context) :
+    imgui::Window(context, gettext("Chat"))
 {
 
 }

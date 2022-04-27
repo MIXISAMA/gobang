@@ -1,6 +1,5 @@
 #include "net/idtcp_client.h"
 
-#include "core/io_context.h"
 #include "core/log.h"
 #include "net/serializer.h"
 
@@ -10,11 +9,12 @@ namespace net
 {
 
 IdtcpClient::IdtcpClient(
+    boost::asio::io_context& io_context,
     const boost::asio::ip::tcp::endpoint& remote_endpoint,
     const std::function<void(bool)>& connect_error_notice,
     const Distribute& distribute
 ) : 
-    socket_(*Io_Context, boost::asio::ip::tcp::endpoint()),
+    socket_(io_context, boost::asio::ip::tcp::endpoint()),
     connect_error_notice_(connect_error_notice),
     distribute_(distribute)
 {

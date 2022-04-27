@@ -16,6 +16,7 @@ public:
     using Distribute = std::vector<std::function<void(const std::vector<std::byte>&)>>;
 
     IdtcpClient(
+        boost::asio::io_context& io_context,
         const boost::asio::ip::tcp::endpoint& remote_endpoint,
         const std::function<void(bool)>& connect_error_notice,
         const Distribute& distribute

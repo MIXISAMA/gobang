@@ -1,11 +1,16 @@
-#include "gui/imgui/window.h"
+#include "gui/imgui/component/window.h"
 
 namespace mixi
 {
 namespace imgui
 {
 
-Window::Window(const std::string &name, ImGuiWindowFlags flags) :
+Window::Window(
+    Context& context,
+    const std::string &name,
+    ImGuiWindowFlags flags
+) :
+    BaseComponent(context),
     name_(name),
     flags_(flags),
     p_open_(nullptr)
