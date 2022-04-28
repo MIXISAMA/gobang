@@ -17,6 +17,7 @@ ServerGameRoom::ServerGameRoom(boost::asio::io_context& io_context) :
         std::bind(&ServerGameRoom::receive_all_room_information_,       this, std::placeholders::_1),
         std::bind(&ServerGameRoom::receive_join_room_,                  this, std::placeholders::_1),
         std::bind(&ServerGameRoom::receive_leave_room_,                 this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_message_,                    this, std::placeholders::_1),
     }
 {
 
@@ -60,8 +61,27 @@ ServerGameRoom::JoinRoomState ServerGameRoom::join_room_state()
 
 void ServerGameRoom::leave_room()
 {
-    send_leave_room();
+    send_leave_room_();
     join_room_state_ = JoinRoomState::Pending;
+}
+
+void ServerGameRoom::send_message(const std::string& message)
+{
+    send_message_(message);
+}
+
+bool ServerGameRoom::has_message()
+{
+    std::shared_lock lock(message_queue_mutex_);
+    return !message_queue_.empty();
+}
+
+std::tuple<std::string, time_t, std::string> ServerGameRoom::pop_message()
+{
+    std::unique_lock lock(message_queue_mutex_);
+    auto message = message_queue_.front();
+    message_queue_.pop();
+    return message;
 }
 
 void ServerGameRoom::connect_error_notice_(
@@ -88,9 +108,16 @@ void ServerGameRoom::send_join_room_(
     nickname_ = nickname;
 }
 
-void ServerGameRoom::send_leave_room()
+void ServerGameRoom::send_leave_room_()
 {
     client_->send((u_int16_t)S_Instruction::Leave_Room, {});
+}
+
+void ServerGameRoom::send_message_(const std::string& message)
+{
+    net::Serializer s;
+    s << message;
+    client_->send((u_int16_t)S_Instruction::Message, s.raw);
 }
 
 void ServerGameRoom::receive_generic_error_notification_(
@@ -195,6 +222,17 @@ void ServerGameRoom::receive_leave_room_(
     net::Serializer s(data);
     s >> nickname;
     game_room_->user_leave(nickname);
+}
+
+void ServerGameRoom::receive_message_(
+    const std::vector<std::byte>& data
+) {
+    std::string nickname, message;
+    net::Serializer s(data);
+    s >> nickname >> message;
+    std::unique_lock lock(message_queue_mutex_);
+    time_t now = time(0);
+    message_queue_.emplace(nickname, now, message);
 }
 
 } // namespace gobang

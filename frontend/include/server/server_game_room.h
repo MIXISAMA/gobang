@@ -38,6 +38,10 @@ public:
 
     const game::Room& game_room();
 
+    void send_message(const std::string& message);
+    bool has_message();
+    std::tuple<std::string, time_t, std::string> pop_message();
+
 protected:
 
     enum class C_Instruction: u_int16_t
@@ -46,6 +50,7 @@ protected:
         All_Room_Information,
         Join_Room,
         Leave_Room,
+        Message,
     };
 
     enum class S_Instruction: u_int16_t
@@ -54,6 +59,7 @@ protected:
         All_Room_Information,
         Join_Room,
         Leave_Room,
+        Message,
     };
 
     boost::asio::io_context& io_context_;
@@ -66,6 +72,13 @@ protected:
     JoinRoomState join_room_state_;
 
     std::string nickname_;
+
+    std::shared_mutex message_queue_mutex_;
+    std::queue<std::tuple<
+        std::string,
+        time_t,
+        std::string
+    >> message_queue_;
 
     void connect_error_notice_(
         bool error,
@@ -81,12 +94,14 @@ private:
         const std::string& nickname,
         bool is_player
     );
-    void send_leave_room();
+    void send_leave_room_();
+    void send_message_(const std::string& message);
 
     void receive_generic_error_notification_(const std::vector<std::byte>& data);
     void receive_all_room_information_      (const std::vector<std::byte>& data);
     void receive_join_room_                 (const std::vector<std::byte>& data);
     void receive_leave_room_                (const std::vector<std::byte>& data);
+    void receive_message_                   (const std::vector<std::byte>& data);
 
 };
 

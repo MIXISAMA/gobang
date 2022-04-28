@@ -10,6 +10,7 @@ const (
 	C_AllRoomInformation       uint16 = 0x0001
 	C_Join_Room                uint16 = 0x0002
 	C_Leave_Room               uint16 = 0x0003
+	C_Message                  uint16 = 0x0004
 )
 
 func SendAllRoomInformation(conn *idtcp.Conn, room *Room) error {
@@ -47,5 +48,16 @@ func SendLeaveRoom(conn *idtcp.Conn, user *server.User) error {
 	}
 
 	_, err = conn.Write(C_Leave_Room, data)
+	return err
+}
+
+func SendMessage(conn *idtcp.Conn, username string, text string) error {
+
+	data, err := EncodeStringString(username, text)
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Write(C_Message, data)
 	return err
 }

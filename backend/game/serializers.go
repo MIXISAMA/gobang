@@ -6,6 +6,13 @@ import (
 	"github.com/MIXISAMA/gobang/backend/server"
 )
 
+func DecodeString(data []byte) (string, error) {
+
+	s := server.MakeSerializer(data)
+	return s.ReadString()
+
+}
+
 func DecodeJoinRoom(data []byte) (*Room, string, bool, error) {
 
 	s := server.MakeSerializer(data)
@@ -114,6 +121,22 @@ func EncodeString(str string) ([]byte, error) {
 	var s server.Serializer
 	err := s.WriteString(str)
 	return s.Raw, err
+
+}
+
+func EncodeStringString(str1 string, str2 string) ([]byte, error) {
+
+	var s server.Serializer
+	err := s.WriteString(str1)
+	if err != nil {
+		return nil, err
+	}
+	err = s.WriteString(str2)
+	if err != nil {
+		return nil, err
+	}
+	return s.Raw, nil
+
 }
 
 func EncodeRooms() ([]byte, error) {

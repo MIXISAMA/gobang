@@ -30,6 +30,7 @@ public:
     bool is_playing() const;
     void is_playing(bool b);
 
+    const std::string& name() const;
     u_int16_t max_users() const;
 
     std::vector<User::Ptr>& users();

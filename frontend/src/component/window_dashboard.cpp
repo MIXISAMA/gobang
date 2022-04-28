@@ -44,6 +44,9 @@ void WindowDashboard::content()
 
     ImGui::Separator();
 
+    ImGui::Text("%s", room_.name().c_str());
+    ImGui::NewLine();
+
     const game::User::Ptr& bp = room_.player(game::Chess::Color::BLACK);
     const game::User::Ptr& wp = room_.player(game::Chess::Color::WHITE);
 

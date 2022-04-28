@@ -29,6 +29,11 @@ void Room::is_playing(bool b)
     is_playing_ = b;
 }
 
+const std::string& Room::name() const
+{
+    return name_;
+}
+
 u_int16_t Room::max_users() const
 {
     return max_users_;

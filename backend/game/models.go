@@ -39,12 +39,12 @@ func (gd *GlobalData) AddUserRoom(
 
 func (gd *GlobalData) RemoveUser(user *server.User) (*Room, error) {
 
-	room, ok := Gd.RoomWhose[user]
-	if !ok {
-		return nil, errors.New("this user is not in any room")
+	room, err := Gd.GetRoom(user)
+	if err != nil {
+		return nil, err
 	}
 
-	err := room.UserLeave(user)
+	err = room.UserLeave(user)
 	if err != nil {
 		return nil, err
 	}
@@ -52,4 +52,13 @@ func (gd *GlobalData) RemoveUser(user *server.User) (*Room, error) {
 	delete(gd.RoomWhose, user)
 	delete(gd.UserWho, user.Name)
 	return room, nil
+}
+
+func (gd *GlobalData) GetRoom(user *server.User) (*Room, error) {
+
+	if room, ok := Gd.RoomWhose[user]; ok {
+		return room, nil
+	}
+	return nil, errors.New("this user is not in any room")
+
 }

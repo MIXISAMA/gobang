@@ -116,7 +116,7 @@ void ModalRoomSearch::content()
         }
     }
 
-    ImGui::Text("%s:", gettext("Onlookers Number"));
+    ImGui::Text("%s:", gettext("Users Number"));
     if (select_room != nullptr) {
         ImGui::SameLine(200);
         ImGui::Text("%d / %d",

@@ -94,6 +94,28 @@ func ReceiveLeaveRoom(msg *server.IdtcpMessage) error {
 	return LeaveRoom(msg.User)
 }
 
+func ReceiveMessage(msg *server.IdtcpMessage) error {
+
+	room, err := Gd.GetRoom(msg.User)
+	if err != nil {
+		return err
+	}
+
+	text, err := DecodeString(msg.Data)
+	if err != nil {
+		return err
+	}
+
+	for i := range room.Users {
+		err := SendMessage(room.Users[i].Conn, msg.User.Name, text)
+		if err != nil {
+			continue
+		}
+	}
+	return nil
+
+}
+
 /*
 
 // func PlayerReady(msg *idtcp.Message) error {
