@@ -5,7 +5,7 @@ namespace mixi
 namespace gl
 {
 
-GLuint Bindable::id()
+GLuint Idable::id() const
 {
     return id_;
 }

@@ -6,19 +6,26 @@ namespace mixi
 namespace gl
 {
 
-class Bindable
+class Idable
+{
+
+public:
+
+    GLuint id() const;
+
+protected:
+
+    GLuint id_;
+
+};
+
+class Bindable : public Idable
 {
 
 public:
 
     virtual void bind() const = 0;
     virtual void unbind() const = 0;
-
-    GLuint id();
-
-protected:
-
-    GLuint id_;
 
 };
 
