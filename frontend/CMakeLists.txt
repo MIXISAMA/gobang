@@ -24,6 +24,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_LIST})
 target_include_directories(${PROJECT_NAME}
     PUBLIC 3rdparty/glad/include
     PUBLIC 3rdparty/stb
+    PUBLIC 3rdparty/glm
     PUBLIC ${Intl_INCLUDE_DIR}
     PUBLIC ${Boost_INCLUDE_DIR}
     PUBLIC include

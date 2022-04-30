@@ -7,3 +7,6 @@
 [submodule "frontend/3rdparty/stb"]
 	path = frontend/3rdparty/stb
 	url = https://github.com/nothings/stb
+[submodule "frontend/3rdparty/glm"]
+	path = frontend/3rdparty/glm
+	url = https://github.com/g-truc/glm
