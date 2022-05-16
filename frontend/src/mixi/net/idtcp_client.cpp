@@ -77,7 +77,7 @@ void IdtcpClient::handle_send_(const boost::system::error_code& error)
     if (error) {
         std::ostringstream oss;
         oss << "IDTCP Client Send Error: "
-            << error.to_string();
+            << error.message();
         Log::Error(oss.str());
     }
     Log::Info("IDTCP Client Send Success");

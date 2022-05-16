@@ -74,7 +74,7 @@ void IdtcpSocket::handle_receive_(
     >& handler
 ) {
     if (error) {
-        Log::Error(error.to_string());
+        Log::Error(error.message());
         return;
     }
 

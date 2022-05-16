@@ -45,7 +45,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 
-if (${CMAKE_HOST_UNIX})
+if (UNIX AND NOT APPLE)
     target_link_libraries(${PROJECT_NAME}
         pthread
         dl
@@ -53,7 +53,7 @@ if (${CMAKE_HOST_UNIX})
     )
 endif()
 
-if (${CMAKE_HOST_APPLE})
+if (APPLE)
   target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework IOKit")
 endif()
 

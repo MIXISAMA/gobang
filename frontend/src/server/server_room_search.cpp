@@ -69,7 +69,7 @@ void ServerRoomSearch::handle_receive_(
     // std::size_t /*bytes_transferred*/
 ) {
     if (error) {
-        Log::Error(error.to_string());
+        Log::Error(error.message());
         return;
     }
 
