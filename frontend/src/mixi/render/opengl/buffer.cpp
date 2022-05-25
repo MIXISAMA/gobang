@@ -75,7 +75,7 @@ const GLenum ElementBuffer::type() const
 RenderBuffer::RenderBuffer(int width, int height, GLenum internal_format)
 {
     glGenRenderbuffers(1, &id_);
-    Bind(*this);
+    Bind b(*this);
     glRenderbufferStorage(GL_RENDERBUFFER, internal_format, width, height);
 }
 
@@ -99,7 +99,7 @@ FrameBuffer::FrameBuffer(int width, int height) :
 {
     texture_.update_image(width, height, Texture2D::Format::RGB, nullptr);
     glGenFramebuffers(1, &id_);
-    Bind(*this);
+    Bind b(*this);
     glFramebufferTexture2D(
         GL_FRAMEBUFFER,
         GL_COLOR_ATTACHMENT0,
@@ -121,7 +121,7 @@ FrameBuffer::FrameBuffer(int width, int height) :
 
 FrameBuffer::~FrameBuffer()
 {
-    glDeleteBuffers(1, &id_);
+    glDeleteFramebuffers(1, &id_);
 }
 
 void FrameBuffer::bind() const

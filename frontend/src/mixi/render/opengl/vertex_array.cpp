@@ -94,7 +94,7 @@ void VertexArray::draw(GLint first, GLsizei count) const
 {
     if (has_element_buffer_) {
         draw_elements(first, count);
-    } else if (has_element_buffer_) {
+    } else if (has_vertex_buffer_) {
         draw_arrays(first, count);
     }
 }
@@ -103,7 +103,7 @@ void VertexArray::draw() const
 {
     if (has_element_buffer_) {
         draw_elements();
-    } else if (has_element_buffer_) {
+    } else if (has_vertex_buffer_) {
         draw_arrays();
     }
 }

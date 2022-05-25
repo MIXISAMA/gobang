@@ -5,15 +5,6 @@ namespace mixi
 namespace gl
 {
 
-template<typename... Args>
-Program::Program(const Shader& shader, Args&&... shaders)
-{
-    id_ = glCreateProgram();
-    attach_shaders_(shader, shaders...);
-    glLinkProgram(id_);
-    check_link_errors_();
-}
-
 Program::~Program()
 {
     glDeleteProgram(id_);
@@ -22,13 +13,6 @@ Program::~Program()
 void Program::use() const
 {
     glUseProgram(id_);
-}
-
-template<typename... Args>
-void Program::attach_shaders_(const Shader& shader, Args&&... shaders) const
-{
-    glAttachShader(id_, shader.id());
-    attach_shaders_(shaders...);
 }
 
 void Program::check_link_errors_() const
@@ -43,24 +27,33 @@ void Program::check_link_errors_() const
     }
 }
 
+GLint Program::get_uniform_location(const char* name) const
+{
+    return glGetUniformLocation(id_, name);
+}
+
 void Program::set_uniform_int(GLint location, int value) const
 {
-    glProgramUniform1i(id_, location, value);
+    use();
+    glUniform1i(location, value);
 }
 
 void Program::set_uniform_float(GLint location, float value) const
 {
-    glProgramUniform1f(id_, location, value);
+    use();
+    glUniform1f(location, value);
 }
 
 void Program::set_uniform_vec3(GLint location, float* value) const
 {
-    glProgramUniform3fv(id_, location, 1, value);
+    use();
+    glUniform3fv(location, 1, value);
 }
 
 void Program::set_uniform_mat4(GLint location, float* value) const
 {
-    glProgramUniformMatrix4fv(id_, location, 1, GL_FALSE, value);
+    use();
+    glUniformMatrix4fv(location, 1, GL_FALSE, value);
 }
 
 } // namespace gl

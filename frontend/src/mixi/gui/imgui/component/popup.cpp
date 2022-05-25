@@ -12,7 +12,7 @@ PopupModal::PopupModal(
     const std::string &name,
     ImGuiWindowFlags flags
 ) :
-    BaseComponent(context_),
+    BaseComponent(context),
     name_(name),
     flags_(flags),
     should_close_(false)
