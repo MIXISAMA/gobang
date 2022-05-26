@@ -25,13 +25,10 @@ public:
 
 private:
 
-    int width_;
-    int height_;
-
     geo::Camera camera_;
     geo::Plane plane_;
 
-    gl::FrameBuffer* frame_buffer_;
+    gl::FrameBuffer frame_buffer_;
     gl::VertexBuffer vertex_buffer_;
     // gl::ElementBuffer element_buffer_;
     gl::VertexArray vertex_array_;
@@ -48,7 +45,7 @@ private:
     GLint location_model_;
     GLint location_projection_;
 
-    void resize_(int width, int height);
+    void resize_frame_buffer_();
 
 };
 

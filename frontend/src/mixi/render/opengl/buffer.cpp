@@ -75,8 +75,7 @@ const GLenum ElementBuffer::type() const
 RenderBuffer::RenderBuffer(int width, int height, GLenum internal_format)
 {
     glGenRenderbuffers(1, &id_);
-    Bind b(*this);
-    glRenderbufferStorage(GL_RENDERBUFFER, internal_format, width, height);
+    storage(width, height, internal_format);
 }
 
 RenderBuffer::~RenderBuffer()
@@ -94,11 +93,22 @@ void RenderBuffer::unbind() const
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
+void RenderBuffer::storage(
+    int width,
+    int height,
+    GLenum internal_format
+) {
+    Bind b(*this);
+    glRenderbufferStorage(GL_RENDERBUFFER, internal_format, width, height);
+}
+
 FrameBuffer::FrameBuffer(int width, int height) :
     render_buffer_(width, height)
 {
     texture_.update_image(width, height, Texture2D::Format::RGB, nullptr);
+
     glGenFramebuffers(1, &id_);
+
     Bind b(*this);
     glFramebufferTexture2D(
         GL_FRAMEBUFFER,
@@ -114,7 +124,8 @@ FrameBuffer::FrameBuffer(int width, int height) :
         render_buffer_.id()
     );
 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    GLenum state = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (state != GL_FRAMEBUFFER_COMPLETE) {
         throw std::runtime_error("frame buffer create error");
     }
 }
@@ -132,6 +143,12 @@ void FrameBuffer::bind() const
 void FrameBuffer::unbind() const
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void FrameBuffer::resize(int width, int height)
+{
+    texture_.update_image(width, height, Texture2D::Format::RGB, nullptr);
+    render_buffer_.storage(width, height);
 }
 
 const Texture2D& FrameBuffer::texture() const

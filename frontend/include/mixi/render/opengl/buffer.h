@@ -95,6 +95,12 @@ public:
     void bind() const override;
     void unbind() const override;
 
+    void storage(
+        int width,
+        int height,
+        GLenum internal_format = GL_DEPTH24_STENCIL8
+    );
+
 };
 
 class FrameBuffer : public Bindable
@@ -102,11 +108,13 @@ class FrameBuffer : public Bindable
 
 public:
 
-    FrameBuffer(int width, int height);
+    FrameBuffer(int width = 1, int height = 1);
     ~FrameBuffer();
 
     void bind() const override;
     void unbind() const override;
+
+    void resize(int width, int height);
 
     const Texture2D& texture() const;
 

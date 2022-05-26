@@ -5,7 +5,9 @@ namespace mixi
 namespace gl
 {
 
-Texture2D::Texture2D()
+Texture2D::Texture2D() :
+    width_(0),
+    height_(0)
 {
     glGenTextures(1, &id_);
 }
@@ -23,6 +25,16 @@ void Texture2D::bind() const
 void Texture2D::unbind() const
 {
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+GLsizei Texture2D::width() const
+{
+    return width_;
+}
+
+GLsizei Texture2D::height() const
+{
+    return height_;
 }
 
 void Texture2D::update_image(
@@ -48,6 +60,9 @@ void Texture2D::update_image(
         GL_UNSIGNED_BYTE,
         data
     );
+
+    width_  = width;
+    height_ = height;
 }
 
 } // namespace gl

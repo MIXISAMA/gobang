@@ -18,7 +18,7 @@ ModalRoomCreate::~ModalRoomCreate()
 
 void ModalRoomCreate::content()
 {
-    ImGui::Text(gettext("Create Room"));
+    ImGui::Text("%s", gettext("Create Room"));
 }
 
 

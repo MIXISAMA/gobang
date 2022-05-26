@@ -39,12 +39,20 @@ public:
     void bind() const override;
     void unbind() const override;
 
+    GLsizei width() const;
+    GLsizei height() const;
+
     void update_image(
         GLsizei width,
         GLsizei height,
         Format format,
         const void *data
     );
+
+protected:
+
+    GLsizei width_;
+    GLsizei height_;
 
 };
 

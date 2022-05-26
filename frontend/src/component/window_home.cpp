@@ -27,7 +27,7 @@ void WindowHome::content()
     ImVec2 text_size = ImGui::CalcTextSize(gettext("Gobang"));
     ImVec2 text_pos = ImVec2((window_size.x - text_size.x) * 0.5f, window_size.y * 0.3f);
     ImGui::SetCursorPos(text_pos);
-    ImGui::Text(gettext("Gobang"));
+    ImGui::Text("%s", gettext("Gobang"));
 
     ImVec2 button_pos = ImVec2(window_size.x * 0.5f - 160.0f, window_size.y * 0.6f - 40.0f);
     ImGui::SetCursorPos(button_pos);

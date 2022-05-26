@@ -39,7 +39,7 @@ bool ModalRoomSearch::join_done()
 void ModalRoomSearch::content()
 {
     ImGui::AlignTextToFramePadding();
-    ImGui::Text(gettext("Server Address"));
+    ImGui::Text("%s", gettext("Server Address"));
     for (int i = 0; i < 4; i++) {
         ImGui::SameLine();
         ImGui::PushID(i);
@@ -59,7 +59,7 @@ void ModalRoomSearch::content()
         on_search_();
     }
 
-    ImGui::Text(gettext("Rooms List"));
+    ImGui::Text("%s", gettext("Rooms List"));
 
     server_room_search_.update_rooms();
     
