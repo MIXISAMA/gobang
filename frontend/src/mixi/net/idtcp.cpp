@@ -74,7 +74,10 @@ void IdtcpSocket::handle_receive_(
     >& handler
 ) {
     if (error) {
-        Log::Error(error.message());
+        std::ostringstream oss;
+        oss << "IDTCP Client Handle Receive Error: "
+            << error.message();
+        Log::Error(oss.str());
         return;
     }
 

@@ -11,7 +11,7 @@ Buffer::Buffer(GLenum target, GLsizeiptr bytes, void *data, GLenum usage) :
 
     glGenBuffers(1, &id_);
 
-    Bind bind(*this);
+    Bind b(*this);
     glBufferData(target_, bytes, data, usage);
 
 }

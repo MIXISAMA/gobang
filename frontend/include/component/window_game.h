@@ -2,8 +2,8 @@
 #include "pch.h"
 #include "gui/imgui/component/window.h"
 
-#include "geo/camera.h"
-#include "geo/plane.h"
+#include "geometry/camera.h"
+#include "geometry/plane.h"
 
 #include "render/opengl/buffer.h"
 #include "render/opengl/vertex_array.h"
@@ -44,8 +44,6 @@ private:
     GLint location_view_;
     GLint location_model_;
     GLint location_projection_;
-
-    void resize_frame_buffer_();
 
 };
 

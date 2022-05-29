@@ -84,7 +84,7 @@ void WindowDashboard::load_texture_by_image_(
     const std::filesystem::path& filepath
 ) {
     {
-        gl::Bind bind(tex);
+        gl::Bind b(tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);

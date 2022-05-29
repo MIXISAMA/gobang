@@ -43,7 +43,7 @@ void Texture2D::update_image(
     Format format,
     const void *data
 ) {
-    Bind bind(*this);
+    Bind b(*this);
 
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);

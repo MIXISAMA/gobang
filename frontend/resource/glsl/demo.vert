@@ -11,5 +11,5 @@ uniform mat4 projection;
 void main()
 {
     gl_Position = projection * view * model * vec4(aPosition, 1.0f);
-    gl_PointSize = 5 / gl_Position.z;
+    gl_PointSize = 50 / gl_Position.z;
 }

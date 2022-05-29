@@ -29,10 +29,10 @@ public:
     void move_down    (float delta);
 
     float yaw() const;
-    void yaw(float y);
+    void  yaw(float y);
     float pitch() const;
-    void pitch(float p);
-    void yaw_pitch(float y, float p);
+    void  pitch(float p);
+    void  yaw_pitch(float y, float p);
 
     void yaw_left  (float delta);
     void yaw_right (float delta);

@@ -46,7 +46,7 @@ void VertexArray::bind_vertex_buffer(
     const std::vector<std::pair<int, int>>& location_descriptor_map
 ) {
     bind();
-    Bind b(vertex_buffer);
+    vertex_buffer.bind();
 
     for (auto [location, idx]: location_descriptor_map) {
         const auto& ds = vertex_buffer.descriptors();

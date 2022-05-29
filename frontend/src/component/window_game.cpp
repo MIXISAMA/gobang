@@ -6,7 +6,7 @@ namespace gobang {
 
 WindowGame::WindowGame(imgui::Context& context) :
     imgui::Window(context, gettext("Gobang Game")),
-    camera_({0.0f, 0.0f, 10.0f}),
+    camera_({0.0f, 0.0f, 20.0f}),
     plane_(),
     vertex_buffer_(
         plane_.vertices().size() * sizeof(glm::vec3),
@@ -21,6 +21,7 @@ WindowGame::WindowGame(imgui::Context& context) :
             .pointer    = (void*)0
         }}
     ),
+    vertex_array_(GL_POINTS),
     vert_shader_("resource/glsl/demo.vert", GL_VERTEX_SHADER),
     frag_shader_("resource/glsl/demo.frag", GL_FRAGMENT_SHADER),
     program_(vert_shader_, frag_shader_),
@@ -34,9 +35,9 @@ WindowGame::WindowGame(imgui::Context& context) :
     model_(1.0f)
 {
     vertex_array_.bind_vertex_buffer(vertex_buffer_, {{0, 0}});
-    GLint location_view_       = program_.get_uniform_location("view");
-    GLint location_model_      = program_.get_uniform_location("model");
-    GLint location_projection_ = program_.get_uniform_location("projection");
+    location_view_       = program_.get_uniform_location("view");
+    location_model_      = program_.get_uniform_location("model");
+    location_projection_ = program_.get_uniform_location("projection");
     gl::Bind b(frame_buffer_.texture());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -65,8 +66,8 @@ void WindowGame::content()
         frame_buffer_.resize(width, height);
         projection_ = glm::perspective(
             glm::radians(45.0f),
-            (float)width / (float)height,
-            1.0f, 10000.0f
+            width / height,
+            0.1f, 1000.0f
         );
     }
 
@@ -107,11 +108,6 @@ void WindowGame::content()
     }
     camera_.move_forward(io.MouseWheel);
     view_ = camera_.view_matrix();
-}
-
-void WindowGame::resize_frame_buffer_()
-{
-    
 }
 
 } // namespace gobang

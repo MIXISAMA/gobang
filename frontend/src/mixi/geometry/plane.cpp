@@ -1,4 +1,4 @@
-#include "geo/plane.h"
+#include "geometry/plane.h"
 
 namespace mixi
 {
