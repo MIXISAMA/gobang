@@ -22,18 +22,19 @@ file(GLOB_RECURSE SOURCE_LIST CONFIGURE_DEPENDS "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCE_LIST})
 
 target_include_directories(${PROJECT_NAME}
-    PUBLIC 3rdparty/glad/include
-    PUBLIC 3rdparty/stb
-    PUBLIC 3rdparty/glm
+    PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/glad/include/
+    PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/stb/
+    PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/glm/
+
     PUBLIC ${Intl_INCLUDE_DIR}
     PUBLIC ${Boost_INCLUDE_DIR}
-    PUBLIC include
-    PUBLIC include/mixi
+
+    PUBLIC ${CMAKE_SOURCE_DIR}/include/mixi/
+    PUBLIC ${CMAKE_SOURCE_DIR}/include/
 )
 
 target_link_directories(${PROJECT_NAME}
-    PUBLIC build/3rdparty/glad
-    PUBLIC build/3rdparty/imgui
+    PUBLIC ${CMAKE_BINARY_DIR}/3rdparty/
 )
 
 target_link_libraries(${PROJECT_NAME}

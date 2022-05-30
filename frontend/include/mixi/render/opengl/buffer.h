@@ -125,5 +125,26 @@ protected:
 
 };
 
+class UniformBuffer : public Buffer
+{
+
+public:
+
+    UniformBuffer(
+        GLsizeiptr bytes,
+        void* data = nullptr,
+        GLenum usage = GL_DYNAMIC_DRAW
+    );
+
+    GLuint binding_point() const;
+
+protected:
+
+    const GLuint binding_point_;
+
+    static GLuint Uniform_Buffer_Count_;
+
+};
+
 } // namespace gl
 } // namespace mixi

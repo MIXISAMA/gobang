@@ -156,5 +156,23 @@ const Texture2D& FrameBuffer::texture() const
     return texture_;
 }
 
+GLuint UniformBuffer::Uniform_Buffer_Count_ = 0;
+
+UniformBuffer::UniformBuffer(
+    GLsizeiptr bytes,
+    void* data,
+    GLenum usage
+) :
+    Buffer(GL_UNIFORM_BUFFER, bytes, data, usage),
+    binding_point_(Uniform_Buffer_Count_++)
+{
+    glBindBufferBase(GL_UNIFORM_BUFFER, binding_point_, id_);
+}
+
+GLuint UniformBuffer::binding_point() const
+{
+    return binding_point_;
+}
+
 } // namespace gl
 } // namespace mixi

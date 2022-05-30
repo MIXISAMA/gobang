@@ -44,17 +44,25 @@ void Program::set_uniform_float(GLint location, float value) const
     glUniform1f(location, value);
 }
 
-void Program::set_uniform_vec3(GLint location, float* value) const
+void Program::set_uniform_vec3(GLint location, const float* value) const
 {
     use();
     glUniform3fv(location, 1, value);
 }
 
-void Program::set_uniform_mat4(GLint location, float* value) const
+void Program::set_uniform_mat4(GLint location, const float* value) const
 {
     use();
     glUniformMatrix4fv(location, 1, GL_FALSE, value);
 }
+
+void Program::bind_uniform_block(const char* name, GLuint binding_point) const
+{
+    GLuint index = glGetUniformBlockIndex(id_, name);
+    glUniformBlockBinding(id_, index, binding_point);
+}
+
+
 
 } // namespace gl
 } // namespace mixi

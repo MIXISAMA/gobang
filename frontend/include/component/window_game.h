@@ -7,7 +7,10 @@
 
 #include "render/opengl/buffer.h"
 #include "render/opengl/vertex_array.h"
-#include "render/opengl/program.h"
+
+#include "engine/opengl/program/camera_model.h"
+#include "engine/opengl/uniform_buffer/camera.h"
+#include "engine/opengl/drawable_node.h"
 
 namespace mixi
 {
@@ -33,17 +36,9 @@ private:
     // gl::ElementBuffer element_buffer_;
     gl::VertexArray vertex_array_;
 
-    gl::Shader vert_shader_;
-    gl::Shader frag_shader_;
-    gl::Program program_;
-
-    glm::mat4 view_;
-    glm::mat4 model_;
-    glm::mat4 projection_;
-
-    GLint location_view_;
-    GLint location_model_;
-    GLint location_projection_;
+    gl::eng::CameraUniformBuffer uniform_buffer_;
+    gl::eng::CameraModelProgram program_;
+    gl::eng::DrawableGroup drawable_group_;
 
 };
 

@@ -2,9 +2,12 @@
 
 layout(location = 0) in vec3 aPosition;
 
+layout (std140) uniform Camera
+{
+    mat4 projection;
+    mat4 view;
+};
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
 
 // uniform float pointSize;
 

@@ -22,32 +22,28 @@ WindowGame::WindowGame(imgui::Context& context) :
         }}
     ),
     vertex_array_(GL_POINTS),
-    vert_shader_("resource/glsl/demo.vert", GL_VERTEX_SHADER),
-    frag_shader_("resource/glsl/demo.frag", GL_FRAGMENT_SHADER),
-    program_(vert_shader_, frag_shader_),
-    projection_(glm::perspective(
-        glm::radians(45.0f),
-        (float)frame_buffer_.texture().width() /
-        (float)frame_buffer_.texture().height(),
-        1.0f, 10000.0f
-    )),
-    view_(camera_.view_matrix()),
-    model_(1.0f)
+    program_(
+        "model", uniform_buffer_,
+        gl::Shader("resource/glsl/demo.vert", GL_VERTEX_SHADER),
+        gl::Shader("resource/glsl/demo.frag", GL_FRAGMENT_SHADER)
+    )
 {
     vertex_array_.bind_vertex_buffer(vertex_buffer_, {{0, 0}});
-    location_view_       = program_.get_uniform_location("view");
-    location_model_      = program_.get_uniform_location("model");
-    location_projection_ = program_.get_uniform_location("projection");
+
     gl::Bind b(frame_buffer_.texture());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    drawable_group_.node_members().emplace_back(
+        program_, vertex_array_
+    );
 }
 
 WindowGame::~WindowGame()
 {
-    // delete frame_buffer_;
+
 }
 
 void WindowGame::content()
@@ -64,26 +60,22 @@ void WindowGame::content()
         height != frame_buffer_.texture().height()
     ) {
         frame_buffer_.resize(width, height);
-        projection_ = glm::perspective(
+        glm::mat4 projection = glm::perspective(
             glm::radians(45.0f),
             width / height,
             0.1f, 1000.0f
+        );
+        uniform_buffer_.update_projection(
+            glm::value_ptr(projection)
         );
     }
 
     /* render frame */
     frame_buffer_.bind();
-    
     glViewport(0, 0, width, height);
     glClearColor(0.1f, 0.0f, 0.2f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    program_.use();
-    program_.set_uniform_mat4(location_view_,       glm::value_ptr(view_));
-    program_.set_uniform_mat4(location_model_,      glm::value_ptr(model_));
-    program_.set_uniform_mat4(location_projection_, glm::value_ptr(projection_));
-    vertex_array_.draw();
-
+    drawable_group_.draw();
     frame_buffer_.unbind();
 
     ImGui::Image(
@@ -107,7 +99,8 @@ void WindowGame::content()
         camera_.move_up   (io.MouseDelta.y * 0.01f);
     }
     camera_.move_forward(io.MouseWheel);
-    view_ = camera_.view_matrix();
+    glm::mat4 view = camera_.view_matrix();
+    uniform_buffer_.update_view(glm::value_ptr(view));
 }
 
 } // namespace gobang

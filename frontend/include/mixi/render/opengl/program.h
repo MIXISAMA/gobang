@@ -14,10 +14,10 @@ class Program : public Idable
 public:
 
     template<typename... Args>
-    Program(const Shader& shader, const Args&... shaders)
+    Program(const Args&... shaders)
     {
         id_ = glCreateProgram();
-        attach_shaders_(shader, shaders...);
+        attach_shaders_(shaders...);
         glLinkProgram(id_);
         check_link_errors_();
 
@@ -58,10 +58,12 @@ public:
 
     GLint get_uniform_location(const char* name) const;
 
-    void set_uniform_int  (GLint location, int    value) const;
-    void set_uniform_float(GLint location, float  value) const;
-    void set_uniform_vec3 (GLint location, float* value) const;
-    void set_uniform_mat4 (GLint location, float* value) const;
+    void set_uniform_int  (GLint location, int          value) const;
+    void set_uniform_float(GLint location, float        value) const;
+    void set_uniform_vec3 (GLint location, const float* value) const;
+    void set_uniform_mat4 (GLint location, const float* value) const;
+
+    void bind_uniform_block(const char* name, GLuint binding_point) const;
 
 private:
 
