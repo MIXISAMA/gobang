@@ -83,14 +83,6 @@ void WindowDashboard::load_texture_by_image_(
     gl::Texture2D& tex,
     const std::filesystem::path& filepath
 ) {
-    {
-        gl::Bind b(tex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    }
-
     img::Image icon(filepath);
     icon.inverted_color();
     tex.update_image(

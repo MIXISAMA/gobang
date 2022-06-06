@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
-#include "engine/opengl/program/model.h"
-#include "engine/opengl/uniform_buffer/camera.h"
+#include "render/opengl/program.h"
+#include "engine/opengl/uniform_buffer.h"
 
 namespace mixi
 {
@@ -9,6 +9,30 @@ namespace gl
 {
 namespace eng
 {
+
+class ModelProgram : public Program
+{
+
+public:
+
+    template<typename... Args>
+    ModelProgram(
+        const char* model_uniform_name,
+        const Args&... shaders
+    ) :
+        Program(shaders...),
+        location_model_(get_uniform_location(model_uniform_name))
+    {
+
+    }
+
+    void update_model(const float* model_matrix) const;
+
+protected:
+
+    GLint location_model_;
+
+};
 
 class CameraModelProgram : public ModelProgram
 {

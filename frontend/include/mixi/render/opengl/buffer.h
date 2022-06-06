@@ -50,13 +50,13 @@ public:
 
     const GLsizei count() const;
 
-    const std::vector<Descriptor>& descriptors() const;
+    std::vector<Descriptor>& descriptors();
 
 protected:
 
     const GLsizei count_;
 
-    const std::vector<Descriptor> descriptors_;
+    std::vector<Descriptor> descriptors_;
 
 };
 

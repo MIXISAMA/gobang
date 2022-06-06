@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-#include "engine/opengl/program/model.h"
+#include "engine/opengl/program.h"
 #include "render/opengl/vertex_array.h"
 
 namespace mixi

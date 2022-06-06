@@ -1,5 +1,5 @@
 #include "component/window_game.h"
-
+#include "geometry/plane.h"
 
 namespace mixi {
 namespace gobang {
@@ -7,34 +7,35 @@ namespace gobang {
 WindowGame::WindowGame(imgui::Context& context) :
     imgui::Window(context, gettext("Gobang Game")),
     camera_({0.0f, 0.0f, 20.0f}),
-    plane_(),
-    vertex_buffer_(
-        plane_.vertices().size() * sizeof(glm::vec3),
-        (void*)plane_.vertices().data(),
-        GL_STATIC_DRAW,
-        plane_.vertices().size(),
-        {gl::VertexBuffer::Descriptor{
-            .size       = (GLint)plane_.vertices().size(),
-            .type       = GL_FLOAT,
-            .normalized = GL_FALSE,
-            .stride     = 3 * sizeof(float),
-            .pointer    = (void*)0
-        }}
-    ),
-    vertex_array_(GL_POINTS),
     program_(
         "model", uniform_buffer_,
         gl::Shader("resource/glsl/demo.vert", GL_VERTEX_SHADER),
         gl::Shader("resource/glsl/demo.frag", GL_FRAGMENT_SHADER)
     )
 {
-    vertex_array_.bind_vertex_buffer(vertex_buffer_, {{0, 0}});
+    geo::Plane plane;
 
-    gl::Bind b(frame_buffer_.texture());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    vertex_buffer_ = new gl::VertexBuffer(
+        plane.vertices().size() * sizeof(glm::vec3),
+        (void*)plane.vertices().data(),
+        GL_STATIC_DRAW,
+        plane.vertices().size(),
+        {gl::VertexBuffer::Descriptor{
+            .size       = 3,
+            .type       = GL_FLOAT,
+            .normalized = GL_FALSE,
+            .stride     = sizeof(glm::vec3),
+            .pointer    = (void*)0
+        }}
+    );
+
+    element_buffer_ = new gl::ElementBuffer(
+        plane.indices().size() * sizeof(glm::uvec3),
+        (void*)plane.indices().data()
+    );
+
+    vertex_array_.bind_vertex_buffer(*vertex_buffer_, {{0, 0}});
+    vertex_array_.bind_element_buffer(*element_buffer_);
 
     drawable_group_.node_members().emplace_back(
         program_, vertex_array_
@@ -43,7 +44,8 @@ WindowGame::WindowGame(imgui::Context& context) :
 
 WindowGame::~WindowGame()
 {
-
+    delete vertex_buffer_;
+    delete element_buffer_;
 }
 
 void WindowGame::content()

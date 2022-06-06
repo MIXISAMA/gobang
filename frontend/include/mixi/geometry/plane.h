@@ -1,25 +1,18 @@
 #pragma once
 #include "pch.h"
+#include "geometry/base.h"
 
 namespace mixi
 {
 namespace geo
 {
 
-class Plane
+class Plane : public Vertices, public Indices
 {
 
 public:
 
     Plane();
-
-    const std::vector<glm::vec3>& vertices();
-    const std::vector<glm::ivec3>& indices();
-
-private:
-
-    std::vector<glm::vec3> vertices_;
-    std::vector<glm::ivec3> indices_;
 
 };
 

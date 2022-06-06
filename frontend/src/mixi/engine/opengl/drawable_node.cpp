@@ -41,7 +41,8 @@ void DrawableNode::model_matrix(const glm::mat4& m)
 
 void DrawableNode::draw(const glm::mat4& pre_model) const
 {
-    model_program_.update_model(glm::value_ptr(pre_model * model_matrix_));
+    glm::mat4 model = model_matrix_ * pre_model;
+    model_program_.update_model(glm::value_ptr(model));
     vertex_array_.draw();
 }
 
@@ -63,7 +64,7 @@ std::vector<DrawableGroup>& DrawableGroup::group_members()
 
 void DrawableGroup::draw(const glm::mat4& pre_model) const
 {
-    glm::mat4 model = pre_model * model_matrix_;
+    glm::mat4 model = model_matrix_ * pre_model;
     for (const DrawableNode& node : node_members_) {
         node.draw(model);
     }

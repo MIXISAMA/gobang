@@ -1,4 +1,4 @@
-#include "engine/opengl/uniform_buffer/camera.h"
+#include "engine/opengl/uniform_buffer.h"
 
 namespace mixi
 {

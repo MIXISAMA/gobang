@@ -50,7 +50,7 @@ const GLsizei VertexBuffer::count() const
     return count_;
 }
 
-const std::vector<VertexBuffer::Descriptor>& VertexBuffer::descriptors() const
+std::vector<VertexBuffer::Descriptor>& VertexBuffer::descriptors()
 {
     return descriptors_;
 }

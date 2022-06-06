@@ -3,13 +3,12 @@
 #include "gui/imgui/component/window.h"
 
 #include "geometry/camera.h"
-#include "geometry/plane.h"
 
 #include "render/opengl/buffer.h"
 #include "render/opengl/vertex_array.h"
 
-#include "engine/opengl/program/camera_model.h"
-#include "engine/opengl/uniform_buffer/camera.h"
+#include "engine/opengl/program.h"
+#include "engine/opengl/uniform_buffer.h"
 #include "engine/opengl/drawable_node.h"
 
 namespace mixi
@@ -29,12 +28,11 @@ public:
 private:
 
     geo::Camera camera_;
-    geo::Plane plane_;
 
     gl::FrameBuffer frame_buffer_;
-    gl::VertexBuffer vertex_buffer_;
-    // gl::ElementBuffer element_buffer_;
     gl::VertexArray vertex_array_;
+    gl::VertexBuffer* vertex_buffer_;
+    gl::ElementBuffer* element_buffer_;
 
     gl::eng::CameraUniformBuffer uniform_buffer_;
     gl::eng::CameraModelProgram program_;
