@@ -10,7 +10,7 @@ const std::vector<glm::vec3>& Vertices::vertices() const
     return vertices_;
 }
 
-const std::vector<glm::ivec3>& Indices::indices() const
+const std::vector<glm::uvec3>& Indices::indices() const
 {
     return indices_;
 }

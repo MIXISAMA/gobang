@@ -14,7 +14,20 @@ class Buffer : public Bindable
 
 public:
 
-    Buffer(GLenum target, GLsizeiptr bytes, void* data, GLenum usage);
+    enum class Usage
+    {
+        STREAM_DRAW  = GL_STREAM_DRAW,
+        STREAM_READ  = GL_STREAM_READ,
+        STREAM_COPY  = GL_STREAM_COPY,
+        STATIC_DRAW  = GL_STATIC_DRAW,
+        STATIC_READ  = GL_STATIC_READ,
+        STATIC_COPY  = GL_STATIC_COPY,
+        DYNAMIC_DRAW = GL_DYNAMIC_DRAW,
+        DYNAMIC_READ = GL_DYNAMIC_READ,
+        DYNAMIC_COPY = GL_DYNAMIC_COPY,
+    };
+
+    Buffer(GLenum target, GLsizeiptr bytes, void* data, Usage usage);
     virtual ~Buffer();
 
     void bind() const override;
@@ -43,7 +56,7 @@ public:
     VertexBuffer(
         GLsizeiptr bytes,
         void* data,
-        GLenum usage,
+        Usage usage,
         GLsizei count,
         const std::vector<Descriptor>& descriptors = {}
     );
@@ -51,6 +64,7 @@ public:
     const GLsizei count() const;
 
     std::vector<Descriptor>& descriptors();
+    const std::vector<Descriptor>& descriptors() const;
 
 protected:
 
@@ -65,18 +79,27 @@ class ElementBuffer : public Buffer
 
 public:
 
+    enum class Type
+    {
+        UNSIGNED_BYTE  = GL_UNSIGNED_BYTE,
+        UNSIGNED_SHORT = GL_UNSIGNED_SHORT,
+        UNSIGNED_INT   = GL_UNSIGNED_INT,
+    };
+
     ElementBuffer(
         GLsizeiptr bytes,
         void* data,
-        GLenum type = GL_UNSIGNED_INT,
-        GLenum usage = GL_STATIC_DRAW
+        Type type = Type::UNSIGNED_INT,
+        Usage usage = Usage::STATIC_DRAW
     );
 
-    const GLenum type() const;
+    const GLsizei count() const;
+    const Type type() const;
 
 protected:
 
-    const GLenum type_;
+    GLsizei count_;
+    const Type type_;
 
 };
 
@@ -133,7 +156,7 @@ public:
     UniformBuffer(
         GLsizeiptr bytes,
         void* data = nullptr,
-        GLenum usage = GL_DYNAMIC_DRAW
+        Usage usage = Usage::DYNAMIC_DRAW
     );
 
     GLuint binding_point() const;

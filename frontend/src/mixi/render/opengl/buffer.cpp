@@ -5,14 +5,14 @@ namespace mixi
 namespace gl
 {
 
-Buffer::Buffer(GLenum target, GLsizeiptr bytes, void *data, GLenum usage) :
+Buffer::Buffer(GLenum target, GLsizeiptr bytes, void *data, Usage usage) :
     target_(target)
 {
 
     glGenBuffers(1, &id_);
 
     Bind b(*this);
-    glBufferData(target_, bytes, data, usage);
+    glBufferData(target_, bytes, data, (GLenum)usage);
 
 }
 
@@ -34,7 +34,7 @@ void Buffer::unbind() const
 VertexBuffer::VertexBuffer(
     GLsizeiptr bytes,
     void* data,
-    GLenum usage,
+    Usage usage,
     GLsizei count,
     const std::vector<Descriptor>& descriptors
 ) :
@@ -55,19 +55,39 @@ std::vector<VertexBuffer::Descriptor>& VertexBuffer::descriptors()
     return descriptors_;
 }
 
+const std::vector<VertexBuffer::Descriptor>& VertexBuffer::descriptors() const
+{
+    return descriptors_;
+}
+
 ElementBuffer::ElementBuffer(
     GLsizeiptr bytes,
     void* data,
-    GLenum type,
-    GLenum usage
+    Type type,
+    Usage usage
 ) :
     Buffer(GL_ELEMENT_ARRAY_BUFFER, bytes, data, usage),
     type_(type)
 {
-
+    switch (type) {
+    case Type::UNSIGNED_BYTE:
+        count_ = bytes;
+        break;
+    case Type::UNSIGNED_SHORT:
+        count_ = bytes / 2;
+        break;
+    case Type::UNSIGNED_INT:
+        count_ = bytes / 4;
+        break;
+    }
 }
 
-const GLenum ElementBuffer::type() const
+const GLsizei ElementBuffer::count() const
+{
+    return count_;
+}
+
+const ElementBuffer::Type ElementBuffer::type() const
 {
     return type_;
 }
@@ -161,7 +181,7 @@ GLuint UniformBuffer::Uniform_Buffer_Count_ = 0;
 UniformBuffer::UniformBuffer(
     GLsizeiptr bytes,
     void* data,
-    GLenum usage
+    Usage usage
 ) :
     Buffer(GL_UNIFORM_BUFFER, bytes, data, usage),
     binding_point_(Uniform_Buffer_Count_++)

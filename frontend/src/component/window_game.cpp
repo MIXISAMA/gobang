@@ -10,7 +10,7 @@ WindowGame::WindowGame(imgui::Context& context) :
     program_(
         "model", uniform_buffer_,
         gl::Shader("resource/glsl/demo.vert", GL_VERTEX_SHADER),
-        gl::Shader("resource/glsl/demo.frag", GL_FRAGMENT_SHADER)
+        gl::Shader("resource/glsl/demo2.frag", GL_FRAGMENT_SHADER)
     )
 {
     geo::Plane plane;
@@ -18,7 +18,7 @@ WindowGame::WindowGame(imgui::Context& context) :
     vertex_buffer_ = new gl::VertexBuffer(
         plane.vertices().size() * sizeof(glm::vec3),
         (void*)plane.vertices().data(),
-        GL_STATIC_DRAW,
+        gl::VertexBuffer::Usage::STATIC_DRAW,
         plane.vertices().size(),
         {gl::VertexBuffer::Descriptor{
             .size       = 3,

@@ -5,13 +5,13 @@ namespace mixi
 namespace gl
 {
 
-VertexArray::VertexArray(GLenum mode) :
+VertexArray::VertexArray(Mode mode) :
     mode_(mode),
     has_vertex_buffer_(false),
     has_element_buffer_(false),
     default_arrays_count_(0),
     default_elements_count_(0),
-    default_elements_type_(GL_TRIANGLES)
+    default_elements_type_(ElementBuffer::Type::UNSIGNED_INT)
 {
     glGenVertexArrays(1, &id_);
 }
@@ -31,12 +31,12 @@ void VertexArray::unbind() const
     glBindVertexArray(0);
 }
 
-GLenum VertexArray::mode() const
+VertexArray::Mode VertexArray::mode() const
 {
     return mode_;
 }
 
-void VertexArray::mode(GLenum m)
+void VertexArray::mode(Mode m)
 {
     mode_ = m;
 }
@@ -49,7 +49,7 @@ void VertexArray::bind_vertex_buffer(
     vertex_buffer.bind();
 
     for (auto [location, idx]: location_descriptor_map) {
-        const auto& ds = vertex_buffer.descriptors();
+        const std::vector<VertexBuffer::Descriptor>& ds = vertex_buffer.descriptors();
         const VertexBuffer::Descriptor& d = ds[idx];
         glVertexAttribPointer(location, d.size, d.type, d.normalized, d.stride, d.pointer);
         glEnableVertexAttribArray(location);
@@ -65,13 +65,14 @@ void VertexArray::bind_element_buffer(
     bind();
     element_buffer.bind();
     has_element_buffer_ = true;
+    default_elements_count_ = element_buffer.count();
     default_elements_type_ = element_buffer.type();
 }
 
 void VertexArray::draw_arrays(GLint first, GLsizei count) const
 {
     bind();
-    glDrawArrays(mode_, first, count);
+    glDrawArrays((GLenum)mode_, first, count);
 }
 
 void VertexArray::draw_arrays() const
@@ -82,7 +83,7 @@ void VertexArray::draw_arrays() const
 void VertexArray::draw_elements(GLsizei first_byte, GLsizei count) const
 {
     bind();
-    glDrawElements(mode_, count, default_elements_type_, (void*)(uintptr_t)first_byte);
+    glDrawElements((GLenum)mode_, count, (GLenum)default_elements_type_, (void*)(uintptr_t)first_byte);
 }
 
 void VertexArray::draw_elements() const
@@ -105,6 +106,37 @@ void VertexArray::draw() const
         draw_elements();
     } else if (has_vertex_buffer_) {
         draw_arrays();
+    }
+}
+
+int VertexArray::Cal_Elements_Count_(Mode m, int count)
+{
+    switch (m)
+    {
+    case Mode::POINTS:
+        return count;
+    case Mode::LINE_STRIP:
+        return count;
+    case Mode::LINE_LOOP:
+        return count;
+    case Mode::LINES:
+        return count;
+    case Mode::LINE_STRIP_ADJACENCY:
+        return count;
+    case Mode::LINES_ADJACENCY:
+        return count;
+    case Mode::TRIANGLE_STRIP:
+        return count;
+    case Mode::TRIANGLE_FAN:
+        return count;
+    case Mode::TRIANGLES:
+        return count;
+    case Mode::TRIANGLE_STRIP_ADJACENCY:
+        return count;
+    case Mode::TRIANGLES_ADJACENCY:
+        return count;
+    case Mode::PATCHES:
+        return count;
     }
 }
 
