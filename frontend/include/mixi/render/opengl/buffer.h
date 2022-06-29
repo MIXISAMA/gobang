@@ -44,6 +44,8 @@ class VertexBuffer : public Buffer
 
 public:
 
+    using Ptr = std::shared_ptr<VertexBuffer>;
+
     struct Descriptor
     {
         GLint size;
@@ -78,6 +80,8 @@ class ElementBuffer : public Buffer
 {
 
 public:
+
+    using Ptr = std::shared_ptr<ElementBuffer>;
 
     enum class Type
     {

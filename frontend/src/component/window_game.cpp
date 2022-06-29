@@ -15,12 +15,12 @@ WindowGame::WindowGame(imgui::Context& context) :
 {
     geo::Plane plane;
 
-    vertex_buffer_ = new gl::VertexBuffer(
+    gl::VertexBuffer::Ptr vertex_buffer_ = std::make_shared<gl::VertexBuffer>(
         plane.vertices().size() * sizeof(glm::vec3),
         (void*)plane.vertices().data(),
         gl::VertexBuffer::Usage::STATIC_DRAW,
         plane.vertices().size(),
-        {gl::VertexBuffer::Descriptor{
+        std::vector<gl::VertexBuffer::Descriptor>{{
             .size       = 3,
             .type       = GL_FLOAT,
             .normalized = GL_FALSE,
@@ -29,13 +29,13 @@ WindowGame::WindowGame(imgui::Context& context) :
         }}
     );
 
-    element_buffer_ = new gl::ElementBuffer(
+    gl::ElementBuffer::Ptr element_buffer_ = std::make_shared<gl::ElementBuffer>(
         plane.indices().size() * sizeof(glm::uvec3),
         (void*)plane.indices().data()
     );
 
-    vertex_array_.bind_vertex_buffer(*vertex_buffer_, {{0, 0}});
-    vertex_array_.bind_element_buffer(*element_buffer_);
+    vertex_array_.bind_vertex_buffer(vertex_buffer_, {{0, 0}});
+    vertex_array_.bind_element_buffer(element_buffer_);
 
     drawable_group_.node_members().emplace_back(
         program_, vertex_array_
@@ -44,8 +44,7 @@ WindowGame::WindowGame(imgui::Context& context) :
 
 WindowGame::~WindowGame()
 {
-    delete vertex_buffer_;
-    delete element_buffer_;
+
 }
 
 void WindowGame::content()

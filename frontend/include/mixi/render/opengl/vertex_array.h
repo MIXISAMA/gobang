@@ -40,11 +40,11 @@ public:
     void mode(Mode m);
 
     void bind_vertex_buffer(
-        const VertexBuffer& vertex_buffer,
+        const VertexBuffer::Ptr& vertex_buffer,
         const std::vector<std::pair<int, int>>& location_descriptor_map
     );
     void bind_element_buffer(
-        const ElementBuffer& element_buffer
+        const ElementBuffer::Ptr& element_buffer
     );
 
     void draw_arrays(GLint first, GLsizei count) const;
@@ -60,11 +60,8 @@ protected:
 
     Mode mode_;
 
-    bool has_vertex_buffer_;
-    bool has_element_buffer_;
-    GLsizei default_arrays_count_;
-    GLsizei default_elements_count_;
-    ElementBuffer::Type default_elements_type_;
+    VertexBuffer::Ptr vertex_buffer_;
+    ElementBuffer::Ptr element_buffer_;
 
     static int Cal_Elements_Count_(Mode m, int count);
 

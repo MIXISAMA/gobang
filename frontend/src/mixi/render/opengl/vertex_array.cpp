@@ -6,12 +6,7 @@ namespace gl
 {
 
 VertexArray::VertexArray(Mode mode) :
-    mode_(mode),
-    has_vertex_buffer_(false),
-    has_element_buffer_(false),
-    default_arrays_count_(0),
-    default_elements_count_(0),
-    default_elements_type_(ElementBuffer::Type::UNSIGNED_INT)
+    mode_(mode)
 {
     glGenVertexArrays(1, &id_);
 }
@@ -42,31 +37,30 @@ void VertexArray::mode(Mode m)
 }
 
 void VertexArray::bind_vertex_buffer(
-    const VertexBuffer& vertex_buffer,
+    const VertexBuffer::Ptr& vertex_buffer,
     const std::vector<std::pair<int, int>>& location_descriptor_map
 ) {
     bind();
-    vertex_buffer.bind();
+    vertex_buffer->bind();
+
+    vertex_buffer_ = vertex_buffer;
 
     for (auto [location, idx]: location_descriptor_map) {
-        const std::vector<VertexBuffer::Descriptor>& ds = vertex_buffer.descriptors();
+        const std::vector<VertexBuffer::Descriptor>& ds = vertex_buffer->descriptors();
         const VertexBuffer::Descriptor& d = ds[idx];
         glVertexAttribPointer(location, d.size, d.type, d.normalized, d.stride, d.pointer);
         glEnableVertexAttribArray(location);
     }
 
-    has_vertex_buffer_ = true;
-    default_arrays_count_ = vertex_buffer.count();
 }
 
 void VertexArray::bind_element_buffer(
-    const ElementBuffer& element_buffer
+    const ElementBuffer::Ptr& element_buffer
 ) {
     bind();
-    element_buffer.bind();
-    has_element_buffer_ = true;
-    default_elements_count_ = element_buffer.count();
-    default_elements_type_ = element_buffer.type();
+    element_buffer->bind();
+
+    element_buffer_ = element_buffer;
 }
 
 void VertexArray::draw_arrays(GLint first, GLsizei count) const
@@ -77,34 +71,34 @@ void VertexArray::draw_arrays(GLint first, GLsizei count) const
 
 void VertexArray::draw_arrays() const
 {
-    draw_arrays(0, default_arrays_count_);
+    draw_arrays(0, vertex_buffer_->count());
 }
 
 void VertexArray::draw_elements(GLsizei first_byte, GLsizei count) const
 {
     bind();
-    glDrawElements((GLenum)mode_, count, (GLenum)default_elements_type_, (void*)(uintptr_t)first_byte);
+    glDrawElements((GLenum)mode_, count, (GLenum)element_buffer_->type(), (void*)(uintptr_t)first_byte);
 }
 
 void VertexArray::draw_elements() const
 {
-    draw_elements(0, default_elements_count_);
+    draw_elements(0, element_buffer_->count());
 }
 
 void VertexArray::draw(GLint first, GLsizei count) const
 {
-    if (has_element_buffer_) {
+    if (element_buffer_) {
         draw_elements(first, count);
-    } else if (has_vertex_buffer_) {
+    } else if (vertex_buffer_) {
         draw_arrays(first, count);
     }
 }
 
 void VertexArray::draw() const
 {
-    if (has_element_buffer_) {
+    if (element_buffer_) {
         draw_elements();
-    } else if (has_vertex_buffer_) {
+    } else if (vertex_buffer_) {
         draw_arrays();
     }
 }

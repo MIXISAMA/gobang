@@ -31,8 +31,6 @@ private:
 
     gl::FrameBuffer frame_buffer_;
     gl::VertexArray vertex_array_;
-    gl::VertexBuffer* vertex_buffer_;
-    gl::ElementBuffer* element_buffer_;
 
     gl::eng::CameraUniformBuffer uniform_buffer_;
     gl::eng::CameraModelProgram program_;
