@@ -10,12 +10,11 @@ namespace gobang
 {
 
 ServerRoomSearch::ServerRoomSearch(boost::asio::io_context& io_context) :
-    recv_buffer_(1 << 16),
-    socket_(io_context, boost::asio::ip::udp::endpoint()),
-    has_new_rooms_(false)
+    io_context_(io_context),
+    socket_(io_context, boost::asio::ip::udp::endpoint())
 {
     socket_.set_option(boost::asio::ip::udp::socket::broadcast(true));
-    start_receive_();
+    boost::asio::co_spawn(io_context_, receive_(), boost::asio::detached);
 }
 
 ServerRoomSearch::~ServerRoomSearch()
@@ -23,91 +22,67 @@ ServerRoomSearch::~ServerRoomSearch()
     socket_.close();
 }
 
-void ServerRoomSearch::update_rooms()
-{
-    if (has_new_rooms_) {
-        std::shared_lock lock(room_set_mutex_);
-        rooms_.assign(room_set_.begin(), room_set_.end());
-        has_new_rooms_ = false;
-    }
-}
-
 void ServerRoomSearch::search_room(const boost::asio::ip::udp::endpoint &endpoint)
 {
-    room_set_.clear();
+    boost::asio::co_spawn(io_context_, send_search_room_(endpoint), boost::asio::detached);
+}
+
+boost::asio::awaitable<void> ServerRoomSearch::receive_()
+{
+    Log::Info("ServerRoomSearch receive_");
+    std::vector<std::byte> recv_buffer_(1 << 16);
+    boost::asio::ip::udp::endpoint sender_endpoint_;
+    while (true) {     
+        co_await socket_.async_receive_from(
+            boost::asio::buffer(recv_buffer_),
+            sender_endpoint_,
+            boost::asio::use_awaitable
+        );
+        Log::Info("ServerRoomSearch received");
+
+        net::Serializer s(recv_buffer_);
+        u_int16_t room_num;// = s.read_uint16();
+        s >> room_num;
+        for (u_int16_t i = 0; i < room_num; i++) {
+            ConciseRoom room;
+            s >> room.id >> room.name >> room.is_playing;
+            for (int j = 0; j < 2; j++) {
+                bool exist_player;
+                s >> exist_player;
+                if (exist_player) {
+                    s >> room.player_name[j];
+                }
+            }
+            s >> room.onlooker_num >> room.max_onlooker_num;
+            room.endpoint.address(sender_endpoint_.address());
+            room.endpoint.port(sender_endpoint_.port());
+
+            std::unique_lock lock(rooms_mutex_);
+            rooms_.push_back(room);
+        }
+    }
+}
+
+boost::asio::awaitable<void> ServerRoomSearch::send_search_room_(const boost::asio::ip::udp::endpoint endpoint)
+{
+    Log::Info("ServerRoomSearch send search room");
     net::Serializer s;
     s << VERSION;
-    socket_.async_send_to(
+    co_await socket_.async_send_to(
         boost::asio::buffer(s.raw),
         endpoint,
-        boost::bind(&ServerRoomSearch::handle_send_, this,
-            boost::asio::placeholders::error//,
-            // boost::asio::placeholders::bytes_transferred
-        )
+        boost::asio::use_awaitable
     );
 }
 
-const std::vector<ConciseRoom>& ServerRoomSearch::rooms()
+std::vector<ConciseRoom> ServerRoomSearch::new_rooms()
 {
-    return rooms_;
-}
-
-void ServerRoomSearch::start_receive_()
-{
-    socket_.async_receive_from(
-        boost::asio::buffer(recv_buffer_),
-        sender_endpoint_,
-        boost::bind(&ServerRoomSearch::handle_receive_, this,
-            boost::asio::placeholders::error
-            // boost::asio::placeholders::bytes_transferred
-        )
-    );
-}
-
-void ServerRoomSearch::handle_receive_(
-    const boost::system::error_code& error
-    // std::size_t /*bytes_transferred*/
-) {
-    if (error) {
-        std::ostringstream oss;
-        oss << "Search Room Server Error: "
-            << error.message();
-        Log::Error(oss.str());
-        return;
+    if (rooms_mutex_.try_lock()) {
+        std::vector<ConciseRoom> new_rooms = std::move(rooms_);
+        rooms_mutex_.unlock();
+        return new_rooms;
     }
-
-    net::Serializer s(recv_buffer_);
-    u_int16_t room_num;// = s.read_uint16();
-    s >> room_num;
-    for (u_int16_t i = 0; i < room_num; i++) {
-        ConciseRoom room;
-        s >> room.id >> room.name >> room.is_playing;
-        for (int j = 0; j < 2; j++) {
-            bool exist_player;
-            s >> exist_player;
-            if (exist_player) {
-                s >> room.player_name[j];
-            }
-        }
-        s >> room.onlooker_num >> room.max_onlooker_num;
-        room.endpoint.address(sender_endpoint_.address());
-        room.endpoint.port(sender_endpoint_.port());
-
-        std::unique_lock lock(room_set_mutex_);
-        auto [_, success] = room_set_.insert(room);
-        if (success) {
-            has_new_rooms_ = true;
-        }
-    }
-
-    start_receive_();
-}
-
-void ServerRoomSearch::handle_send_(
-    const boost::system::error_code& error
-    // std::size_t /*bytes_transferred*/
-) {
-    // start_receive_();
+    return {};
 }
 
 bool ConciseRoom::operator < (const ConciseRoom& room) const

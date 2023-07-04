@@ -12,69 +12,65 @@ namespace game
 struct User
 {
     using Ptr = std::shared_ptr<User>;
-
     std::string name;
 };
+
+struct Player : public User
+{
+    using Ptr = std::shared_ptr<Player>;
+    Chess::Color color;
+    bool is_ready;
+    bool is_repentant;
+};
+
 
 class Room
 {
 
 public:
-    
-    Room(
-        const std::string& name,
-        u_int16_t max_users
-    );
+
+    Room();
     ~Room() = default;
+
+    std::string name() const;
+    void name(const std::string& s);
+
+    int max_onlookers() const;
+    void max_onlookers(int m);
 
     bool is_playing() const;
     void is_playing(bool b);
 
-    const std::string& name() const;
-    u_int16_t max_users() const;
+    Player::Ptr self() const;
+    void self(Player::Ptr p);
+    
+    Player::Ptr opponent() const;
+    void opponent(Player::Ptr p);
 
-    std::vector<User::Ptr>& users();
-    const std::vector<User::Ptr>& users() const;
+    void copy_onlookers(
+        std::vector<User::Ptr>& onlookers,
+        long long& onlookers_version
+    );
 
-    User::Ptr user(const std::string& name) const;
-
-    User::Ptr player(Chess::Color color) const;
-    void player(Chess::Color color, const User::Ptr& player);
-
-    User::Ptr repentant() const;
-    void repentant(const User::Ptr& user);
-
-    User::Ptr ready_user() const;
-    void ready_user(const User::Ptr& user);
+    void onlooker_join(const std::string& name);
+    void onlooker_leave(const std::string& name);
 
     Chess& chess();
 
-    void onlooker_join(const std::string& name);    
-    void player_join(const std::string& name, Chess::Color color);
-    void user_leave(const std::string& name);
-
-    void stone(const std::string& name, std::byte coor);
-
 protected:
 
-    const std::string name_;
-    const u_int16_t max_users_;
+    std::string name_;
+    int max_onlookers_;
 
     bool is_playing_;
-    std::vector<User::Ptr> users_;
-    User::Ptr players_[2];
-    User::Ptr repentant_;
-    User::Ptr ready_user_;
+    Player::Ptr self_;
+    Player::Ptr opponent_;
+
+    std::vector<User::Ptr> onlookers_;
+    std::mutex onlookers_mutex_;
+    long long onlookers_version_;
 
     Chess chess_;
-
-    std::vector<User::Ptr>::const_iterator
-    user_iter_(const std::string& name) const;
-
-    void clean_();
-
-    void onlooker_join_(const User::Ptr& user);
-    void player_join_(const User::Ptr& player, Chess::Color color);
 
 };
 

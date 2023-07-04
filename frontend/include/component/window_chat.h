@@ -1,17 +1,17 @@
 #pragma once
 #include "pch.h"
-#include "gui/imgui/component/window.h"
+#include "gui/component.h"
 
 namespace mixi
 {
 namespace gobang
 {
 
-class WindowChat : public imgui::Window
+class WindowChat : public gui::Window
 {
 public:
 
-    WindowChat(imgui::Context& context);
+    WindowChat(gui::Context& context);
     ~WindowChat();
 
     void add_message(const std::string& message);

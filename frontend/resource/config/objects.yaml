@@ -1,0 +1,10 @@
+chessboard:
+- tianyuan:
+  - x: 0
+  - y: 0
+  - z: 0.066143
+- zuoxia:
+  - x: -0.7
+  - y: -0.7
+  - z: 0.066143
+- size: 15

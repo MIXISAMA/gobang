@@ -5,22 +5,21 @@ namespace mixi
 namespace gobang
 {
 
-ComponentRoom::ComponentRoom(
-    imgui::Context& context,
-    ServerGameRoom& server_game_room
-) :
-    imgui::BaseComponent(context),
-    server_game_room_(server_game_room),
+ComponentRoom::ComponentRoom(gui::Context& context) :
+    gui::Component<ComponentRoom>(context),
+    io_context_game_room_(),
+    server_game_room_(io_context_game_room_, game_room_),
     window_game_(context),
     window_chat_(context),
-    window_dashboard_(context, server_game_room.game_room())
+    window_dashboard_(context, game_room_)
 {
-
+    boost::thread thread_game_room([this]{io_context_game_room_.run();});
+    thread_game_room.detach();
 }
 
 ComponentRoom::~ComponentRoom()
 {
-
+    io_context_game_room_.stop();
 }
 
 void ComponentRoom::content()

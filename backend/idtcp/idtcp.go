@@ -8,16 +8,7 @@ import (
 )
 
 type Conn struct {
-	TCPConn *net.TCPConn
-	buffer  []byte
-	tmpbuf  []byte
-}
-
-func NewConn(tcpConn *net.TCPConn) *Conn {
-	idtcpConn := new(Conn)
-	idtcpConn.TCPConn = tcpConn
-	idtcpConn.tmpbuf = make([]byte, 65536)
-	return idtcpConn
+	*net.TCPConn
 }
 
 func (conn *Conn) Write(instruction uint16, data []byte) (int, error) {
@@ -57,7 +48,7 @@ func (conn *Conn) ReadN(buffer []byte) error {
 
 func (conn *Conn) Read(instruction *uint16, data *[]byte) (int, error) {
 
-	conn.buffer = nil
+	// conn.buffer = nil
 
 	package_bytes := make([]byte, 2)
 	err := conn.ReadN(package_bytes)

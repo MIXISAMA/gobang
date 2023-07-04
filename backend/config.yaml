@@ -1,10 +1,13 @@
 server: 0.0.0.0:52039
+name: mixi server
 
-rooms:
+# User generated password requires uuid,
+# so please never change uuid unless you want to lose all users.
+uuid: 
 
-  - name: gobang room 1
-    maxusers: 64
+database: ./database.db
 
-  - name: gobang room 2
-    maxusers: 64
+roomsnames:
+  - gobang room 1
+  - gobang room 2
 

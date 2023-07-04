@@ -4,8 +4,8 @@
 namespace mixi {
 namespace gobang {
 
-WindowChat::WindowChat(imgui::Context& context) :
-    imgui::Window(context, gettext("Chat")),
+WindowChat::WindowChat(gui::Context& context) :
+    gui::Window(context, gettext("Chat")),
     has_input_(false)
 {
     input_buffer_[0] = '\0';

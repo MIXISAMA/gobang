@@ -3,14 +3,10 @@
 namespace mixi {
 namespace gobang {
 
-WindowHome::WindowHome(
-    imgui::Context& context,
-    ServerGameRoom& server_game_room
-) :
-    imgui::Window(context, gettext("Home")),
-    server_game_room_(server_game_room),
-    room_create_modal_(context),
-    room_search_modal_(context, server_game_room_)
+WindowHome::WindowHome(gui::Context& context) :
+    gui::Window(context, gettext("Home")),
+    modal_room_create_(context),
+    modal_room_search_(context)
 {
 
 }
@@ -32,22 +28,26 @@ void WindowHome::content()
     ImVec2 button_pos = ImVec2(window_size.x * 0.5f - 160.0f, window_size.y * 0.6f - 40.0f);
     ImGui::SetCursorPos(button_pos);
     if (ImGui::Button(gettext("Create Room"), ImVec2(160, 80))) {
-        room_create_modal_.open();
+        modal_room_create_.open();
     }
     ImGui::SameLine();
     if (ImGui::Button(gettext("Search Room"), ImVec2(160, 80))) {
-        room_search_modal_.open();
+        modal_room_search_.open();
     }
 
-    room_create_modal_.render();
-
-    room_search_modal_.render();
+    modal_room_create_.render();
+    modal_room_search_.render();
 
 }
 
-bool WindowHome::join_done()
+const ModalRoomCreate& WindowHome::modal_room_create() const
 {
-    return room_search_modal_.join_done();
+    return modal_room_create_;
+}
+
+const ModalRoomSearch& WindowHome::modal_room_search() const
+{
+    return modal_room_search_;
 }
 
 } // namespace gobang

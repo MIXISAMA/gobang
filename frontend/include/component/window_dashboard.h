@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "gui/imgui/component/window.h"
+#include "gui/component.h"
 
 #include "render/opengl/texture.h"
 
@@ -12,12 +12,12 @@ namespace mixi
 namespace gobang
 {
 
-class WindowDashboard : public imgui::Window
+class WindowDashboard : public gui::Window
 {
 public:
 
     WindowDashboard(
-        imgui::Context& context,
+        gui::Context& context,
         const game::Room& room
     );
     ~WindowDashboard();

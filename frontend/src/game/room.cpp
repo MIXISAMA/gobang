@@ -8,12 +8,8 @@ namespace gobang
 namespace game
 {
 
-Room::Room(
-    const std::string& name,
-    u_int16_t max_users
-) : 
-    name_(name),
-    max_users_(max_users),
+Room::Room() : 
+    max_onlookers_(16),
     is_playing_(false)
 {
 
@@ -29,146 +25,84 @@ void Room::is_playing(bool b)
     is_playing_ = b;
 }
 
-const std::string& Room::name() const
+std::string Room::name() const
 {
     return name_;
 }
 
-u_int16_t Room::max_users() const
+void Room::name(const std::string& s)
 {
-    return max_users_;
+    name_ = s;
 }
 
-std::vector<User::Ptr>& Room::users()
+int Room::max_onlookers() const
 {
-    return users_;
+    return max_onlookers_;
 }
 
-const std::vector<User::Ptr>& Room::users() const
+void Room::max_onlookers(int m)
 {
-    return users_;
+    max_onlookers_ = m;
 }
 
-User::Ptr Room::user(const std::string& name) const
+Player::Ptr Room::self() const
 {
-    auto iter = user_iter_(name);
-    if (iter == users_.end()) {
-        return nullptr;
+    return self_;
+}
+
+void Room::self(Player::Ptr p)
+{
+    self_ = p;
+}
+
+Player::Ptr Room::opponent() const
+{
+    return opponent_;
+}
+
+void Room::opponent(Player::Ptr p)
+{
+    opponent_ = p;
+}
+
+void Room::copy_onlookers(
+    std::vector<User::Ptr>& onlookers,
+    long long& onlookers_version
+) {
+    if (!onlookers_mutex_.try_lock()) {
+        return;
     }
-    return *iter;
+    if (onlookers_version != onlookers_version_) {
+        onlookers_version = onlookers_version_;
+        onlookers.assign(onlookers_.begin(), onlookers_.end());
+    }
+    onlookers_mutex_.unlock();
 }
 
-User::Ptr Room::player(Chess::Color color) const
+void Room::onlooker_join(const std::string& name)
 {
-    return players_[(int)color];
+    onlookers_mutex_.lock();
+    onlookers_.push_back(User::Ptr(new User{.name = name}));
+    onlookers_version_++;
+    onlookers_mutex_.unlock();
 }
 
-void Room::player(Chess::Color color, const User::Ptr& player)
+void Room::onlooker_leave(const std::string& name)
 {
-    players_[(int)color] = player;
-}
-
-User::Ptr Room::repentant() const
-{
-    return repentant_;
-}
-
-void Room::repentant(const User::Ptr& user)
-{
-    repentant_ = user;
-}
-
-User::Ptr Room::ready_user() const
-{
-    return ready_user_;
-}
-
-void Room::ready_user(const User::Ptr& user)
-{
-    ready_user_ = user;
+    onlookers_mutex_.lock();
+    for (auto iter = onlookers_.begin(); iter != onlookers_.end(); iter++) {
+        if ((*iter)->name == name) {
+            onlookers_.erase(iter);
+            onlookers_version_++;
+            break;
+        }
+    }
+    onlookers_mutex_.unlock();
 }
 
 Chess& Room::chess()
 {
     return chess_;
-}
-
-void Room::onlooker_join_(const User::Ptr& user)
-{
-    users_.push_back(user);
-}
-
-void Room::onlooker_join(const std::string& name)
-{
-    // no exception, because of thin client
-
-    User::Ptr user = User::Ptr(new User{.name = name});
-    onlooker_join_(user);
-}
-
-void Room::player_join_(const User::Ptr& player, Chess::Color color)
-{
-    players_[(int)color] = player;
-    onlooker_join_(player);
-}
-
-void Room::player_join(const std::string& name, Chess::Color color)
-{
-    User::Ptr player = User::Ptr(new User{.name = name});
-    player_join_(player, color);
-}
-
-void Room::user_leave(const std::string& name)
-{
- 
-    auto iter = user_iter_(name);
-    User::Ptr user = *iter;
-    users_.erase(iter);
-    for (int i = 0; i < 2; i++) {
-        if (players_[i] == user) {
-            players_[i].reset();
-            clean_();
-        }
-    }
-    if (repentant_ == user) {
-        repentant_.reset();
-    }
-    if (ready_user_ == user) {
-        ready_user_.reset();
-    }
-
-}
-
-void Room::stone(const std::string& name, std::byte coor)
-{
-    for (int i = 0; i < 2; i++) {
-        if (players_[i]->name == name) {
-            Chess::Color color = (Chess::Color)i;
-            chess_.stone(coor, color);
-            break;
-        }
-    }
-}
-
-std::vector<User::Ptr>::const_iterator
-Room::user_iter_(const std::string& name) const
-{
-    return std::find_if(
-        users_.begin(),
-        users_.end(),
-        [name](const User::Ptr& user){
-            return user->name == name;
-        }
-    );
-}
-
-void Room::clean_()
-{
-    is_playing_ = false;
-    repentant_.reset();
-    ready_user_.reset();
-    chess_.clean();
-    std::swap(players_[0], players_[1]);
 }
 
 } // namespace game

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pch.h"
-#include "gui/imgui/component/popup.h"
+#include "gui/component.h"
 
 
 namespace mixi
@@ -9,12 +9,12 @@ namespace mixi
 namespace gobang
 {
 
-class ModalRoomCreate : public imgui::PopupModal
+class ModalRoomCreate : public gui::PopupModal
 {
 
 public:
 
-    ModalRoomCreate(imgui::Context& context);
+    ModalRoomCreate(gui::Context& context);
     ~ModalRoomCreate();
 
     void content() override;

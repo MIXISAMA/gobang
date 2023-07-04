@@ -32,29 +32,18 @@ public:
 
     void search_room(const boost::asio::ip::udp::endpoint &endpoint);
 
-    const std::vector<ConciseRoom>& rooms();
-    void update_rooms();
+    std::vector<ConciseRoom> new_rooms();
 
 private:
 
-    void start_receive_();
-    void handle_receive_(
-        const boost::system::error_code& error
-        // std::size_t /*bytes_transferred*/
-    );
-    void handle_send_(const boost::system::error_code& error);
-
+    boost::asio::io_context& io_context_;
     boost::asio::ip::udp::socket socket_;
-    std::vector<std::byte>  recv_buffer_;
-    boost::asio::ip::udp::endpoint sender_endpoint_;
 
-    
-    std::set<ConciseRoom> room_set_;
-    std::shared_mutex room_set_mutex_;
-
-    std::atomic_bool has_new_rooms_;
+    std::mutex rooms_mutex_;
     std::vector<ConciseRoom> rooms_;
-    
+
+    boost::asio::awaitable<void> send_search_room_(const boost::asio::ip::udp::endpoint endpoint);
+    boost::asio::awaitable<void> receive_();
 
 };
 

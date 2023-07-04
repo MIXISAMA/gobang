@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pch.h"
-#include "gui/imgui/component/popup.h"
+#include "gui/component.h"
 
 
 namespace mixi
@@ -9,12 +9,12 @@ namespace mixi
 namespace gobang
 {
 
-class ModalConfirmLeave : public imgui::PopupModal
+class ModalConfirmLeave : public gui::PopupModal
 {
 
 public:
 
-    ModalConfirmLeave(imgui::Context& context);
+    ModalConfirmLeave(gui::Context& context);
     ~ModalConfirmLeave() = default;
 
     bool leave();

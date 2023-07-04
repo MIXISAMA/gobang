@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "game/room.h"
 
-#include "net/idtcp_client.h"
+#include "net/idtcp.h"
 
 namespace mixi
 {
@@ -22,7 +22,10 @@ public:
         Failed,
     };
 
-    ServerGameRoom(boost::asio::io_context& io_context);
+    ServerGameRoom(
+        boost::asio::io_context& io_context,
+        game::Room& game_room
+    );
     ~ServerGameRoom();
 
     void join_room(
@@ -35,8 +38,6 @@ public:
     JoinRoomState join_room_state();
 
     void leave_room();
-
-    const game::Room& game_room();
 
     void send_message(const std::string& message);
     bool has_message();
@@ -64,14 +65,11 @@ protected:
 
     boost::asio::io_context& io_context_;
 
-    std::shared_ptr<net::IdtcpClient> client_;
-    std::shared_ptr<game::Room> game_room_;
-
+    game::Room& game_room_;
+    net::IdtcpClient client_;
     const net::IdtcpClient::Distribute distribute_;
 
     JoinRoomState join_room_state_;
-
-    std::string nickname_;
 
     std::shared_mutex message_queue_mutex_;
     std::queue<std::tuple<
@@ -80,22 +78,16 @@ protected:
         std::string
     >> message_queue_;
 
-    void connect_error_notice_(
-        bool error,
-        u_int16_t room_id,
-        const std::string& nickname,
-        bool is_player
-    );
-
 private:
 
-    void send_join_room_(
+    boost::asio::awaitable<void> connect_and_join_room_(
+        const boost::asio::ip::tcp::endpoint& remote_endpoint,
         u_int16_t room_id,
         const std::string& nickname,
         bool is_player
     );
-    void send_leave_room_();
-    void send_message_(const std::string& message);
+    boost::asio::awaitable<void> send_leave_room_();
+    boost::asio::awaitable<void> send_send_message_(const std::string& message);
 
     void receive_generic_error_notification_(const std::vector<std::byte>& data);
     void receive_all_room_information_      (const std::vector<std::byte>& data);

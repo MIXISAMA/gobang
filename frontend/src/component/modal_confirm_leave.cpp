@@ -5,8 +5,8 @@ namespace mixi
 namespace gobang
 {
 
-ModalConfirmLeave::ModalConfirmLeave(imgui::Context& context) :
-    PopupModal(context, gettext("Exit")),
+ModalConfirmLeave::ModalConfirmLeave(gui::Context& context) :
+    PopupModal(context, gettext("Exit"), ImGuiWindowFlags_AlwaysAutoResize),
     leave_(false)
 {
 

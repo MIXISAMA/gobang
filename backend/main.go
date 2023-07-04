@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 
-	"github.com/MIXISAMA/gobang/backend/config"
-	"github.com/MIXISAMA/gobang/backend/game"
+	"github.com/MIXISAMA/gobang/backend/idtcp"
+	usermiddleware "github.com/MIXISAMA/gobang/backend/middlewares"
 	"github.com/MIXISAMA/gobang/backend/server"
+	"github.com/MIXISAMA/gobang/backend/udp"
 )
 
 func main() {
@@ -14,21 +15,23 @@ func main() {
 	flag.StringVar(&configPath, "config", "./config.yaml", "config file path")
 	flag.Parse()
 
-	conf, err := config.ReadConfig(configPath)
+	conf, err := ReadConfig(configPath)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	game.LoadGdFromConfig(conf)
-
-	var udpServer = server.NewUdpServer(conf.Server, game.UdpPipe)
+	var udpServer = udp.NewServer(conf.Server, server.UdpPipe)
 	go udpServer.Run()
 
-	var idtcpServer = server.NewIdtcpServer(
+	userMiddleware, err := usermiddleware.New(2, 2, conf.DatabasePath, conf.Uuid)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	idtcp.NewServer(
 		conf.Server,
-		game.Endpoints,
-		game.OnDisconnect,
-	)
-	idtcpServer.Run()
+		server.Endpoints,
+		[]idtcp.Middleware{userMiddleware},
+	).Run()
 
 }

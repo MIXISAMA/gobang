@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-#include "gui/imgui/component/component.h"
+#include "gui/component.h"
 
 #include "component/window_home.h"
 #include "component/component_room.h"
@@ -11,23 +11,26 @@
 namespace mixi {
 namespace gobang {
 
-class ComponentRoot : public imgui::BaseComponent
+class ComponentRoot : public gui::Component<ComponentRoot>
 {
 public:
 
-    ComponentRoot(imgui::Context& context);
+    ComponentRoot(gui::Context& context);
     ~ComponentRoot();
 
     void content() override;
 
 private:
 
-    WindowHome::Ptr window_home_;
-    ComponentRoom::Ptr component_room_;
+    std::unique_ptr<WindowHome>    window_home_;
+    std::unique_ptr<ComponentRoom> component_room_;
 
-    ServerGameRoom server_game_room_;
+    // ServerGameRoom server_game_room_;
 
     bool gaming_;
+
+    void render_game_room_();
+    void render_home_window_();
 
 };
 

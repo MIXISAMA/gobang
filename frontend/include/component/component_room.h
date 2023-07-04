@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "gui/imgui/component/component.h"
+#include "gui/component.h"
 
 #include "server/server_game_room.h"
 
@@ -13,16 +13,11 @@ namespace mixi
 namespace gobang
 {
 
-class ComponentRoom : public imgui::BaseComponent
+class ComponentRoom : public gui::Component<ComponentRoom>
 {
 public:
 
-    using Ptr = std::shared_ptr<ComponentRoom>;
-
-    ComponentRoom(
-        imgui::Context& context,
-        ServerGameRoom& server_game_room
-    );
+    ComponentRoom(gui::Context& context);
     ~ComponentRoom();
 
     void content() override;
@@ -31,12 +26,14 @@ public:
 
 private:
 
+    game::Room game_room_;
+
+    boost::asio::io_context io_context_game_room_;
+    ServerGameRoom server_game_room_;
+
     WindowDashboard window_dashboard_;
     WindowGame window_game_;
     WindowChat window_chat_;
-
-    ServerGameRoom& server_game_room_;
-
 };
     
 } // namespace gobang

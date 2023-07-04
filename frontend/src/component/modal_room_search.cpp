@@ -1,39 +1,33 @@
 #include "component/modal_room_search.h"
+#include "core/log.h"
 
 namespace mixi
 {
 namespace gobang
 {
 
-ModalRoomSearch::ModalRoomSearch(
-    imgui::Context& context,
-    ServerGameRoom& server_game_room
-) :
-    PopupModal(
-        context,
-        gettext("Search Room"),
-        ImGuiWindowFlags_AlwaysAutoResize
-    ),
+ModalRoomSearch::ModalRoomSearch(gui::Context& context) :
+    PopupModal(context, gettext("Search Room"), ImGuiWindowFlags_AlwaysAutoResize),
     item_current_idx_(-1),
     search_ip_{0xFF, 0xFF, 0xFF, 0xFF},
     search_port_(52039),
-    server_room_search_(context.io_context),
-    rooms_(server_room_search_.rooms()),
-    server_game_room_(server_game_room),
+    io_context_room_search_(),
+    server_room_search_(io_context_room_search_),
     hint_(Hint_Search_)
 {
     player_name_[0] = '\0';
+    boost::thread thread_room_search([this]{
+        Log::Info("thread_room_search run");
+        io_context_room_search_.run();
+        Log::Info("thread_room_search stop");
+    });
+    thread_room_search.detach();
 }
 
 ModalRoomSearch::~ModalRoomSearch()
 {
-
-}
-
-bool ModalRoomSearch::join_done()
-{
-    return server_game_room_.join_room_state()
-        == ServerGameRoom::JoinRoomState::Done;
+    io_context_room_search_.stop();
+    // thread_room_search_.interrupt();
 }
 
 void ModalRoomSearch::content()
@@ -60,8 +54,8 @@ void ModalRoomSearch::content()
     }
 
     ImGui::Text("%s", gettext("Rooms List"));
-
-    server_room_search_.update_rooms();
+    
+    update_rooms_();
     
     if (ImGui::BeginListBox("##listbox 2",
         ImVec2(600, 5 * ImGui::GetTextLineHeightWithSpacing())
@@ -145,33 +139,53 @@ void ModalRoomSearch::content()
 
     ImGui::BeginDisabled(select_room == nullptr);
     if (ImGui::Button(gettext("Join Game"))) {
-        join_room_(true);
+        should_join_room_ = true;
+        as_a_player_ = true;
     }
     ImGui::SameLine();
     if (ImGui::Button(gettext("Watch Just"))) {
-        join_room_(false);
+        should_join_room_ = true;
+        as_a_player_ = false;
     }
     ImGui::EndDisabled();
 
     ImGui::Text("%s", hint_);
 }
 
+void ModalRoomSearch::update_rooms_()
+{
+    std::vector<ConciseRoom> new_rooms = server_room_search_.new_rooms();
+    rooms_.insert(rooms_.end(), new_rooms.begin(), new_rooms.end());
+}
+
 void ModalRoomSearch::on_search_()
 {
+    rooms_.clear();
     boost::asio::ip::address_v4 address = boost::asio::ip::make_address_v4(search_ip_);
     server_room_search_.search_room(boost::asio::ip::udp::endpoint(address, search_port_));
 }
 
-void ModalRoomSearch::join_room_(bool is_player)
+bool ModalRoomSearch::should_join_room() const
 {
-    hint_ = Hint_Joining_;
-    server_game_room_.join_room(
-        rooms_[item_current_idx_].endpoint,
-        rooms_[item_current_idx_].id,
-        player_name_,
-        is_player
-    );
+    return should_join_room_;
 }
+
+std::pair<ConciseRoom, bool> ModalRoomSearch::info_join_room() const
+{
+    return {rooms_[item_current_idx_], as_a_player_};
+}
+
+
+// void ModalRoomSearch::join_room_(bool is_player)
+// {
+//     hint_ = Hint_Joining_;
+//     server_game_room_.join_room(
+//         rooms_[item_current_idx_].endpoint,
+//         rooms_[item_current_idx_].id,
+//         player_name_,
+//         is_player
+//     );
+// }
 
 const char* ModalRoomSearch::Hint_Search_  = gettext("Please search rooms and choose one to join");
 const char* ModalRoomSearch::Hint_Joining_ = gettext("Joining room, please wait");

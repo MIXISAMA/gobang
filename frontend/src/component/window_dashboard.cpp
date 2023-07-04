@@ -6,10 +6,10 @@ namespace mixi {
 namespace gobang {
 
 WindowDashboard::WindowDashboard(
-    imgui::Context& context,
+    gui::Context& context,
     const game::Room& room
 ) :
-    imgui::Window(context, gettext("Dashboard")),
+    gui::Window(context, gettext("Dashboard")),
     room_(room),
     modal_confirm_leave_(context)
 {
@@ -25,56 +25,56 @@ WindowDashboard::~WindowDashboard()
 
 void WindowDashboard::content()
 {
-    bool full_screen = context_.glfw.full_screen();
-    if (ImGui::ImageButton(
-            full_screen ?
-            (void*)(intptr_t)tex_window_.id() :
-            (void*)(intptr_t)tex_full_screen_.id(),
-            ImVec2(32, 32)
-    )) {
-        context_.glfw.full_screen(!full_screen);
-    }
-    ImGui::SameLine();
-    if (ImGui::ImageButton(
-            (void*)(intptr_t)tex_exit_.id(),
-            ImVec2(32, 32)
-    )) {
-        modal_confirm_leave_.open();
-    }
+    // bool full_screen = context_.glfw.full_screen();
+    // if (ImGui::ImageButton(
+    //         full_screen ?
+    //         (void*)(intptr_t)tex_window_.id() :
+    //         (void*)(intptr_t)tex_full_screen_.id(),
+    //         ImVec2(32, 32)
+    // )) {
+    //     context_.glfw.full_screen(!full_screen);
+    // }
+    // ImGui::SameLine();
+    // if (ImGui::ImageButton(
+    //         (void*)(intptr_t)tex_exit_.id(),
+    //         ImVec2(32, 32)
+    // )) {
+    //     modal_confirm_leave_.open();
+    // }
 
-    ImGui::Separator();
+    // ImGui::Separator();
 
-    ImGui::Text("%s", room_.name().c_str());
-    ImGui::NewLine();
+    // ImGui::Text("%s", room_.name().c_str());
+    // ImGui::NewLine();
 
-    const game::User::Ptr& bp = room_.player(game::Chess::Color::BLACK);
-    const game::User::Ptr& wp = room_.player(game::Chess::Color::WHITE);
+    // const game::User::Ptr& bp = room_.player(game::Chess::Color::BLACK);
+    // const game::User::Ptr& wp = room_.player(game::Chess::Color::WHITE);
 
-    ImGui::Text("%s:", gettext("Black"));
-    if (bp.get() != nullptr) {
-        ImGui::SameLine(100);
-        ImGui::Text("%s", bp->name.c_str());
-    }
+    // ImGui::Text("%s:", gettext("Black"));
+    // if (bp.get() != nullptr) {
+    //     ImGui::SameLine(100);
+    //     ImGui::Text("%s", bp->name.c_str());
+    // }
 
-    ImGui::Text("%s:", gettext("White"));
-    if (wp.get() != nullptr) {
-        ImGui::SameLine(100);
-        ImGui::Text("%s", wp->name.c_str());
-    }
+    // ImGui::Text("%s:", gettext("White"));
+    // if (wp.get() != nullptr) {
+    //     ImGui::SameLine(100);
+    //     ImGui::Text("%s", wp->name.c_str());
+    // }
 
-    ImGui::Text("%s:", gettext("Onlookers"));
-    if (ImGui::BeginListBox(
-            "##onlookers",
-            ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())
-    )) {
-        for (const game::User::Ptr& user : room_.users()) {
-            if (user == bp || user == wp) {
-                continue;
-            }
-            ImGui::Selectable(user->name.c_str());
-        }
-        ImGui::EndListBox();
-    }
+    // ImGui::Text("%s:", gettext("Onlookers"));
+    // if (ImGui::BeginListBox(
+    //         "##onlookers",
+    //         ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())
+    // )) {
+    //     for (const game::User::Ptr& user : room_.users()) {
+    //         if (user == bp || user == wp) {
+    //             continue;
+    //         }
+    //         ImGui::Selectable(user->name.c_str());
+    //     }
+    //     ImGui::EndListBox();
+    // }
 
     modal_confirm_leave_.render();
 }
