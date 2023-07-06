@@ -31,3 +31,25 @@ var Endpoints = []func(*idtcp.Request) error{
 	S_PlayerTie:    Empty,
 	S_Message:      ReceiveMessage,
 }
+
+func ReceiveMessage(req *idtcp.Request) error {
+
+	room, err := Gd.GetRoom(msg.User)
+	if err != nil {
+		return err
+	}
+
+	text, err := DecodeString(msg.Data)
+	if err != nil {
+		return err
+	}
+
+	for i := range room.Users {
+		err := SendMessage(room.Users[i].Conn, msg.User.Name, text)
+		if err != nil {
+			continue
+		}
+	}
+	return nil
+
+}

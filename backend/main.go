@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 
+	"github.com/MIXISAMA/gobang/backend/config"
 	"github.com/MIXISAMA/gobang/backend/idtcp"
-	usermiddleware "github.com/MIXISAMA/gobang/backend/middlewares"
+	"github.com/MIXISAMA/gobang/backend/middlewares/room"
+	"github.com/MIXISAMA/gobang/backend/middlewares/user"
 	"github.com/MIXISAMA/gobang/backend/server"
 	"github.com/MIXISAMA/gobang/backend/udp"
 )
@@ -15,23 +17,34 @@ func main() {
 	flag.StringVar(&configPath, "config", "./config.yaml", "config file path")
 	flag.Parse()
 
-	conf, err := ReadConfig(configPath)
+	conf, err := config.ReadConfig(configPath)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	var udpServer = udp.NewServer(conf.Server, server.UdpPipe)
+	userMiddleware, err := user.NewMiddleware(2, 2, conf.DatabasePath, conf.Uuid)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	roomMiddleware := room.NewMiddleware(conf.Rooms)
+
+	serv := server.NewServer(
+		conf.ServerName,
+		userMiddleware,
+		roomMiddleware,
+	)
+
+	var udpServer = udp.NewServer(conf.Address, serv.UdpPipe)
 	go udpServer.Run()
 
-	userMiddleware, err := usermiddleware.New(2, 2, conf.DatabasePath, conf.Uuid)
-	if err != nil {
-		panic(err.Error())
-	}
-
 	idtcp.NewServer(
-		conf.Server,
+		conf.Address,
 		server.Endpoints,
-		[]idtcp.Middleware{userMiddleware},
+		[]idtcp.Middleware{
+			userMiddleware,
+			roomMiddleware,
+		},
 	).Run()
 
 }

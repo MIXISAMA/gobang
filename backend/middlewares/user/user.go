@@ -1,4 +1,4 @@
-package usermiddleware
+package user
 
 import (
 	"crypto/rand"
@@ -24,21 +24,19 @@ type User struct {
 	GameDuration uint64
 }
 
-var Key = new(idtcp.MiddlewareKey)
-
-type Middlewares struct {
+type Middleware struct {
 	instructionPublicKey     uint16
 	instructionAuthorization uint16
 	databasePath             string
 	serverUuid               []byte
 }
 
-func New(
+func NewMiddleware(
 	instructionPublicKey uint16,
 	instructionAuthorization uint16,
 	databasePath string,
 	serverUuid string,
-) (*Middlewares, error) {
+) (*Middleware, error) {
 
 	u, err := uuid.Parse(serverUuid)
 	if err != nil {
@@ -77,7 +75,7 @@ func New(
 		return nil, err
 	}
 
-	return &Middlewares{
+	return &Middleware{
 		instructionPublicKey:     instructionPublicKey,
 		instructionAuthorization: instructionAuthorization,
 		databasePath:             databasePath,
@@ -85,19 +83,19 @@ func New(
 	}, nil
 }
 
-type UserMiddlewaresConnectionPayload struct {
+var Key = new(idtcp.MiddlewareKey)
+
+type ConnectionPayload struct {
 	User       *User
 	PrivateKey *rsa.PrivateKey
 }
-type tConnPayload = UserMiddlewaresConnectionPayload
 
-type UserMiddlewaresDistributePayload struct {
+type DistributePayload struct {
 }
-type tDistPayload = UserMiddlewaresDistributePayload
 
-func (middleware *Middlewares) ProcessConnection(
-	payloads idtcp.ConnectionPayloadMap,
-	processConnection func(idtcp.ConnectionPayloadMap) (*idtcp.Conn, error),
+func (middleware *Middleware) ProcessConnection(
+	payloads idtcp.PayloadMap,
+	processConnection func(idtcp.PayloadMap) (*idtcp.Conn, error),
 ) (*idtcp.Conn, error) {
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
@@ -105,7 +103,7 @@ func (middleware *Middlewares) ProcessConnection(
 		return nil, err
 	}
 
-	payloads[Key] = &tConnPayload{
+	payloads[Key] = &ConnectionPayload{
 		User:       nil,
 		PrivateKey: privateKey,
 	}
@@ -119,12 +117,12 @@ func (middleware *Middlewares) ProcessConnection(
 	return conn, err
 }
 
-func (middleware *Middlewares) ProcessDistribution(
+func (middleware *Middleware) ProcessDistribution(
 	request *idtcp.Request,
 	processDistribution func(*idtcp.Request) error,
 ) error {
 
-	request.DistPayloads[Key] = &tDistPayload{}
+	request.DistPayloads[Key] = &ConnectionPayload{}
 
 	if request.Instruction == middleware.instructionAuthorization {
 		err := middleware.authorization(request)
@@ -133,7 +131,7 @@ func (middleware *Middlewares) ProcessDistribution(
 		}
 	}
 
-	user := request.ConnPayloads[Key].(*tConnPayload).User
+	user := request.ConnPayloads[Key].(*ConnectionPayload).User
 	if user == nil {
 		return errors.New("user has not passed the authorization")
 	}
@@ -146,7 +144,7 @@ func (middleware *Middlewares) ProcessDistribution(
 	return nil
 }
 
-func (middleware *Middlewares) sendPublicKey(conn *idtcp.Conn, publicKey *rsa.PublicKey) error {
+func (middleware *Middleware) sendPublicKey(conn *idtcp.Conn, publicKey *rsa.PublicKey) error {
 
 	pubKeyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
 	if err != nil {
@@ -166,7 +164,7 @@ func (middleware *Middlewares) sendPublicKey(conn *idtcp.Conn, publicKey *rsa.Pu
 	return err
 }
 
-func (middleware *Middlewares) authorization(request *idtcp.Request) error {
+func (middleware *Middleware) authorization(request *idtcp.Request) error {
 
 	var s1 = utils.MakeSerializer(request.Data)
 
@@ -180,7 +178,7 @@ func (middleware *Middlewares) authorization(request *idtcp.Request) error {
 		return err
 	}
 
-	privateKey := request.ConnPayloads[Key].(*tConnPayload).PrivateKey
+	privateKey := request.ConnPayloads[Key].(*ConnectionPayload).PrivateKey
 	plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
 	if err != nil {
 		return err
@@ -203,11 +201,11 @@ func (middleware *Middlewares) authorization(request *idtcp.Request) error {
 		return err
 	}
 
-	request.ConnPayloads[Key].(*tConnPayload).User = user
+	request.ConnPayloads[Key].(*ConnectionPayload).User = user
 	return nil
 }
 
-func (middleware *Middlewares) addUserToDatabase(username string, password []byte) (*User, error) {
+func (middleware *Middleware) addUserToDatabase(username string, password []byte) (*User, error) {
 	db, err := sql.Open("sqlite3", middleware.databasePath)
 	if err != nil {
 		return nil, err

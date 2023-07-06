@@ -4,39 +4,34 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"sync"
 )
 
 type Middleware interface {
-	ProcessConnection(ConnectionPayloadMap, func(ConnectionPayloadMap) (*Conn, error)) (*Conn, error)
+	ProcessConnection(PayloadMap, func(PayloadMap) (*Conn, error)) (*Conn, error)
 	ProcessDistribution(*Request, func(*Request) error) error
 }
 
 type MiddlewareKey struct{}
-
-type MiddlewarePayload interface{}
-type ConnectionPayloadMap map[*MiddlewareKey]MiddlewarePayload
-type DistributePayloadMap map[*MiddlewareKey]MiddlewarePayload
+type PayloadMap map[*MiddlewareKey]interface{}
 
 type Request struct {
 	Instruction  uint16
 	Data         []byte
 	Conn         *Conn
-	ConnPayloads ConnectionPayloadMap
-	DistPayloads DistributePayloadMap
+	ConnPayloads PayloadMap
+	DistPayloads PayloadMap
 }
 
 type Server struct {
 	listener       *net.TCPListener
 	distributeList []func(request *Request) error
 	middlewareList []Middleware
-	connectPipe    func(connPayload ConnectionPayloadMap) (*Conn, error)
+	connectPipe    func(connPayload PayloadMap) (*Conn, error)
 	distributePipe func(request *Request) error
 	connectionSet  sync.Map
 	listenerMutex  sync.Mutex
 	connWaitGroup  sync.WaitGroup
-	quitChannel    chan os.Signal
 }
 
 func NewServer(
@@ -59,10 +54,9 @@ func NewServer(
 		listener:       tcpListener,
 		distributeList: distributeList,
 		middlewareList: middlewareList,
-		quitChannel:    make(chan os.Signal, 1),
 	}
 
-	server.connectPipe = func(connPayloads ConnectionPayloadMap) (*Conn, error) {
+	server.connectPipe = func(connPayloads PayloadMap) (*Conn, error) {
 
 		tcpConn, err := server.listener.AcceptTCP()
 		conn := &Conn{TCPConn: tcpConn}
@@ -77,7 +71,7 @@ func NewServer(
 	}
 
 	for i := len(middlewareList) - 1; i >= 0; i-- {
-		server.connectPipe = func(connPayload ConnectionPayloadMap) (*Conn, error) {
+		server.connectPipe = func(connPayload PayloadMap) (*Conn, error) {
 			return middlewareList[i].ProcessConnection(connPayload, server.connectPipe)
 		}
 	}
@@ -104,11 +98,8 @@ func NewServer(
 func (server *Server) Run() {
 	defer server.connWaitGroup.Wait()
 
-	server.connWaitGroup.Add(1)
-	go server.listenInterrupt()
-
 	for {
-		connPayloads := make(ConnectionPayloadMap)
+		connPayloads := make(PayloadMap)
 		server.listenerMutex.Lock()
 		conn, err := server.connectPipe(connPayloads)
 		if err != nil {
@@ -128,7 +119,7 @@ func (server *Server) Run() {
 
 }
 
-func (server *Server) requestPipe(conn *Conn, connPayloads ConnectionPayloadMap) {
+func (server *Server) requestPipe(conn *Conn, connPayloads PayloadMap) {
 	defer func() {
 		conn.Close()
 		server.connectionSet.Delete(conn)
@@ -139,7 +130,7 @@ func (server *Server) requestPipe(conn *Conn, connPayloads ConnectionPayloadMap)
 		var req = Request{
 			Conn:         conn,
 			ConnPayloads: connPayloads,
-			DistPayloads: make(DistributePayloadMap),
+			DistPayloads: make(PayloadMap),
 		}
 		_, err := conn.Read(&req.Instruction, &req.Data)
 		if err != nil {
@@ -151,11 +142,7 @@ func (server *Server) requestPipe(conn *Conn, connPayloads ConnectionPayloadMap)
 	}
 }
 
-func (server *Server) listenInterrupt() {
-	defer server.connWaitGroup.Done()
-	<-server.quitChannel
-	log.Println("quit")
-
+func (server *Server) CloseAll() {
 	server.listener.Close()
 
 	server.listenerMutex.Lock()
@@ -164,5 +151,4 @@ func (server *Server) listenInterrupt() {
 		return true
 	})
 	server.listenerMutex.Unlock()
-
 }

@@ -1,21 +1,12 @@
 package server
 
-import (
-	"fmt"
+// const Version = "0.1"
 
-	"github.com/MIXISAMA/gobang/backend/idtcp"
-	usermiddleware "github.com/MIXISAMA/gobang/backend/middlewares"
-	"github.com/MIXISAMA/gobang/backend/udp"
-	"github.com/MIXISAMA/gobang/backend/utils"
-)
-
-const Version = "0.1"
-
-var Gd = GlobalData{
-	Rooms:     make([]*Room, 0),
-	UserWho:   make(map[string]*usermiddleware.User),
-	RoomWhose: make(map[*usermiddleware.User]*Room),
-}
+// var Gd = GlobalData{
+// 	Rooms:     make([]*Room, 0),
+// 	UserWho:   make(map[string]*usermiddleware.User),
+// 	RoomWhose: make(map[*usermiddleware.User]*Room),
+// }
 
 // func LoadGdFromConfig(conf *config.Config) error {
 
@@ -94,28 +85,6 @@ var Gd = GlobalData{
 
 // 	return LeaveRoom(msg.User)
 // }
-
-func ReceiveMessage(req *idtcp.Request) error {
-
-	// room, err := Gd.GetRoom(msg.User)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// text, err := DecodeString(msg.Data)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// for i := range room.Users {
-	// 	err := SendMessage(room.Users[i].Conn, msg.User.Name, text)
-	// 	if err != nil {
-	// 		continue
-	// 	}
-	// }
-	return nil
-
-}
 
 /*
 
@@ -201,26 +170,3 @@ func ReceiveMessage(req *idtcp.Request) error {
 // 	LeaveRoom(user)
 
 // }
-
-func UdpPipe(msg *udp.Message) error {
-
-	s := utils.MakeSerializer(msg.Data)
-
-	version, err := s.ReadString8()
-	if err != nil {
-		return err
-	}
-
-	if version != Version {
-		return fmt.Errorf("inconsistent version %s", version)
-	}
-
-	data, err := EncodeRooms()
-	if err != nil {
-		return err
-	}
-
-	_, err = msg.Conn.WriteToUDP(data, msg.Addr)
-	return err
-
-}
