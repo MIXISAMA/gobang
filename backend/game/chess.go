@@ -14,7 +14,7 @@ type Chess struct {
 	cursor int
 }
 
-func (chess Chess) Init() {
+func (chess *Chess) Init() {
 	chess.cursor = 0
 	for i := range chess.board {
 		for j := range chess.board[i] {
@@ -23,24 +23,38 @@ func (chess Chess) Init() {
 	}
 }
 
-func (chess Chess) WhosTurn() byte {
+func (chess *Chess) WhoseTurn() byte {
 	return byte(chess.cursor % 2)
 }
 
-func (chess *Chess) Stone(coor byte) (bool, error) {
+func (chess *Chess) Stone(move int, coor byte) error {
+
+	if move != chess.cursor {
+		return errors.New("move number is wrong")
+	}
 
 	r, c := parseCoor(coor)
 	if !isVaildCoor(r, c) {
-		return false, errors.New("stone out of bounds")
+		return errors.New("stone out of bounds")
 	}
 
 	if chess.board[r][c] != SPACE {
-		return false, errors.New("there is already a chess piece here")
+		return errors.New("there is already a chess piece here")
 	}
 
 	chess.record[chess.cursor] = coor
-	chess.board[r][c] = chess.WhosTurn()
+	chess.board[r][c] = chess.WhoseTurn()
 	chess.cursor++
+
+	return nil
+}
+
+func (chess *Chess) DidYouWin() bool {
+	if chess.cursor <= 0 {
+		return false
+	}
+
+	r, c := parseCoor(chess.record[chess.cursor-1])
 
 	for i := range dr {
 		count := 1
@@ -61,10 +75,14 @@ func (chess *Chess) Stone(coor byte) (bool, error) {
 			count++
 		}
 		if count >= 5 {
-			return true, nil
+			return true
 		}
 	}
-	return false, nil
+	return false
+}
+
+func (chess *Chess) GetRecords() []byte {
+	return chess.record[:chess.cursor]
 }
 
 func parseCoor(coor byte) (int, int) {

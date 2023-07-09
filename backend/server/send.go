@@ -1,6 +1,11 @@
 package server
 
-import "github.com/MIXISAMA/gobang/backend/idtcp"
+import (
+	"github.com/MIXISAMA/gobang/backend/idtcp"
+	"github.com/MIXISAMA/gobang/backend/middlewares/mdwroom"
+	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
+	"github.com/MIXISAMA/gobang/backend/utils"
+)
 
 const (
 	C_Version       uint16 = 0
@@ -20,55 +25,102 @@ const (
 	C_Message       uint16 = 14
 )
 
-func sendVoid(conn *idtcp.Conn, instruction uint16) {
-	conn.Write(instruction, make([]byte, 0))
+func sendVoid(conn *idtcp.Conn, instruction uint16) error {
+	_, err := conn.Write(instruction, make([]byte, 0))
+	return err
 }
 
-func SendAllRoomInformation(conn *idtcp.Conn, room *Room) error {
-
-	data, err := EncodeAllRoomInformation(room)
+func sendByte(conn *idtcp.Conn, instruction uint16, b byte) error {
+	var s utils.Serializer
+	err := s.WriteByte(b)
 	if err != nil {
 		return err
 	}
-
-	_, err = conn.Write(C_AllRoomInformation, data)
+	_, err = conn.Write(instruction, s.Raw)
 	return err
-
 }
 
-func SendJoinRoom(
+func sendBoolean(conn *idtcp.Conn, instruction uint16, b bool) error {
+	var s utils.Serializer
+	s.WriteBoolean(b)
+	_, err := conn.Write(instruction, s.Raw)
+	return err
+}
+
+func SendString(conn *idtcp.Conn, instruction uint16, str string) error {
+	var s utils.Serializer
+	s.WriteString8(str)
+	_, err := conn.Write(instruction, s.Raw)
+	return err
+}
+
+func SendYouJoinRoom(
 	conn *idtcp.Conn,
-	room *Room,
-	user *server.User,
+	isSuccess bool,
+	room *mdwroom.Room,
 ) error {
 
-	data, err := EncodeUserInRoom(room, user)
-	if err != nil {
+	var s utils.Serializer
+
+	s.WriteBoolean(isSuccess)
+
+	if !isSuccess {
+		_, err := conn.Write(C_YouJoinRoom, s.Raw)
 		return err
 	}
 
-	_, err = conn.Write(C_Join_Room, data)
+	s.WriteString8(room.Name)
+
+	s.WriteUint8_Int(room.MaxUsers)
+
+	var blackUsername = room.BlackPlayer.(*mdwuser.User).GetUsername("")
+	var whiteUsername = room.WhitePlayer.(*mdwuser.User).GetUsername("")
+
+	s.WriteString8(blackUsername)
+	s.WriteString8(whiteUsername)
+
+	s.WriteUint8_Int(room.Users.Len())
+	for i := room.Users.Front(); i != nil; i = i.Next() {
+		user := i.Value.(*mdwuser.User)
+		if user == room.BlackPlayer || user == room.WhitePlayer {
+			continue
+		}
+		s.WriteString8(user.Username)
+	}
+
+	s.WriteByte(room.ReadyColor)
+	s.WriteBoolean(room.IsPlaying)
+	s.WriteByte(room.RegretColor)
+	s.WriteByte(room.TieColor)
+
+	s.WriteBytes8(room.Chess.GetRecords())
+
+	_, err := conn.Write(C_YouJoinRoom, s.Raw)
 	return err
 }
 
-func SendLeaveRoom(conn *idtcp.Conn, user *server.User) error {
+func SendUserInfo(conn *idtcp.Conn, user *mdwuser.User) error {
 
-	data, err := EncodeString(user.Name)
-	if err != nil {
-		return err
-	}
+	var s utils.Serializer
 
-	_, err = conn.Write(C_Leave_Room, data)
+	s.WriteString8(user.Username)
+	s.WriteUint32(user.NumOfWins)
+	s.WriteUint32(user.NumOfTies)
+	s.WriteUint32(user.NumOfLosses)
+	s.WriteUint32(user.NumOfMatches)
+	s.WriteUint64(user.GameDuration)
+
+	_, err := conn.Write(C_UserInfo, s.Raw)
 	return err
 }
 
 func SendMessage(conn *idtcp.Conn, username string, text string) error {
 
-	data, err := EncodeStringString(username, text)
-	if err != nil {
-		return err
-	}
+	var s utils.Serializer
 
-	_, err = conn.Write(C_Message, data)
+	s.WriteString8(username)
+	s.WriteString16(text)
+
+	_, err := conn.Write(C_Message, s.Raw)
 	return err
 }

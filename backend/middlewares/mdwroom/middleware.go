@@ -1,36 +1,23 @@
-package room
+package mdwroom
 
-import (
-	"container/list"
-
-	"github.com/MIXISAMA/gobang/backend/idtcp"
-)
+import "github.com/MIXISAMA/gobang/backend/idtcp"
 
 var MaxRooms = 200
 
-type Room struct {
-	Name     string
-	MaxUsers int
-}
-
 type Middleware struct {
-	rooms []Room
-	users *list.List
+	Rooms []*Room
 }
 
-func NewMiddleware(rooms []Room) *Middleware {
-	numOfRooms := len(rooms)
-	if numOfRooms > MaxRooms {
-		numOfRooms = MaxRooms
+func NewMiddleware(rooms []*Room) *Middleware {
+	middleware := Middleware{
+		Rooms: make([]*Room, len(rooms[:MaxRooms])),
 	}
-	middleware := new(Middleware)
-	middleware.users = list.New()
-	middleware.rooms = make([]Room, numOfRooms)
-	for i := range middleware.rooms {
-		middleware.rooms[i] = rooms[i]
+	for i := range middleware.Rooms {
+		room := *rooms[i]
+		room.Index = i
+		middleware.Rooms[i] = &room
 	}
-
-	return middleware
+	return &middleware
 }
 
 var Key = new(idtcp.MiddlewareKey)
@@ -52,8 +39,4 @@ func (middleware *Middleware) ProcessDistribution(
 ) error {
 	request.DistPayloads[Key] = &DistributePayload{}
 	return processDistribution(request)
-}
-
-func (middleware *Middleware) Size() int {
-	return len(middleware.rooms)
 }

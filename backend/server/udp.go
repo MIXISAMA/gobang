@@ -3,15 +3,16 @@ package server
 import (
 	"fmt"
 
+	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
 	"github.com/MIXISAMA/gobang/backend/udp"
 	"github.com/MIXISAMA/gobang/backend/utils"
 )
 
 func (server *Server) UdpPipe(msg *udp.Message) error {
 
-	s := utils.MakeSerializer(msg.Data)
+	sr := utils.MakeSerializer(msg.Data)
 
-	version, err := s.ReadString8()
+	version, err := sr.ReadString8()
 	if err != nil {
 		return err
 	}
@@ -20,66 +21,22 @@ func (server *Server) UdpPipe(msg *udp.Message) error {
 		return fmt.Errorf("inconsistent version %s", version)
 	}
 
-	data, err := encodeRooms()
-	if err != nil {
-		return err
+	var sw utils.Serializer
+
+	sw.WriteString8(Version)
+	sw.WriteString8(server.name)
+	sw.WriteUint8_Int(len(server.room.Rooms))
+	for i := range server.room.Rooms {
+		room := server.room.Rooms[i]
+		sw.WriteString8(room.Name)
+		sw.WriteBoolean(room.IsPlaying)
+		sw.WriteString8(room.BlackPlayer.(*mdwuser.User).GetUsername(""))
+		sw.WriteString8(room.WhitePlayer.(*mdwuser.User).GetUsername(""))
+		sw.WriteUint8_Int(room.Users.Len())
+		sw.WriteUint8_Int(room.MaxUsers)
 	}
 
-	_, err = msg.Conn.WriteToUDP(data, msg.Addr)
+	_, err = msg.Conn.WriteToUDP(sw.Raw, msg.Addr)
 	return err
-
-}
-
-func encodeRooms() ([]byte, error) {
-
-	var s server.Serializer
-
-	err := s.WriteUint16_Int(len(Gd.Rooms))
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range Gd.Rooms {
-
-		room := Gd.Rooms[i]
-
-		err = s.WriteUint16_Int(i)
-		if err != nil {
-			return nil, err
-		}
-
-		err = s.WriteString(room.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		s.WriteBoolean(room.IsPlaying)
-
-		for j := range room.Players {
-			player := room.Players[j]
-			if player != nil {
-				s.WriteBoolean(true)
-				err = s.WriteString(player.Name)
-				if err != nil {
-					return nil, err
-				}
-			} else {
-				s.WriteBoolean(false)
-			}
-		}
-
-		err = s.WriteUint16_Int(len(room.Users))
-		if err != nil {
-			return nil, err
-		}
-
-		err = s.WriteUint16_Int(room.MaxUsers)
-		if err != nil {
-			return nil, err
-		}
-
-	}
-
-	return s.Raw, nil
 
 }

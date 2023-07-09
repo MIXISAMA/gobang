@@ -3,17 +3,21 @@ package config
 import (
 	"io/ioutil"
 
-	"github.com/MIXISAMA/gobang/backend/middlewares/room"
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
 )
+
+type Room struct {
+	Name    string
+	MaxUser int
+}
 
 type Config struct {
 	Address      string
 	ServerName   string
 	Uuid         string
 	DatabasePath string
-	Rooms        []room.Room
+	Rooms        []Room
 }
 
 func ReadConfig(path string) (*Config, error) {

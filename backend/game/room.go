@@ -7,82 +7,95 @@ import (
 type Player interface{}
 
 type Room struct {
-	whitePlayer *Player
-	blackPlayer *Player
-	regret      byte
-	tie         byte
-	ready       byte
-	isPlaying   bool
-	chess       Chess
+	WhitePlayer Player
+	BlackPlayer Player
+	RegretColor byte
+	TieColor    byte
+	ReadyColor  byte
+	IsPlaying   bool
+	Chess       Chess
 }
 
-func (room Room) init() {
-	room.whitePlayer = nil
-	room.blackPlayer = nil
-	room.regret = SPACE
-	room.tie = SPACE
-	room.ready = SPACE
-	room.isPlaying = false
-	room.chess.Init()
+func NewRoom() *Room {
+	room := Room{
+		WhitePlayer: nil,
+		BlackPlayer: nil,
+		RegretColor: SPACE,
+		TieColor:    SPACE,
+		ReadyColor:  SPACE,
+		IsPlaying:   false,
+	}
+	room.Chess.Init()
+	return &room
 }
 
-func (room *Room) Join(player *Player, color byte) error {
+func (room *Room) Join(player Player, color byte) error {
 	if color == BLACK {
-		if room.blackPlayer != nil {
+		if room.BlackPlayer != nil {
 			return errors.New("black player has exist")
 		}
-		room.blackPlayer = player
+		room.BlackPlayer = player
 	} else if color == WHITE {
-		if room.whitePlayer != nil {
+		if room.WhitePlayer != nil {
 			return errors.New("white player has exist")
 		}
-		room.whitePlayer = player
+		room.WhitePlayer = player
 	} else {
 		return errors.New("wrong color")
 	}
 	return nil
 }
 
-func (room *Room) Leave(player *Player) error {
+func (room *Room) Leave(player Player) error {
 	color := SPACE
-	if player == room.blackPlayer {
-		room.blackPlayer = nil
+	if player == room.BlackPlayer {
+		room.BlackPlayer = nil
 		color = BLACK
-	} else if player == room.whitePlayer {
-		room.whitePlayer = nil
+	} else if player == room.WhitePlayer {
+		room.WhitePlayer = nil
 		color = WHITE
 	} else {
 		return errors.New("wrong player")
 	}
-	if room.regret == color {
-		room.regret = SPACE
+	if room.RegretColor == color {
+		room.RegretColor = SPACE
 	}
-	if room.tie == color {
-		room.tie = SPACE
+	if room.TieColor == color {
+		room.TieColor = SPACE
 	}
-	if room.ready == color {
-		room.ready = SPACE
+	if room.ReadyColor == color {
+		room.ReadyColor = SPACE
 	}
-	room.isPlaying = false
+	room.IsPlaying = false
 	return nil
 }
 
-func (room *Room) Ready(player *Player) (bool, error) {
-	if player == room.blackPlayer {
-		if room.ready == WHITE {
-			room.ready = SPACE
+func (room *Room) Ready(player Player) (bool, error) {
+	if player == room.BlackPlayer {
+		if room.ReadyColor == WHITE {
+			room.ReadyColor = SPACE
 			return true, nil
 		}
-		room.ready = BLACK
+		room.ReadyColor = BLACK
 		return false, nil
 	}
-	if player == room.whitePlayer {
-		if room.ready == BLACK {
-			room.ready = SPACE
+	if player == room.WhitePlayer {
+		if room.ReadyColor == BLACK {
+			room.ReadyColor = SPACE
 			return true, nil
 		}
-		room.ready = WHITE
+		room.ReadyColor = WHITE
 		return false, nil
 	}
 	return false, errors.New("wrong player")
+}
+
+func (room *Room) Opponent(player Player) (Player, error) {
+	if room.BlackPlayer == player {
+		return room.WhitePlayer, nil
+	}
+	if room.WhitePlayer == player {
+		return room.BlackPlayer, nil
+	}
+	return nil, errors.New("not player")
 }

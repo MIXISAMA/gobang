@@ -126,6 +126,18 @@ func (s *Serializer) WriteUint16_Int(val int) error {
 	return nil
 }
 
+func (s *Serializer) WriteUint32(val uint32) {
+	var data = make([]byte, 4)
+	binary.LittleEndian.PutUint32(data, val)
+	s.Raw = append(s.Raw, data...)
+}
+
+func (s *Serializer) WriteUint64(val uint64) {
+	var data = make([]byte, 8)
+	binary.LittleEndian.PutUint64(data, val)
+	s.Raw = append(s.Raw, data...)
+}
+
 func (s *Serializer) WriteBytes8(val []byte) error {
 	err := s.WriteUint8_Int(len(val))
 	if err != nil {
