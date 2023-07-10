@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/MIXISAMA/gobang/backend/idtcp"
-	"github.com/MIXISAMA/gobang/backend/middlewares/mdwroom"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
 	"github.com/MIXISAMA/gobang/backend/utils"
 )
@@ -51,51 +50,6 @@ func SendString(conn *idtcp.Conn, instruction uint16, str string) error {
 	var s utils.Serializer
 	s.WriteString8(str)
 	_, err := conn.Write(instruction, s.Raw)
-	return err
-}
-
-func SendYouJoinRoom(
-	conn *idtcp.Conn,
-	isSuccess bool,
-	room *mdwroom.Room,
-) error {
-
-	var s utils.Serializer
-
-	s.WriteBoolean(isSuccess)
-
-	if !isSuccess {
-		_, err := conn.Write(C_YouJoinRoom, s.Raw)
-		return err
-	}
-
-	s.WriteString8(room.Name)
-
-	s.WriteUint8_Int(room.MaxUsers)
-
-	var blackUsername = room.BlackPlayer.(*mdwuser.User).GetUsername("")
-	var whiteUsername = room.WhitePlayer.(*mdwuser.User).GetUsername("")
-
-	s.WriteString8(blackUsername)
-	s.WriteString8(whiteUsername)
-
-	s.WriteUint8_Int(room.Users.Len())
-	for i := room.Users.Front(); i != nil; i = i.Next() {
-		user := i.Value.(*mdwuser.User)
-		if user == room.BlackPlayer || user == room.WhitePlayer {
-			continue
-		}
-		s.WriteString8(user.Username)
-	}
-
-	s.WriteByte(room.ReadyColor)
-	s.WriteBoolean(room.IsPlaying)
-	s.WriteByte(room.RegretColor)
-	s.WriteByte(room.TieColor)
-
-	s.WriteBytes8(room.Chess.GetRecords())
-
-	_, err := conn.Write(C_YouJoinRoom, s.Raw)
 	return err
 }
 

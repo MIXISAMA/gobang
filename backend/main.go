@@ -23,8 +23,8 @@ func main() {
 	}
 
 	userMiddleware, err := mdwuser.NewMiddleware(
-		server.C_PublicKey,
 		server.S_JoinRoom,
+		server.C_PublicKey,
 		server.C_YouJoinRoom,
 		conf.DatabasePath,
 		conf.Uuid,
@@ -33,11 +33,22 @@ func main() {
 		panic(err.Error())
 	}
 
-	rooms := make([]*mdwroom.Room, len(conf.Rooms))
+	rooms := make([]*mdwroom.ConfigRoom, len(conf.Rooms))
 	for i := range rooms {
-		rooms[i] = mdwroom.NewRoom(conf.Rooms[i].Name, conf.Rooms[i].MaxUser)
+		rooms[i] = &mdwroom.ConfigRoom{
+			Name:     conf.Rooms[i].Name,
+			MaxUsers: conf.Rooms[i].MaxUser,
+		}
 	}
-	roomMiddleware := mdwroom.NewMiddleware(rooms)
+	roomMiddleware := mdwroom.NewMiddleware(
+		server.S_JoinRoom,
+		server.S_LeaveRoom,
+		server.C_YouJoinRoom,
+		server.C_OtherJoinRoom,
+		server.C_UserLeaveRoom,
+		server.C_GameOver,
+		rooms,
+	)
 
 	serv := server.NewServer(
 		conf.ServerName,

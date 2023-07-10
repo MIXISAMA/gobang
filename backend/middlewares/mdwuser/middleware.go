@@ -10,17 +10,17 @@ import (
 )
 
 type Middleware struct {
-	instructionPublicKey     uint16
-	instructionAuthorization uint16
-	instructionAuthFailed    uint16
-	database                 *Database
-	serverUuid               []byte
+	s_JoinRoom    uint16
+	c_PublicKey   uint16
+	c_YouJoinRoom uint16
+	database      *Database
+	serverUuid    []byte
 }
 
 func NewMiddleware(
-	instructionPublicKey uint16,
-	instructionAuthorization uint16,
-	instructionAuthFailed uint16,
+	s_JoinRoom uint16,
+	c_PublicKey uint16,
+	c_YouJoinRoom uint16,
 	databasePath string,
 	serverUuid string,
 ) (*Middleware, error) {
@@ -41,27 +41,24 @@ func NewMiddleware(
 	}
 
 	return &Middleware{
-		instructionPublicKey:     instructionPublicKey,
-		instructionAuthorization: instructionAuthorization,
-		instructionAuthFailed:    instructionAuthFailed,
-		database:                 database,
-		serverUuid:               uuidBytes,
+		s_JoinRoom:    s_JoinRoom,
+		c_PublicKey:   c_PublicKey,
+		c_YouJoinRoom: c_YouJoinRoom,
+		database:      database,
+		serverUuid:    uuidBytes,
 	}, nil
 }
 
 var Key = new(idtcp.MiddlewareKey)
 
-type ConnectionPayload struct {
+type ConnPayload struct {
 	User       *User
 	PrivateKey *rsa.PrivateKey
 }
 
-type DistributePayload struct {
-}
-
-func (middleware *Middleware) ProcessConnection(
+func (middleware *Middleware) ProcessConnect(
 	payloads idtcp.PayloadMap,
-	processConnection func(idtcp.PayloadMap) (*idtcp.Conn, error),
+	processConnect func(idtcp.PayloadMap) (*idtcp.Conn, error),
 ) (*idtcp.Conn, error) {
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
@@ -69,12 +66,12 @@ func (middleware *Middleware) ProcessConnection(
 		return nil, err
 	}
 
-	payloads[Key] = &ConnectionPayload{
+	payloads[Key] = &ConnPayload{
 		User:       nil,
 		PrivateKey: privateKey,
 	}
 
-	conn, err := processConnection(payloads)
+	conn, err := processConnect(payloads)
 	if err != nil {
 		return conn, err
 	}
@@ -83,28 +80,34 @@ func (middleware *Middleware) ProcessConnection(
 	return conn, err
 }
 
-func (middleware *Middleware) ProcessDistribution(
+func (middleware *Middleware) ProcessDisconnect(
+	conn *idtcp.Conn,
+	payloads idtcp.PayloadMap,
+	processDisconnect func(*idtcp.Conn, idtcp.PayloadMap),
+) {
+
+}
+
+func (middleware *Middleware) ProcessDistribute(
 	request *idtcp.Request,
-	processDistribution func(*idtcp.Request) error,
+	processDistribute func(*idtcp.Request) error,
 ) error {
 
-	request.DistPayloads[Key] = &ConnectionPayload{}
-
-	if request.Instruction == middleware.instructionAuthorization {
+	if request.Instruction == middleware.s_JoinRoom {
 		user, err := middleware.authorization(request)
 		if err != nil {
-			middleware.sendAuthorizationFailed(request.Conn, middleware.instructionAuthFailed)
+			middleware.sendAuthorizationFailed(request.Conn, middleware.c_YouJoinRoom)
 			return err
 		}
-		request.ConnPayloads[Key].(*ConnectionPayload).User = user
+		request.ConnPayloads[Key].(*ConnPayload).User = user
 	}
 
-	user := request.ConnPayloads[Key].(*ConnectionPayload).User
+	user := request.ConnPayloads[Key].(*ConnPayload).User
 	if user == nil {
 		return errors.New("user has not passed the authorization")
 	}
 
-	err := processDistribution(request)
+	err := processDistribute(request)
 	if err != nil {
 		return err
 	}

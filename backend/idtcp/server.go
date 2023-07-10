@@ -8,8 +8,9 @@ import (
 )
 
 type Middleware interface {
-	ProcessConnection(PayloadMap, func(PayloadMap) (*Conn, error)) (*Conn, error)
-	ProcessDistribution(*Request, func(*Request) error) error
+	ProcessConnect(PayloadMap, func(PayloadMap) (*Conn, error)) (*Conn, error)
+	ProcessDisconnect(*Conn, PayloadMap, func(*Conn, PayloadMap))
+	ProcessDistribute(*Request, func(*Request) error) error
 }
 
 type MiddlewareKey struct{}
@@ -28,6 +29,7 @@ type Server struct {
 	distributeList []func(request *Request) error
 	middlewareList []Middleware
 	connectPipe    func(connPayload PayloadMap) (*Conn, error)
+	disconnectPipe func(conn *Conn, connPayload PayloadMap)
 	distributePipe func(request *Request) error
 	connectionSet  sync.Map
 	listenerMutex  sync.Mutex
@@ -72,7 +74,20 @@ func NewServer(
 
 	for i := len(middlewareList) - 1; i >= 0; i-- {
 		server.connectPipe = func(connPayload PayloadMap) (*Conn, error) {
-			return middlewareList[i].ProcessConnection(connPayload, server.connectPipe)
+			return middlewareList[i].ProcessConnect(connPayload, server.connectPipe)
+		}
+	}
+
+	server.disconnectPipe = func(conn *Conn, connPayload PayloadMap) {
+		err := conn.Close()
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}
+
+	for i := len(middlewareList) - 1; i >= 0; i-- {
+		server.disconnectPipe = func(conn *Conn, connPayload PayloadMap) {
+			middlewareList[i].ProcessDisconnect(conn, connPayload, server.disconnectPipe)
 		}
 	}
 
@@ -88,7 +103,7 @@ func NewServer(
 
 	for i := len(middlewareList) - 1; i >= 0; i-- {
 		server.distributePipe = func(req *Request) error {
-			return middlewareList[i].ProcessDistribution(req, server.distributePipe)
+			return middlewareList[i].ProcessDistribute(req, server.distributePipe)
 		}
 	}
 
@@ -121,7 +136,7 @@ func (server *Server) Run() {
 
 func (server *Server) requestPipe(conn *Conn, connPayloads PayloadMap) {
 	defer func() {
-		conn.Close()
+		server.disconnectPipe(conn, connPayloads)
 		server.connectionSet.Delete(conn)
 		server.connWaitGroup.Done()
 	}()

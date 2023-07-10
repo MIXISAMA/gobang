@@ -29,19 +29,13 @@ func NewRoom() *Room {
 	return &room
 }
 
-func (room *Room) Join(player Player, color byte) error {
-	if color == BLACK {
-		if room.BlackPlayer != nil {
-			return errors.New("black player has exist")
-		}
+func (room *Room) Join(player Player) error {
+	if room.BlackPlayer == nil {
 		room.BlackPlayer = player
-	} else if color == WHITE {
-		if room.WhitePlayer != nil {
-			return errors.New("white player has exist")
-		}
+	} else if room.WhitePlayer == nil {
 		room.WhitePlayer = player
 	} else {
-		return errors.New("wrong color")
+		return errors.New("the room is full of players")
 	}
 	return nil
 }
@@ -98,4 +92,25 @@ func (room *Room) Opponent(player Player) (Player, error) {
 		return room.BlackPlayer, nil
 	}
 	return nil, errors.New("not player")
+}
+
+func (room *Room) PlayerCount() int {
+	playerCount := 0
+	if room.BlackPlayer != nil {
+		playerCount++
+	}
+	if room.WhitePlayer != nil {
+		playerCount++
+	}
+	return playerCount
+}
+
+func (room *Room) PlayerColor(player Player) byte {
+	if room.BlackPlayer == player {
+		return BLACK
+	}
+	if room.WhitePlayer == player {
+		return WHITE
+	}
+	return SPACE
 }

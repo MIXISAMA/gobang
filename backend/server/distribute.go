@@ -31,7 +31,7 @@ func Empty(*idtcp.Request) error {
 var Endpoints = []func(*idtcp.Request) error{
 	S_Version:      Empty,
 	S_FatalError:   Empty,
-	S_JoinRoom:     ReceiveJoinRoom,
+	S_JoinRoom:     Empty,
 	S_UserInfo:     ReceiveUserInfo,
 	S_LeaveRoom:    Empty,
 	S_PlayerStone:  ReceivePlayerStone,
@@ -43,15 +43,8 @@ var Endpoints = []func(*idtcp.Request) error{
 	S_Message:      ReceiveMessage,
 }
 
-func ReceiveJoinRoom(req *idtcp.Request) error {
-
-	room := req.DistPayloads[mdwroom.Key].(*mdwroom.DistributePayload).Room
-
-	return SendYouJoinRoom(req.Conn, true, room)
-}
-
 func ReceiveUserInfo(req *idtcp.Request) error {
-	room := req.DistPayloads[mdwroom.Key].(*mdwroom.DistributePayload).Room
+	room := req.ConnPayloads[mdwroom.Key].(*mdwroom.ConnPayload).Room
 	s := utils.MakeSerializer(req.Data)
 	username, err := s.ReadString8()
 	if err != nil {
@@ -64,12 +57,8 @@ func ReceiveUserInfo(req *idtcp.Request) error {
 	return SendUserInfo(req.Conn, user)
 }
 
-func ReceiveLeaveRoom(req *idtcp.Request) error {
-	return sendVoid(req.Conn, C_UserLeaveRoom)
-}
-
 func ReceivePlayerStone(req *idtcp.Request) error {
-	room := req.DistPayloads[mdwroom.Key].(*mdwroom.DistributePayload).Room
+	room := req.ConnPayloads[mdwroom.Key].(*mdwroom.ConnPayload).Room
 
 	s := utils.MakeSerializer(req.Data)
 	move, err := s.ReadUint8()
@@ -109,8 +98,8 @@ func ReceivePlayerRegret(req *idtcp.Request) error {
 
 func ReceiveAgreeRegret(req *idtcp.Request) error {
 	var (
-		room = req.DistPayloads[mdwroom.Key].(*mdwroom.DistributePayload).Room
-		user = req.ConnPayloads[mdwuser.Key].(*mdwuser.ConnectionPayload).User
+		room = req.ConnPayloads[mdwroom.Key].(*mdwroom.ConnPayload).Room
+		user = req.ConnPayloads[mdwuser.Key].(*mdwuser.ConnPayload).User
 	)
 
 	s := utils.MakeSerializer(req.Data)
@@ -142,8 +131,8 @@ func ReceiveAgreeRegret(req *idtcp.Request) error {
 
 func ReceiveMessage(req *idtcp.Request) error {
 	var (
-		room   = req.DistPayloads[mdwroom.Key].(*mdwroom.DistributePayload).Room
-		sender = req.DistPayloads[mdwuser.Key].(*mdwuser.ConnectionPayload).User
+		room   = req.ConnPayloads[mdwroom.Key].(*mdwroom.ConnPayload).Room
+		sender = req.ConnPayloads[mdwuser.Key].(*mdwuser.ConnPayload).User
 	)
 
 	s := utils.MakeSerializer(req.Data)

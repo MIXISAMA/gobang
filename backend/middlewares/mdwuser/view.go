@@ -27,7 +27,7 @@ func (middleware *Middleware) sendPublicKey(conn *idtcp.Conn, publicKey *rsa.Pub
 	s.WriteBytes8(pemData)
 	s.WriteBytes8(middleware.serverUuid)
 
-	_, err = conn.Write(middleware.instructionPublicKey, s.Raw)
+	_, err = conn.Write(middleware.c_PublicKey, s.Raw)
 	return err
 }
 
@@ -52,7 +52,7 @@ func (middleware *Middleware) authorization(request *idtcp.Request) (*User, erro
 		return nil, err
 	}
 
-	privateKey := request.ConnPayloads[Key].(*ConnectionPayload).PrivateKey
+	privateKey := request.ConnPayloads[Key].(*ConnPayload).PrivateKey
 	plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
 	if err != nil {
 		return nil, err
