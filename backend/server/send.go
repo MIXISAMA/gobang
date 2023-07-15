@@ -68,6 +68,10 @@ func SendUserInfo(conn *idtcp.Conn, user *mdwuser.User) error {
 	return err
 }
 
+func SendGameOver(conn *idtcp.Conn, color byte) error {
+	return sendByte(conn, C_GameOver, color)
+}
+
 func SendMessage(conn *idtcp.Conn, username string, text string) error {
 
 	var s utils.Serializer

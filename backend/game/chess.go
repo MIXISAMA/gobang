@@ -81,6 +81,21 @@ func (chess *Chess) DidYouWin() bool {
 	return false
 }
 
+func (chess *Chess) Regret(color byte) error {
+	if color == chess.WhoseTurn() {
+		if chess.cursor-1 < 0 {
+			return errors.New("can not regret")
+		}
+		chess.cursor -= 1
+	} else {
+		if chess.cursor-2 < 0 {
+			return errors.New("can not regret")
+		}
+		chess.cursor -= 2
+	}
+	return nil
+}
+
 func (chess *Chess) GetRecords() []byte {
 	return chess.record[:chess.cursor]
 }

@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 
+	"github.com/MIXISAMA/gobang/backend/game"
 	"github.com/MIXISAMA/gobang/backend/idtcp"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwroom"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
@@ -17,9 +18,9 @@ const (
 	S_LeaveRoom    uint16 = 4
 	S_PlayerStone  uint16 = 5
 	S_PlayerRegret uint16 = 6
-	S_AgreeRegret  uint16 = 7
+	S_ReplyRegret  uint16 = 7
 	S_PlayerTie    uint16 = 8
-	S_AgreeTie     uint16 = 9
+	S_ReplyTie     uint16 = 9
 	S_GiveUp       uint16 = 10
 	S_Message      uint16 = 11
 )
@@ -36,15 +37,15 @@ var Endpoints = []func(*idtcp.Request) error{
 	S_LeaveRoom:    Empty,
 	S_PlayerStone:  ReceivePlayerStone,
 	S_PlayerRegret: ReceivePlayerRegret,
-	S_AgreeRegret:  Empty,
+	S_ReplyRegret:  Empty,
 	S_PlayerTie:    Empty,
-	S_AgreeTie:     Empty,
+	S_ReplyTie:     Empty,
 	S_GiveUp:       Empty,
 	S_Message:      ReceiveMessage,
 }
 
 func ReceiveUserInfo(req *idtcp.Request) error {
-	room := req.ConnPayloads[mdwroom.Key].(*mdwroom.ConnPayload).Room
+	room := req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
 	s := utils.MakeSerializer(req.Data)
 	username, err := s.ReadString8()
 	if err != nil {
@@ -57,8 +58,19 @@ func ReceiveUserInfo(req *idtcp.Request) error {
 	return SendUserInfo(req.Conn, user)
 }
 
+func ReceiveLeaveRoom(req *idtcp.Request) error {
+	var (
+		room = req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
+		user = req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
+	)
+	if color := room.PlayerColor(user); color != game.SPACE && room.IsPlaying {
+		return SendGameOver(req.Conn, color^0x01)
+	}
+	return nil
+}
+
 func ReceivePlayerStone(req *idtcp.Request) error {
-	room := req.ConnPayloads[mdwroom.Key].(*mdwroom.ConnPayload).Room
+	room := req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
 
 	s := utils.MakeSerializer(req.Data)
 	move, err := s.ReadUint8()
@@ -93,17 +105,43 @@ func ReceivePlayerStone(req *idtcp.Request) error {
 }
 
 func ReceivePlayerRegret(req *idtcp.Request) error {
-	return sendVoid(req.Conn, C_PlayerRegret)
+	var (
+		room = req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
+		user = req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
+	)
+	err := room.Regret(user)
+	if err != nil {
+		return err
+	}
+	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+		user := i.Value.(*mdwuser.User)
+		err = sendByte(user.Conn, C_PlayerRegret, room.RegretColor)
+		if err != nil {
+			user.Conn.Close()
+			continue
+		}
+		err = SendMessage(user.Conn, mdwuser.ServerUsername, "regret")
+		if err != nil {
+			user.Conn.Close()
+			continue
+		}
+	}
+	return nil
 }
 
-func ReceiveAgreeRegret(req *idtcp.Request) error {
+func ReceiveReplyRegret(req *idtcp.Request) error {
 	var (
-		room = req.ConnPayloads[mdwroom.Key].(*mdwroom.ConnPayload).Room
-		user = req.ConnPayloads[mdwuser.Key].(*mdwuser.ConnPayload).User
+		room = req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
+		user = req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	)
 
 	s := utils.MakeSerializer(req.Data)
 	agree, err := s.ReadBoolean()
+	if err != nil {
+		return err
+	}
+
+	err = room.ReplyRegret(user, agree)
 	if err != nil {
 		return err
 	}
@@ -122,8 +160,7 @@ func ReceiveAgreeRegret(req *idtcp.Request) error {
 			err = SendMessage(user.Conn, mdwuser.ServerUsername, "disagree")
 		}
 		if err != nil {
-			// todo
-			continue
+			user.Conn.Close()
 		}
 	}
 	return nil
@@ -131,8 +168,8 @@ func ReceiveAgreeRegret(req *idtcp.Request) error {
 
 func ReceiveMessage(req *idtcp.Request) error {
 	var (
-		room   = req.ConnPayloads[mdwroom.Key].(*mdwroom.ConnPayload).Room
-		sender = req.ConnPayloads[mdwuser.Key].(*mdwuser.ConnPayload).User
+		room   = req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
+		sender = req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	)
 
 	s := utils.MakeSerializer(req.Data)

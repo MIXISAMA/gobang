@@ -41,10 +41,24 @@ func (s *Serializer) ReadUint8() (uint8, error) {
 func (s *Serializer) ReadUint16() (uint16, error) {
 	var data = s.Raw[s.cursor : s.cursor+2]
 	if len(data) != 2 {
-		return 0, errors.New("GetUint16 error")
+		return 0, errors.New("ReadUint16 error")
 	}
 	s.cursor += 2
 	return binary.LittleEndian.Uint16(data), nil
+}
+
+func (s *Serializer) ReadUint32() (uint32, error) {
+	var data = s.Raw[s.cursor : s.cursor+4]
+	if len(data) != 4 {
+		return 0, errors.New("ReadInt32 error")
+	}
+	s.cursor += 4
+	return binary.LittleEndian.Uint32(data), nil
+}
+
+func (s *Serializer) ReadInt32() (int32, error) {
+	n, err := s.ReadUint32()
+	return int32(n), err
 }
 
 func (s *Serializer) ReadBytes8() ([]byte, error) {
@@ -55,7 +69,7 @@ func (s *Serializer) ReadBytes8() ([]byte, error) {
 	var length = int(length_u8)
 	var bytesRaw = s.Raw[s.cursor : s.cursor+length]
 	if len(bytesRaw) != length {
-		return nil, errors.New("GetString error")
+		return nil, errors.New("ReadBytes8 error")
 	}
 	s.cursor += length
 	return bytesRaw, nil
@@ -69,7 +83,7 @@ func (s *Serializer) ReadBytes16() ([]byte, error) {
 	var length = int(length_u16)
 	var bytesRaw = s.Raw[s.cursor : s.cursor+length]
 	if len(bytesRaw) != length {
-		return nil, errors.New("GetString error")
+		return nil, errors.New("ReadBytes16 error")
 	}
 	s.cursor += length
 	return bytesRaw, nil

@@ -28,7 +28,7 @@ func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
 		return err
 	}
 
-	user := req.ConnPayloads[mdwuser.Key].(*mdwuser.ConnPayload).User
+	user := req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 
 	role, err := s.ReadByte()
 	if err != nil {
@@ -59,7 +59,7 @@ func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
 		return err
 	}
 
-	req.ConnPayloads[Key].(*ConnPayload).Room = room
+	req.Payloads[Key].(*Payload).Room = room
 	return nil
 }
 
@@ -116,13 +116,10 @@ func (middleware *Middleware) sendOtherJoinRoom(conn *idtcp.Conn, username strin
 }
 
 func (middleware *Middleware) receiveUserLeaveRoom(req *idtcp.Request) error {
-	room := req.ConnPayloads[Key].(*ConnPayload).Room
-	user := req.ConnPayloads[mdwuser.Key].(*mdwuser.ConnPayload).User
+	room := req.Payloads[Key].(*Payload).Room
+	user := req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	if color := room.PlayerColor(user); color != game.SPACE {
-		if room.IsPlaying {
-			middleware.sendGameOver(req.Conn, color^0x01)
 
-		}
 		err := room.leaveAsPlayer(user)
 		if err != nil {
 			return err
@@ -136,11 +133,4 @@ func (middleware *Middleware) receiveUserLeaveRoom(req *idtcp.Request) error {
 		}
 	}
 	return nil
-}
-
-func (middleware *Middleware) sendGameOver(conn *idtcp.Conn, color byte) error {
-	var s utils.Serializer
-	s.WriteByte(color)
-	_, err := conn.Write(middleware.c_GameOver, s.Raw)
-	return err
 }

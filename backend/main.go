@@ -5,6 +5,7 @@ import (
 
 	"github.com/MIXISAMA/gobang/backend/config"
 	"github.com/MIXISAMA/gobang/backend/idtcp"
+	"github.com/MIXISAMA/gobang/backend/middlewares/mdwfatal"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwroom"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
 	"github.com/MIXISAMA/gobang/backend/server"
@@ -21,6 +22,11 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	fatalMiddleware := mdwfatal.NewMiddleware(
+		server.S_FatalError,
+		server.C_FatalError,
+	)
 
 	userMiddleware, err := mdwuser.NewMiddleware(
 		server.S_JoinRoom,
@@ -62,6 +68,7 @@ func main() {
 		conf.Address,
 		server.Endpoints,
 		[]idtcp.Middleware{
+			fatalMiddleware,
 			userMiddleware,
 			roomMiddleware,
 		},

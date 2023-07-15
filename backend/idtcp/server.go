@@ -17,11 +17,10 @@ type MiddlewareKey struct{}
 type PayloadMap map[*MiddlewareKey]interface{}
 
 type Request struct {
-	Instruction  uint16
-	Data         []byte
-	Conn         *Conn
-	ConnPayloads PayloadMap
-	DistPayloads PayloadMap
+	Instruction uint16
+	Data        []byte
+	Conn        *Conn
+	Payloads    PayloadMap
 }
 
 type Server struct {
@@ -34,6 +33,7 @@ type Server struct {
 	connectionSet  sync.Map
 	listenerMutex  sync.Mutex
 	connWaitGroup  sync.WaitGroup
+	pipelineMutex  sync.Mutex
 }
 
 func NewServer(
@@ -114,9 +114,9 @@ func (server *Server) Run() {
 	defer server.connWaitGroup.Wait()
 
 	for {
-		connPayloads := make(PayloadMap)
+		payloads := make(PayloadMap)
 		server.listenerMutex.Lock()
-		conn, err := server.connectPipe(connPayloads)
+		conn, err := server.connectPipe(payloads)
 		if err != nil {
 			log.Println(err.Error())
 			if err == net.ErrClosed {
@@ -128,33 +128,40 @@ func (server *Server) Run() {
 		}
 		server.connectionSet.Store(conn, struct{}{})
 		server.connWaitGroup.Add(1)
-		go server.requestPipe(conn, connPayloads)
+		go server.requestPipe(conn, payloads)
 		server.listenerMutex.Unlock()
 	}
 
 }
 
-func (server *Server) requestPipe(conn *Conn, connPayloads PayloadMap) {
+func (server *Server) requestPipe(conn *Conn, payloads PayloadMap) {
 	defer func() {
-		server.disconnectPipe(conn, connPayloads)
 		server.connectionSet.Delete(conn)
 		server.connWaitGroup.Done()
 	}()
 
 	for {
 		var req = Request{
-			Conn:         conn,
-			ConnPayloads: connPayloads,
-			DistPayloads: make(PayloadMap),
+			Conn:     conn,
+			Payloads: payloads,
 		}
 		_, err := conn.Read(&req.Instruction, &req.Data)
 		if err != nil {
 			log.Println(err.Error())
-			return
+			break
 		}
 
-		server.distributePipe(&req)
+		server.pipelineMutex.Lock()
+		err = server.distributePipe(&req)
+		server.pipelineMutex.Unlock()
+		if err != nil {
+			break
+		}
 	}
+
+	server.pipelineMutex.Lock()
+	server.disconnectPipe(conn, payloads)
+	server.pipelineMutex.Unlock()
 }
 
 func (server *Server) CloseAll() {

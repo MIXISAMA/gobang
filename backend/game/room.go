@@ -84,6 +84,38 @@ func (room *Room) Ready(player Player) (bool, error) {
 	return false, errors.New("wrong player")
 }
 
+func (room *Room) Regret(player Player) error {
+	if room.RegretColor != SPACE {
+		return errors.New("someone has regreted")
+	}
+	if color := room.PlayerColor(player); color != SPACE {
+		room.RegretColor = color
+	}
+	return errors.New("wrong player")
+}
+
+func (room *Room) ReplyRegret(player Player, agree bool) error {
+	if player == room.WhitePlayer && room.RegretColor == BLACK {
+		room.RegretColor = SPACE
+		return room.Chess.Regret(BLACK)
+	}
+	if player == room.BlackPlayer && room.RegretColor == WHITE {
+		room.RegretColor = SPACE
+		return room.Chess.Regret(WHITE)
+	}
+	return errors.New("not player")
+}
+
+func (room *Room) Tie(player Player) error {
+	if room.TieColor != SPACE {
+		return errors.New("someone has regreted")
+	}
+	if color := room.PlayerColor(player); color != SPACE {
+		room.TieColor = color
+	}
+	return errors.New("wrong player")
+}
+
 func (room *Room) Opponent(player Player) (Player, error) {
 	if room.BlackPlayer == player {
 		return room.WhitePlayer, nil

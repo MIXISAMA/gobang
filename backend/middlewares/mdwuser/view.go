@@ -52,7 +52,7 @@ func (middleware *Middleware) authorization(request *idtcp.Request) (*User, erro
 		return nil, err
 	}
 
-	privateKey := request.ConnPayloads[Key].(*ConnPayload).PrivateKey
+	privateKey := request.Payloads[Key].(*Payload).PrivateKey
 	plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
 	if err != nil {
 		return nil, err

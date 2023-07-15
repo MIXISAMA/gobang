@@ -51,7 +51,7 @@ func NewMiddleware(
 
 var Key = new(idtcp.MiddlewareKey)
 
-type ConnPayload struct {
+type Payload struct {
 	User       *User
 	PrivateKey *rsa.PrivateKey
 }
@@ -66,7 +66,7 @@ func (middleware *Middleware) ProcessConnect(
 		return nil, err
 	}
 
-	payloads[Key] = &ConnPayload{
+	payloads[Key] = &Payload{
 		User:       nil,
 		PrivateKey: privateKey,
 	}
@@ -99,10 +99,10 @@ func (middleware *Middleware) ProcessDistribute(
 			middleware.sendAuthorizationFailed(request.Conn, middleware.c_YouJoinRoom)
 			return err
 		}
-		request.ConnPayloads[Key].(*ConnPayload).User = user
+		request.Payloads[Key].(*Payload).User = user
 	}
 
-	user := request.ConnPayloads[Key].(*ConnPayload).User
+	user := request.Payloads[Key].(*Payload).User
 	if user == nil {
 		return errors.New("user has not passed the authorization")
 	}

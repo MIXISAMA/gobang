@@ -45,7 +45,7 @@ func NewMiddleware(
 
 var Key = new(idtcp.MiddlewareKey)
 
-type ConnPayload struct {
+type Payload struct {
 	Room *Room
 }
 
@@ -53,7 +53,7 @@ func (middleware *Middleware) ProcessConnect(
 	payloads idtcp.PayloadMap,
 	processConnect func(idtcp.PayloadMap) (*idtcp.Conn, error),
 ) (*idtcp.Conn, error) {
-	payloads[Key] = &ConnPayload{Room: nil}
+	payloads[Key] = &Payload{Room: nil}
 	return processConnect(payloads)
 }
 
