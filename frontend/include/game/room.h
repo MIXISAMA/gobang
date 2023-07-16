@@ -9,68 +9,42 @@ namespace gobang
 namespace game
 {
 
+const std::byte BLACK{0x00};
+const std::byte WHITE{0x01};
+const std::byte SPACE{0xFF};
+
 struct User
 {
-    using Ptr = std::shared_ptr<User>;
+    std::string username;
+    uint32_t number_of_wins;
+    uint32_t number_of_ties;
+    uint32_t number_of_losses;
+    uint32_t number_of_matches;
+    uint64_t game_duration;
+};
+
+struct Room
+{
+
     std::string name;
-};
+    int max_users;
 
-struct Player : public User
-{
-    using Ptr = std::shared_ptr<Player>;
-    Chess::Color color;
-    bool is_ready;
-    bool is_repentant;
-};
+    std::string black_player;
+    std::string white_player;
 
+    std::vector<std::string> onlookers;
 
-class Room
-{
+    bool is_playering;
 
-public:
+    std::byte ready_player;
+    std::byte regret_player;
+    std::byte tie_player;
 
-    Room();
-    ~Room() = default;
+    std::byte board[15][15];
+    std::vector<std::byte> records;
 
-    std::string name() const;
-    void name(const std::string& s);
-
-    int max_onlookers() const;
-    void max_onlookers(int m);
-
-    bool is_playing() const;
-    void is_playing(bool b);
-
-    Player::Ptr self() const;
-    void self(Player::Ptr p);
-    
-    Player::Ptr opponent() const;
-    void opponent(Player::Ptr p);
-
-    void copy_onlookers(
-        std::vector<User::Ptr>& onlookers,
-        long long& onlookers_version
-    );
-
-    void onlooker_join(const std::string& name);
-    void onlooker_leave(const std::string& name);
-
-    Chess& chess();
-
-protected:
-
-    std::string name_;
-    int max_onlookers_;
-
-    bool is_playing_;
-    Player::Ptr self_;
-    Player::Ptr opponent_;
-
-    std::vector<User::Ptr> onlookers_;
-    std::mutex onlookers_mutex_;
-    long long onlookers_version_;
-
-    Chess chess_;
+    void user_join(const std::string& username, std::byte role);
+    void user_leave(const std::string& username);
 
 };
 

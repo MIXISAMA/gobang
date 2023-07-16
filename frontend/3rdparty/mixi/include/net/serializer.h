@@ -18,10 +18,17 @@ public:
     Serializer(const std::vector<std::byte>& buffer);
     ~Serializer() = default;
 
+    void head8();
+    void head16();
+
     Serializer& operator >> (std::byte&   ret);
     Serializer& operator >> (bool&        ret);
-    Serializer& operator >> (u_int16_t&   ret);
+    Serializer& operator >> (uint8_t&     ret);
+    Serializer& operator >> (uint16_t&    ret);
+    Serializer& operator >> (int32_t&     ret);
+    
     Serializer& operator >> (std::string& ret);
+    Serializer& operator >> (std::vector<std::byte>& ret);
 
     Serializer& operator << (const std::byte&   val);
     Serializer& operator << (const bool&        val);
@@ -32,6 +39,7 @@ public:
 private:
 
     size_t cursor_;
+    int head_;
 
 };
 

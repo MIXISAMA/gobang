@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "game/room.h"
 
+#include "core/lock.h"
 #include "net/idtcp.h"
 
 namespace mixi
@@ -22,17 +23,19 @@ public:
         Failed,
     };
 
+    boost::asio::io_context& io_context;
+
     ServerGameRoom(
-        boost::asio::io_context& io_context,
-        game::Room& game_room
+        boost::asio::io_context& io_context
     );
     ~ServerGameRoom();
 
     void join_room(
         const boost::asio::ip::tcp::endpoint& remote_endpoint,
-        u_int16_t room_id,
-        const std::string& nickname,
-        bool is_player
+        uint8_t room_id,
+        const std::string& username,
+        const std::string& password,
+        char role // P|O
     );
 
     JoinRoomState join_room_state();
@@ -63,9 +66,9 @@ protected:
         Message,
     };
 
-    boost::asio::io_context& io_context_;
+    ReadFirstBuffer<game::Room> game_room_;
 
-    game::Room& game_room_;
+    // game::Room& game_room_;
     net::IdtcpClient client_;
     const net::IdtcpClient::Distribute distribute_;
 
@@ -80,17 +83,20 @@ protected:
 
 private:
 
-    boost::asio::awaitable<void> connect_and_join_room_(
-        const boost::asio::ip::tcp::endpoint& remote_endpoint,
-        u_int16_t room_id,
-        const std::string& nickname,
-        bool is_player
-    );
+    uint16_t room_id_;
+    std::string username_;
+    std::string password_;
+    char role_;
+
+
+    boost::asio::awaitable<void> send_join_room_(const std::vector<std::byte> cipher);
     boost::asio::awaitable<void> send_leave_room_();
     boost::asio::awaitable<void> send_send_message_(const std::string& message);
 
-    void receive_generic_error_notification_(const std::vector<std::byte>& data);
-    void receive_all_room_information_      (const std::vector<std::byte>& data);
+    void receive_fatal_error_   (const std::vector<std::byte>& data);
+    void receive_public_key_    (const std::vector<std::byte>& data);
+    void receive_you_join_room_ (const std::vector<std::byte>& data);
+    void receive_user_info_     (const std::vector<std::byte>& data);
     void receive_join_room_                 (const std::vector<std::byte>& data);
     void receive_leave_room_                (const std::vector<std::byte>& data);
     void receive_message_                   (const std::vector<std::byte>& data);

@@ -6,28 +6,22 @@ namespace mixi
 namespace gobang
 {
 
-ModalRoomSearch::ModalRoomSearch(gui::Context& context) :
+ModalRoomSearch::ModalRoomSearch(gui::Context& context, ServerGameRoom& server_game_room) :
     PopupModal(context, gettext("Search Room"), ImGuiWindowFlags_AlwaysAutoResize),
     item_current_idx_(-1),
     search_ip_{0xFF, 0xFF, 0xFF, 0xFF},
     search_port_(52039),
-    io_context_room_search_(),
-    server_room_search_(io_context_room_search_),
+    server_room_search_(server_game_room.io_context),
+    server_game_room_(server_game_room),
     hint_(Hint_Search_)
 {
-    player_name_[0] = '\0';
-    boost::thread thread_room_search([this]{
-        Log::Info("thread_room_search run");
-        io_context_room_search_.run();
-        Log::Info("thread_room_search stop");
-    });
-    thread_room_search.detach();
+    username_[0] = '\0';
+    password_[0] = '\0';
 }
 
 ModalRoomSearch::~ModalRoomSearch()
 {
-    io_context_room_search_.stop();
-    // thread_room_search_.interrupt();
+    // io_context_room_search_.stop();
 }
 
 void ModalRoomSearch::content()
@@ -62,7 +56,7 @@ void ModalRoomSearch::content()
     )) {
         for (int i = 0; i < rooms_.size(); i++) {
             const bool is_selected = (item_current_idx_ == i);
-            if (ImGui::Selectable(rooms_[i].name.c_str(), is_selected)) {
+            if (ImGui::Selectable(rooms_[i].room_name.c_str(), is_selected)) {
                 item_current_idx_ = i;
             }
             // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -90,7 +84,7 @@ void ModalRoomSearch::content()
     ImGui::Text("%s:", gettext("Room Name"));
     if (select_room != nullptr) {
         ImGui::SameLine(200);
-        ImGui::Text("%s", select_room->name.c_str());
+        ImGui::Text("%s", select_room->room_name.c_str());
     }
 
     ImGui::Text("%s:", gettext("Server Address"));
@@ -102,20 +96,25 @@ void ModalRoomSearch::content()
         );
     }
 
-    for (int i = 0; i < 2; i++) {
-        ImGui::Text("%s %d:", gettext("Player"), i + 1);
-        if (select_room != nullptr) {
-            ImGui::SameLine(200);
-            ImGui::Text("%s", select_room->player_name[i].c_str());
-        }
+
+    ImGui::Text("%s:", gettext("Black Player"));
+    if (select_room != nullptr) {
+        ImGui::SameLine(200);
+        ImGui::Text("%s", select_room->black_player.c_str());
     }
 
-    ImGui::Text("%s:", gettext("Users Number"));
+    ImGui::Text("%s:", gettext("White Player"));
+    if (select_room != nullptr) {
+        ImGui::SameLine(200);
+        ImGui::Text("%s", select_room->white_player.c_str());
+    }
+
+    ImGui::Text("%s:", gettext("Number of Users"));
     if (select_room != nullptr) {
         ImGui::SameLine(200);
         ImGui::Text("%d / %d",
-            select_room->onlooker_num,
-            select_room->max_onlooker_num
+            select_room->users,
+            select_room->max_users
         );
     }
 
@@ -133,21 +132,30 @@ void ModalRoomSearch::content()
     ImGui::Text("%s:", gettext("Your Nickname"));
     ImGui::SameLine(200);
     ImGui::PushItemWidth(180);
-    ImGui::InputText("##playername", player_name_, 64);
+    ImGui::InputText("##playername", username_, 64);
     ImGui::PopItemWidth();
     ImGui::SameLine();
 
+    char role = '-';
     ImGui::BeginDisabled(select_room == nullptr);
     if (ImGui::Button(gettext("Join Game"))) {
-        should_join_room_ = true;
-        as_a_player_ = true;
+        role = 'P';
     }
     ImGui::SameLine();
     if (ImGui::Button(gettext("Watch Just"))) {
-        should_join_room_ = true;
-        as_a_player_ = false;
+        role = 'O';
     }
     ImGui::EndDisabled();
+
+    if (role != '-') {
+        server_game_room_.join_room(
+            rooms_[item_current_idx_].endpoint,
+            rooms_[item_current_idx_].room_id,
+            username_,
+            password_,
+            role
+        );
+    }
 
     ImGui::Text("%s", hint_);
 }
@@ -165,15 +173,15 @@ void ModalRoomSearch::on_search_()
     server_room_search_.search_room(boost::asio::ip::udp::endpoint(address, search_port_));
 }
 
-bool ModalRoomSearch::should_join_room() const
-{
-    return should_join_room_;
-}
+// bool ModalRoomSearch::should_join_room() const
+// {
+//     return should_join_room_;
+// }
 
-std::pair<ConciseRoom, bool> ModalRoomSearch::info_join_room() const
-{
-    return {rooms_[item_current_idx_], as_a_player_};
-}
+// std::pair<ConciseRoom, bool> ModalRoomSearch::info_join_room() const
+// {
+//     return {rooms_[item_current_idx_], as_a_player_};
+// }
 
 
 // void ModalRoomSearch::join_room_(bool is_player)

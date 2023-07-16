@@ -41,19 +41,23 @@ boost::asio::awaitable<void> ServerRoomSearch::receive_()
         Log::Info("ServerRoomSearch received");
 
         net::Serializer s(recv_buffer_);
-        u_int16_t room_num;// = s.read_uint16();
+        s.head8();
+        std::string version;
+        std::string server_name;
+        s >> version >> server_name;
+        uint8_t room_num;
         s >> room_num;
-        for (u_int16_t i = 0; i < room_num; i++) {
+        for (uint8_t i = 0; i < room_num; i++) {
             ConciseRoom room;
-            s >> room.id >> room.name >> room.is_playing;
-            for (int j = 0; j < 2; j++) {
-                bool exist_player;
-                s >> exist_player;
-                if (exist_player) {
-                    s >> room.player_name[j];
-                }
-            }
-            s >> room.onlooker_num >> room.max_onlooker_num;
+            room.room_id = i;
+
+            s >> room.room_name
+              >> room.is_playing
+              >> room.black_player
+              >> room.white_player
+              >> room.users
+              >> room.max_users;
+
             room.endpoint.address(sender_endpoint_.address());
             room.endpoint.port(sender_endpoint_.port());
 
@@ -85,12 +89,12 @@ std::vector<ConciseRoom> ServerRoomSearch::new_rooms()
     return {};
 }
 
-bool ConciseRoom::operator < (const ConciseRoom& room) const
+bool ConciseRoom::operator < (const ConciseRoom& other) const
 {
-    if (this->id == room.id) {
-        return this->endpoint < room.endpoint;
+    if (this->version == other.version) {
+        return this->room_id < other.room_id;
     }
-    return this->id < room.id;
+    return this->version < other.version;
 }
 
 } // namespace gobang

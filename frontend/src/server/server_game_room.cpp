@@ -9,18 +9,16 @@ namespace gobang
 {
 
 ServerGameRoom::ServerGameRoom(
-    boost::asio::io_context& io_context,
-    game::Room& game_room
+    boost::asio::io_context& io_context
 ) :
-    io_context_(io_context),
-    game_room_(game_room),
+    io_context(io_context),
     join_room_state_(JoinRoomState::Pending),
     distribute_{
-        std::bind(&ServerGameRoom::receive_generic_error_notification_, this, std::placeholders::_1),
-        std::bind(&ServerGameRoom::receive_all_room_information_,       this, std::placeholders::_1),
-        std::bind(&ServerGameRoom::receive_join_room_,                  this, std::placeholders::_1),
-        std::bind(&ServerGameRoom::receive_leave_room_,                 this, std::placeholders::_1),
-        std::bind(&ServerGameRoom::receive_message_,                    this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_fatal_error_, this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_public_key_,  this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_join_room_,   this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_leave_room_,  this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_message_,     this, std::placeholders::_1),
     },
     client_(io_context, distribute_)
 {
@@ -34,13 +32,20 @@ ServerGameRoom::~ServerGameRoom()
 
 void ServerGameRoom::join_room(
     const boost::asio::ip::tcp::endpoint& remote_endpoint,
-    u_int16_t room_id,
-    const std::string& nickname,
-    bool is_player
+    uint8_t room_id,
+    const std::string& username,
+    const std::string& password,
+    char role
 ) {
+
+    room_id_ = room_id;
+    username_ = username;
+    password_ = password;
+    role_ = role;
+
     boost::asio::co_spawn(
-        io_context_,
-        connect_and_join_room_(remote_endpoint, room_id, nickname, is_player),
+        io_context,
+        client_.connect(remote_endpoint),
         boost::asio::detached
     );
 }
@@ -53,7 +58,7 @@ ServerGameRoom::JoinRoomState ServerGameRoom::join_room_state()
 void ServerGameRoom::leave_room()
 {
     boost::asio::co_spawn(
-        io_context_,
+        io_context,
         send_leave_room_(),
         boost::asio::detached
     );
@@ -62,7 +67,7 @@ void ServerGameRoom::leave_room()
 void ServerGameRoom::send_message(const std::string& message)
 {
     boost::asio::co_spawn(
-        io_context_,
+        io_context,
         send_send_message_(message),
         boost::asio::detached
     );
@@ -82,17 +87,9 @@ std::tuple<std::string, time_t, std::string> ServerGameRoom::pop_message()
     return message;
 }
 
-boost::asio::awaitable<void>
-ServerGameRoom::connect_and_join_room_(
-    const boost::asio::ip::tcp::endpoint& remote_endpoint,
-    u_int16_t room_id,
-    const std::string& nickname,
-    bool is_player
-) {
-    co_await client_.connect(remote_endpoint);
-    net::Serializer s;
-    s << room_id << nickname << is_player;
-    co_await client_.send((u_int16_t)S_Instruction::Join_Room, s.raw);
+boost::asio::awaitable<void> ServerGameRoom::send_join_room_()
+{
+    
 }
 
 boost::asio::awaitable<void> ServerGameRoom::send_leave_room_()
@@ -107,13 +104,66 @@ boost::asio::awaitable<void> ServerGameRoom::send_send_message_(const std::strin
     co_await client_.send((u_int16_t)S_Instruction::Message, s.raw);
 }
 
-void ServerGameRoom::receive_generic_error_notification_(
+void ServerGameRoom::receive_fatal_error_(
     const std::vector<std::byte>& data
 ) {
+    net::Serializer s(data);
+    int32_t error_id;
+    std::string detail;
+    s.head8();
+    s >> error_id >> detail;
+    Log::Error(std::to_string(error_id) + " " + detail);
+}
+
+
+void ServerGameRoom::receive_public_key_(
+    const std::vector<std::byte>& data
+) {
+    net::Serializer s(data);
+    std::vector<std::byte> pubkey;
+    std::vector<std::byte> uuid;
+    s.head8();
+    s >> pubkey >> uuid;
+
+    boost::crypto3::rsa::public_key<boost::crypto3::rsa::private_key<>> pubKey;
+    pubKey.load(boost::crypto3::rsa::make_public_key_from_der(publicKey));
+
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    client_uuid_.reserve(16);
+    std::memcpy(client_uuid_.data(), &uuid, sizeof(uuid));
+    co_await send_join_room_()
+}
+
+void ServerGameRoom::receive_you_join_room_(
+    const std::vector<std::byte>&data
+) {
+    net::Serializer s(data);
+    bool is_success;
+    s >> is_success;
+    if (!is_success) {
+        return;
+    }
+    ReadFirstBuffer<game::Room>::W room = game_room_.w();
+    s >> room->name
+      >> room->max_users
+      >> room->black_player
+      >> room->white_player;
+    uint8_t onlookers_size;
+    s >> onlookers_size;
+    room->onlookers.resize(onlookers_size);
+    for (uint8_t i = 0; i < onlookers_size; i++)
+    {
+        s >> room->onlookers[i];
+    }
+    s >> room->ready_player
+      >> room->is_playering
+      >> room->regret_player
+      >> room->tie_player
+      >> room->records;
 
 }
 
-void ServerGameRoom::receive_all_room_information_(
+void ServerGameRoom::receive_user_info_(
     const std::vector<std::byte>& data
 ) {
     // net::Serializer s(data);

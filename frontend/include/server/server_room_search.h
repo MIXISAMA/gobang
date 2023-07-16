@@ -9,16 +9,19 @@ namespace gobang
 
 struct ConciseRoom
 {
-    u_int16_t   id;
-    std::string name;
+    std::string version;
+    std::string server_name;
+    uint8_t     room_id;
+    std::string room_name;
     bool        is_playing;
-    std::string player_name[2];
-    u_int16_t   onlooker_num;
-    u_int16_t   max_onlooker_num;
+    std::string black_player;
+    std::string white_player;
+    uint8_t     users;
+    uint8_t     max_users;
 
     boost::asio::ip::tcp::endpoint endpoint;
 
-    bool operator < (const ConciseRoom& room) const;
+    bool operator < (const ConciseRoom& other) const;
 };
 
 

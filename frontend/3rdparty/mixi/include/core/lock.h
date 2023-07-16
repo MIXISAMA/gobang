@@ -7,18 +7,36 @@ namespace mixi
 
 
 template <typename T>
-class ReadFirstBuffer : public std::exception
+class ReadFirstBuffer
 {
-    friend class ReadFirstBuffer::R;
+    // friend class ReadFirstBuffer::R;
 public:
+
+    template<typename... Args>
+    ReadFirstBuffer(Args&&... args) :
+        buffer_{T(std::forward<Args>(args)...), T(std::forward<Args>(args)...)}
+        // read_id_(0),
+        // r(*this),
+        // w(*this)
+    {
+
+    }
 
     class R
     {
     public:
-        R(ReadFirstBuffer& rfb) : rfb_(rfb) {}
-        T* operator -> () const noexcept
+        R(ReadFirstBuffer& rfb) :
+            rfb_(rfb)
         {
-            return rfb_.buffer_[read_id_];
+            mutex_.lock();
+        }
+        ~R()
+        {
+            mutex_.unlock();
+        }
+        const T* operator -> () const noexcept
+        {
+            return &rfb_.buffer_[rfb_.read_id_];
         }
     private:
         ReadFirstBuffer& rfb_;
@@ -26,49 +44,41 @@ public:
 
     class W
     {
+    public:
+        W(ReadFirstBuffer& rfb) :
+            rfb_(rfb)
+        {
+            rfb_.buffer_[rfb_.read_id_ ^ 1] = rfb_.buffer_[rfb_.read_id_];
+        }
+        ~W()
+        {
+            rfb_.mutex_.lock();
+            rfb_.read_id_ ^= 1;
+            rfb_.mutex_.unlock();
+        }
         T* operator -> () const noexcept
         {
-            return &buffer_[read_id_ ^ 1];
+            return &rfb_.buffer_[rfb_.read_id_ ^ 1];
         }
+    private:
+        ReadFirstBuffer& rfb_;
     };
-    
-    template <typename ...Args>
-    ReadFirstBuffer(Args&&... args) :
-        buffer_(new T[2](args...)),
-        read_id_(0),
-        r(*this),
-        w(*this)
+
+    R r()
     {
-    
+        return R(*this);
     }
 
-    ~ReadFirstBuffer()
+    W w()
     {
-        delete [] buffer_;
+        return W(*this);
     }
-
-    R r;
-    W w;
-
-    
-    class r_lock_guard
-    {
-    public:
-        r_lock_guard()
-        {
-            mutex_.lock();
-        }
-        ~r_lock_guard()
-        {
-            mutex_.unlock();
-        }
-    };
 
 protected:
 
     std::mutex mutex_;
-    std::atomic_int read_id_;
-    T* buffer_;
+    int read_id_;
+    T buffer_[2];
 
 };
 

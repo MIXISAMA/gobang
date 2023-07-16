@@ -8,7 +8,7 @@ namespace gobang
 ComponentRoom::ComponentRoom(gui::Context& context) :
     gui::Component<ComponentRoom>(context),
     io_context_game_room_(),
-    server_game_room_(io_context_game_room_, game_room_),
+    server_game_room_(io_context_game_room_),
     window_game_(context),
     window_chat_(context),
     window_dashboard_(context, game_room_)

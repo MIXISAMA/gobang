@@ -30,6 +30,8 @@
 #include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/glm.hpp"

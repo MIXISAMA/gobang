@@ -7,7 +7,8 @@ namespace gobang {
 
 ComponentRoot::ComponentRoot(gui::Context& context) :
     gui::Component<ComponentRoot>(context),
-    // server_game_room_(context_.io_context),
+    work_guard_(io_context_.get_executor()),
+    server_game_room_(io_context_),
     gaming_(false)
 {
     ImGuiIO &io = ImGui::GetIO();
@@ -19,6 +20,12 @@ ComponentRoot::ComponentRoot(gui::Context& context) :
 
     ImGui::GetStyle().FrameRounding = 6.0f;
     ImGui::GetStyle().PopupRounding = 12.0f;
+
+
+    std::thread thread([this]() {
+        io_context_.run();
+    });
+    thread.detach();
 
 }
 
@@ -51,13 +58,13 @@ void ComponentRoot::render_home_window_()
 {
     if (window_home_.get() == nullptr) {
         component_room_.reset();
-        window_home_.reset(new WindowHome(context_));
+        window_home_.reset(new WindowHome(context_, server_game_room_));
     }
     window_home_->render();
-    gaming_ = window_home_->modal_room_search().should_join_room();
-    if (gaming_) {
-        auto [room, as_a_player] = window_home_->modal_room_search().info_join_room();
-    }
+    // gaming_ = window_home_->modal_room_search().should_join_room();
+    // if (gaming_) {
+    //     auto [room, as_a_player] = window_home_->modal_room_search().info_join_room();
+    // }
 }
 
 } // namespace gobang

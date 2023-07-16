@@ -15,7 +15,7 @@ class WindowHome : public gui::Window
 {
 public:
 
-    WindowHome(gui::Context& context);
+    WindowHome(gui::Context& context, ServerGameRoom& server_game_room);
     ~WindowHome();
 
     void content() override;

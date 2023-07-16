@@ -3,10 +3,10 @@
 namespace mixi {
 namespace gobang {
 
-WindowHome::WindowHome(gui::Context& context) :
+WindowHome::WindowHome(gui::Context& context, ServerGameRoom& server_game_room) :
     gui::Window(context, gettext("Home")),
     modal_room_create_(context),
-    modal_room_search_(context)
+    modal_room_search_(context, server_game_room)
 {
 
 }

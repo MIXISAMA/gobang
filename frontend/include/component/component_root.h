@@ -25,7 +25,9 @@ private:
     std::unique_ptr<WindowHome>    window_home_;
     std::unique_ptr<ComponentRoom> component_room_;
 
-    // ServerGameRoom server_game_room_;
+    boost::asio::io_context io_context_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard_;
+    ServerGameRoom server_game_room_;
 
     bool gaming_;
 
