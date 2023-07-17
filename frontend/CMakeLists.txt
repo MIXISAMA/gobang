@@ -13,6 +13,8 @@ add_subdirectory(3rdparty)
 find_package(Gettext REQUIRED)
 find_package(Intl REQUIRED)
 
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+find_package(OpenSSL REQUIRED)
 # find_package(Boost REQUIRED COMPONENTS system)
 
 # find_package(Assimp REQUIRED)
@@ -31,6 +33,7 @@ target_include_directories(${PROJECT_NAME}
 
     PUBLIC ${Intl_INCLUDE_DIR}
     PUBLIC ${Boost_INCLUDE_DIR}
+    PUBLIC ${OPENSSL_INCLUDE_DIR}
 
     PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/mixi/include/
     PUBLIC ${CMAKE_SOURCE_DIR}/include/
@@ -50,6 +53,7 @@ target_link_libraries(${PROJECT_NAME}
     # imgui
     # Boost::asio
     # Boost::thread
+    ${OPENSSL_LIBRARIES}
     mixi
     # ${Intl_LIBRARIES}
     # ${Boost_SYSTEM_LIBRARY_RELEASE}

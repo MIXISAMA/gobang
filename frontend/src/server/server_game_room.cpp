@@ -125,13 +125,43 @@ void ServerGameRoom::receive_public_key_(
     s.head8();
     s >> pubkey >> uuid;
 
-    boost::crypto3::rsa::public_key<boost::crypto3::rsa::private_key<>> pubKey;
-    pubKey.load(boost::crypto3::rsa::make_public_key_from_der(publicKey));
 
-    boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    client_uuid_.reserve(16);
-    std::memcpy(client_uuid_.data(), &uuid, sizeof(uuid));
-    co_await send_join_room_()
+    EVP_PKEY_CTX *ctx;
+    ENGINE *eng;
+    unsigned char *out, *in;
+    size_t outlen, inlen;
+    EVP_PKEY *key;
+
+    /*
+    * NB: assumes eng, key, in, inlen are already set up,
+    * and that key is an RSA public key
+    */
+    ctx = EVP_PKEY_CTX_new(key, eng);
+    if (!ctx);
+        /* Error occurred */
+    if (EVP_PKEY_encrypt_init(ctx) <= 0);
+        /* Error */
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0);
+        /* Error */
+
+    /* Determine buffer length */
+    if (EVP_PKEY_encrypt(ctx, NULL, &outlen, in, inlen) <= 0);
+        /* Error */
+
+    out = (unsigned char*)OPENSSL_malloc(outlen);
+
+    if (!out);
+        /* malloc failure */
+
+    if (EVP_PKEY_encrypt(ctx, out, &outlen, in, inlen) <= 0);
+        /* Error */
+
+    /* Encrypted data is outlen bytes written to buffer out */
+
+    // boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    // client_uuid_.reserve(16);
+    // std::memcpy(client_uuid_.data(), &uuid, sizeof(uuid));
+    // co_await send_join_room_()
 }
 
 void ServerGameRoom::receive_you_join_room_(
