@@ -1,3 +1,7 @@
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/engine.h>
+
 #include "server/server_game_room.h"
 
 #include "core/log.h"
@@ -87,7 +91,7 @@ std::tuple<std::string, time_t, std::string> ServerGameRoom::pop_message()
     return message;
 }
 
-boost::asio::awaitable<void> ServerGameRoom::send_join_room_()
+boost::asio::awaitable<void> ServerGameRoom::send_join_room_(const std::vector<std::byte> cipher)
 {
     
 }
