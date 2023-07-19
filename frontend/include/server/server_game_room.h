@@ -89,7 +89,6 @@ private:
     char role_;
 
 
-    boost::asio::awaitable<void> send_join_room_(const std::vector<std::byte> cipher);
     boost::asio::awaitable<void> send_leave_room_();
     boost::asio::awaitable<void> send_send_message_(const std::string& message);
 

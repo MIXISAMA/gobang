@@ -70,26 +70,7 @@ Serializer& Serializer::operator >> (int32_t& ret) {
 }
 
 Serializer& Serializer::operator >> (std::string& ret) {
-    int length;
-
-    if (head_ == 8) {
-        uint8_t n;
-        *this >> n;
-        length = n;
-    }
-    else if (head_ == 16) {
-        uint16_t n;
-        *this >> n;
-        length = n;
-    }
-    else {
-        throw std::runtime_error("wrong head");
-    }
-
-    if (cursor_ + length > raw.size()) {
-        throw std::runtime_error("out of raw size");
-    }
-
+    int length = read_head_();
     char* buffer = (char*)raw.data();
     ret.assign(buffer + cursor_, length);
     cursor_ += length;
@@ -97,39 +78,20 @@ Serializer& Serializer::operator >> (std::string& ret) {
 }
 
 Serializer& Serializer::operator >> (std::vector<std::byte>& ret) {
-    int length;
-
-    if (head_ == 8) {
-        uint8_t n;
-        *this >> n;
-        length = n;
-    }
-    else if (head_ == 16) {
-        uint16_t n;
-        *this >> n;
-        length = n;
-    }
-    else {
-        throw std::runtime_error("wrong head");
-    }
-
-    if (cursor_ + length > raw.size()) {
-        throw std::runtime_error("out of raw size");
-    }
-
+    int length = read_head_();
     ret.assign(raw.begin() + cursor_, raw.begin() + cursor_ + length);
     cursor_ += length;
     return *this;
 }
 
 
-Serializer& Serializer::operator << (const std::byte& val)
+Serializer& Serializer::operator << (std::byte val)
 {
     raw.push_back(val);
     return *this;
 }
 
-Serializer& Serializer::operator << (const bool& val)
+Serializer& Serializer::operator << (bool val)
 {
     if (val) {
         return *this << (u_int16_t)0xFF;
@@ -138,27 +100,79 @@ Serializer& Serializer::operator << (const bool& val)
     }
 }
 
-Serializer& Serializer::operator << (const u_int16_t& val)
+Serializer& Serializer::operator << (uint8_t val)
+{
+    raw.push_back((std::byte)val);
+    return *this;
+}
+
+Serializer& Serializer::operator << (uint16_t val)
 {
     return *this << (std::byte)val << (std::byte)(val >> 8);
 }
 
 Serializer& Serializer::operator << (const std::string& val)
 {
-    if (val.size() >= 65536) {
-        throw std::runtime_error("string is too long");
-    }
-    u_int16_t length = val.size();
-    std::byte* begin = raw.data() + raw.size();
-    raw.resize(raw.size() + length + 2);
-    memcpy(begin, &length, 2);
-    memcpy(begin + 2, val.data(), length);
+    int length = val.size();
+    write_head_(length);
+    raw.resize(raw.size() + length);
+    memcpy(raw.data() + raw.size(), val.data(), length);
+    return *this;
+}
+
+Serializer& Serializer::operator << (const std::vector<std::byte>& val)
+{
+    int length = val.size();
+    write_head_(length);
+    raw.resize(raw.size() + length);
+    memcpy(raw.data() + raw.size(), val.data(), length);
     return *this;
 }
 
 Serializer& Serializer::operator << (const char* val)
 {
     return *this << std::string(val);
+}
+
+int Serializer::read_head_()
+{
+    int length;
+    if (head_ == 8) {
+        uint8_t n;
+        *this >> n;
+        length = n;
+    }
+    else if (head_ == 16) {
+        uint16_t n;
+        *this >> n;
+        length = n;
+    }
+    else {
+        throw std::runtime_error("wrong head");
+    }
+    if (cursor_ + length > raw.size()) {
+        throw std::runtime_error("out of raw size");
+    }
+    return length;
+}
+
+void Serializer::write_head_(int length)
+{
+    if (head_ == 8) {
+        if (length > 0xFF) {
+            throw std::runtime_error("string is too long");
+        }
+        *this << (uint8_t)length;
+        return;
+    }
+    if (head_ == 16) {
+        if (length > 0xFFFF) {
+            throw std::runtime_error("string is too long");
+        }
+        *this << (uint16_t)length;
+        return;
+    }
+    assert(false && "wrong head");
 }
 
 } // namespace net

@@ -30,13 +30,19 @@ public:
     Serializer& operator >> (std::string& ret);
     Serializer& operator >> (std::vector<std::byte>& ret);
 
-    Serializer& operator << (const std::byte&   val);
-    Serializer& operator << (const bool&        val);
-    Serializer& operator << (const u_int16_t&   val);
+    Serializer& operator << (std::byte   val);
+    Serializer& operator << (bool        val);
+    Serializer& operator << (uint8_t     val);
+    Serializer& operator << (uint16_t    val);
+
+    Serializer& operator << (const char* val);
     Serializer& operator << (const std::string& val);
-    Serializer& operator << (const char*        val);
+    Serializer& operator << (const std::vector<std::byte>& val);
 
 private:
+
+    int read_head_();
+    void write_head_(int length);
 
     size_t cursor_;
     int head_;

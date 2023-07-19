@@ -91,11 +91,6 @@ std::tuple<std::string, time_t, std::string> ServerGameRoom::pop_message()
     return message;
 }
 
-boost::asio::awaitable<void> ServerGameRoom::send_join_room_(const std::vector<std::byte> cipher)
-{
-    
-}
-
 boost::asio::awaitable<void> ServerGameRoom::send_leave_room_()
 {
     co_await client_.send((u_int16_t)S_Instruction::Leave_Room, {});
@@ -123,49 +118,51 @@ void ServerGameRoom::receive_fatal_error_(
 void ServerGameRoom::receive_public_key_(
     const std::vector<std::byte>& data
 ) {
-    net::Serializer s(data);
+    net::Serializer s1(data);
     std::vector<std::byte> pubkey;
-    std::vector<std::byte> uuid;
-    s.head8();
-    s >> pubkey >> uuid;
+    std::vector<std::byte> server_uuid;
+    s1.head8();
+    s1 >> pubkey >> server_uuid;
+
+    net::Serializer s2;
+    s2.head8();
+    s2 << password_ << server_uuid;
 
 
-    EVP_PKEY_CTX *ctx;
-    ENGINE *eng;
-    unsigned char *out, *in;
-    size_t outlen, inlen;
-    EVP_PKEY *key;
+    int res = 0;
+    EVP_PKEY *pkey = EVP_PKEY_new();
+    assert(pkey);
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(pkey, nullptr);
+    assert(ctx);
+    res = EVP_PKEY_encrypt_init(ctx);
+    assert(res > 0);
+    res = EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+    assert(res > 0);
+    unsigned char* plain = (unsigned char*)s2.raw.data();
+    size_t plain_size = s2.raw.size();
+    size_t cipher_size;
+    res = EVP_PKEY_encrypt(ctx, nullptr, &cipher_size, plain, plain_size);
+    assert(res > 0);
+    std::vector<std::byte> cipher_bytes(cipher_size);
+    unsigned char* cipher = (unsigned char*)cipher_bytes.data();
+    res = EVP_PKEY_encrypt(ctx, cipher, &cipher_size, plain, plain_size);
+    assert(res > 0);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
 
-    /*
-    * NB: assumes eng, key, in, inlen are already set up,
-    * and that key is an RSA public key
-    */
-    ctx = EVP_PKEY_CTX_new(key, eng);
-    if (!ctx);
-        /* Error occurred */
-    if (EVP_PKEY_encrypt_init(ctx) <= 0);
-        /* Error */
-    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0);
-        /* Error */
+    std::vector<std::byte> client_uuid_(16);
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    std::memcpy(client_uuid_.data(), uuid.data, 16);
 
-    /* Determine buffer length */
-    if (EVP_PKEY_encrypt(ctx, NULL, &outlen, in, inlen) <= 0);
-        /* Error */
-
-    out = (unsigned char*)OPENSSL_malloc(outlen);
-
-    if (!out);
-        /* malloc failure */
-
-    if (EVP_PKEY_encrypt(ctx, out, &outlen, in, inlen) <= 0);
-        /* Error */
-
-    /* Encrypted data is outlen bytes written to buffer out */
-
-    // boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    // client_uuid_.reserve(16);
-    // std::memcpy(client_uuid_.data(), &uuid, sizeof(uuid));
-    // co_await send_join_room_()
+    net::Serializer s3;
+    s3.head8();
+    s3 << username_ << cipher_bytes << client_uuid_;
+    
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::Join_Room, s3.raw),
+        boost::asio::detached
+    );
 }
 
 void ServerGameRoom::receive_you_join_room_(
