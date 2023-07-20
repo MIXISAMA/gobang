@@ -26,6 +26,9 @@ file(GLOB_RECURSE SOURCE_LIST CONFIGURE_DEPENDS "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCE_LIST})
 
 target_include_directories(${PROJECT_NAME}
+    PUBLIC ${CMAKE_SOURCE_DIR}/include/
+    PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/mixi/include/
+
     # PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/glfw/include/
     PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/glad/include/
     PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/stb/
@@ -33,10 +36,7 @@ target_include_directories(${PROJECT_NAME}
 
     PUBLIC ${Intl_INCLUDE_DIR}
     PUBLIC ${Boost_INCLUDE_DIR}
-    PUBLIC ${OPENSSL_INCLUDE_DIR}
-
-    PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/mixi/include/
-    PUBLIC ${CMAKE_SOURCE_DIR}/include/
+    PUBLIC ${OPENSSL_INCLUDE_DIR}    
 )
 
 target_link_directories(${PROJECT_NAME}
@@ -53,6 +53,7 @@ target_link_libraries(${PROJECT_NAME}
     # imgui
     # Boost::asio
     # Boost::thread
+    Boost::uuid
     ${OPENSSL_LIBRARIES}
     mixi
     # ${Intl_LIBRARIES}

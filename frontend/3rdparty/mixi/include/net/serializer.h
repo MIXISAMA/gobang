@@ -25,6 +25,8 @@ public:
     Serializer& operator >> (bool&        ret);
     Serializer& operator >> (uint8_t&     ret);
     Serializer& operator >> (uint16_t&    ret);
+    Serializer& operator >> (uint32_t&    ret);
+    Serializer& operator >> (uint64_t&    ret);
     Serializer& operator >> (int32_t&     ret);
     
     Serializer& operator >> (std::string& ret);
@@ -34,6 +36,7 @@ public:
     Serializer& operator << (bool        val);
     Serializer& operator << (uint8_t     val);
     Serializer& operator << (uint16_t    val);
+    Serializer& operator << (uint32_t    val);
 
     Serializer& operator << (const char* val);
     Serializer& operator << (const std::string& val);

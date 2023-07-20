@@ -11,6 +11,8 @@ namespace mixi
 namespace gobang
 {
 
+using msg_t = std::tuple<std::string, time_t, std::string>;
+
 class ServerGameRoom
 {
 
@@ -43,8 +45,12 @@ public:
     void leave_room();
 
     void send_message(const std::string& message);
-    bool has_message();
-    std::tuple<std::string, time_t, std::string> pop_message();
+    
+
+    ReadTryQueue<game::User>& users();
+    ReadTryQueue<msg_t>& messages();
+    // bool has_message();
+    // std::tuple<std::string, time_t, std::string> pop_message();
 
 protected:
 
@@ -67,19 +73,13 @@ protected:
     };
 
     ReadFirstBuffer<game::Room> game_room_;
+    ReadTryQueue<game::User> users_;
+    ReadTryQueue<msg_t> messages_;
 
-    // game::Room& game_room_;
     net::IdtcpClient client_;
     const net::IdtcpClient::Distribute distribute_;
 
     JoinRoomState join_room_state_;
-
-    std::shared_mutex message_queue_mutex_;
-    std::queue<std::tuple<
-        std::string,
-        time_t,
-        std::string
-    >> message_queue_;
 
 private:
 
@@ -96,7 +96,7 @@ private:
     void receive_public_key_    (const std::vector<std::byte>& data);
     void receive_you_join_room_ (const std::vector<std::byte>& data);
     void receive_user_info_     (const std::vector<std::byte>& data);
-    void receive_join_room_                 (const std::vector<std::byte>& data);
+    void receive_other_join_room_(const std::vector<std::byte>& data);
     void receive_leave_room_                (const std::vector<std::byte>& data);
     void receive_message_                   (const std::vector<std::byte>& data);
 

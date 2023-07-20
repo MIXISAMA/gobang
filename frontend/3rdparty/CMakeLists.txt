@@ -43,7 +43,7 @@ add_subdirectory(assimp)
 # === assimp ===
 # === boost ===
 
-set(BOOST_INCLUDE_LIBRARIES asio thread)
+set(BOOST_INCLUDE_LIBRARIES asio thread uuid)
 add_subdirectory(boost EXCLUDE_FROM_ALL)
 # add_subdirectory(boost/libs/thread EXCLUDE_FROM_ALL)
 # add_subdirectory(boost)

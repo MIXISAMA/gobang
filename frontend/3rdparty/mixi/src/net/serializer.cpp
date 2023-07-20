@@ -57,6 +57,34 @@ Serializer& Serializer::operator >> (uint16_t& ret) {
     return *this;
 }
 
+Serializer& Serializer::operator >> (uint32_t& ret) {
+    if (cursor_ + 4 > raw.size()) {
+        throw std::runtime_error("out of raw size");
+    }
+    ret = (uint32_t)raw[cursor_ + 3] << 24
+        | (uint32_t)raw[cursor_ + 2] << 16
+        | (uint32_t)raw[cursor_ + 1] << 8
+        | (uint32_t)raw[cursor_];
+    cursor_ += 4;
+    return *this;
+}
+
+Serializer& Serializer::operator >> (uint64_t& ret) {
+    if (cursor_ + 8 > raw.size()) {
+        throw std::runtime_error("out of raw size");
+    }
+    ret = (uint64_t)raw[cursor_ + 7] << 56
+        | (uint64_t)raw[cursor_ + 6] << 48
+        | (uint64_t)raw[cursor_ + 5] << 40
+        | (uint64_t)raw[cursor_ + 4] << 32
+        | (uint64_t)raw[cursor_ + 3] << 24
+        | (uint64_t)raw[cursor_ + 2] << 16
+        | (uint64_t)raw[cursor_ + 1] << 8
+        | (uint64_t)raw[cursor_];
+    cursor_ += 8;
+    return *this;
+}
+
 Serializer& Serializer::operator >> (int32_t& ret) {
     if (cursor_ + 4 > raw.size()) {
         throw std::runtime_error("out of raw size");
@@ -111,12 +139,19 @@ Serializer& Serializer::operator << (uint16_t val)
     return *this << (std::byte)val << (std::byte)(val >> 8);
 }
 
+Serializer& Serializer::operator << (uint32_t val)
+{
+    raw.resize(raw.size() + 4);
+    memcpy(raw.data() + raw.size() - 4, &val, 4);
+    return *this;
+}
+
 Serializer& Serializer::operator << (const std::string& val)
 {
     int length = val.size();
     write_head_(length);
     raw.resize(raw.size() + length);
-    memcpy(raw.data() + raw.size(), val.data(), length);
+    memcpy(raw.data() + raw.size() - length, val.data(), length);
     return *this;
 }
 
@@ -125,7 +160,7 @@ Serializer& Serializer::operator << (const std::vector<std::byte>& val)
     int length = val.size();
     write_head_(length);
     raw.resize(raw.size() + length);
-    memcpy(raw.data() + raw.size(), val.data(), length);
+    memcpy(raw.data() + raw.size() - length, val.data(), length);
     return *this;
 }
 
