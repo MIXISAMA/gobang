@@ -28,13 +28,13 @@ var Key = new(idtcp.MiddlewareKey)
 
 type Execution struct {
 	conn    *idtcp.Conn
-	errorId *int32
+	errorId int32
 	message string
 }
 
 func NewExecution(
 	conn *idtcp.Conn,
-	errorId *int32,
+	errorId int32,
 	message string,
 ) *Execution {
 	return &Execution{
@@ -45,7 +45,7 @@ func NewExecution(
 }
 
 func (execution *Execution) Error() string {
-	return fmt.Sprintf("Fatal ID %d: %s", execution.errorId, execution.message)
+	return fmt.Sprintf("FatalID [%d] %s", execution.errorId, execution.message)
 }
 
 type Payload struct {
@@ -57,7 +57,7 @@ func (middleware *Middleware) ProcessConnect(
 	processConnect func(idtcp.PayloadMap) (*idtcp.Conn, error),
 ) (*idtcp.Conn, error) {
 	payload := &Payload{Executions: list.New()}
-	payloads[Key] = payload
+	payloads[&Key] = payload
 	conn, err := processConnect(payloads)
 	switch e := err.(type) {
 	case *Execution:
@@ -72,7 +72,7 @@ func (middleware *Middleware) ProcessDisconnect(
 	payloads idtcp.PayloadMap,
 	processDisconnect func(*idtcp.Conn, idtcp.PayloadMap),
 ) {
-
+	processDisconnect(conn, payloads)
 }
 
 func (middleware *Middleware) ProcessDistribute(
@@ -87,13 +87,14 @@ func (middleware *Middleware) ProcessDistribute(
 	case *Execution:
 		middleware.processExecution(e)
 	}
-	middleware.processExecutions(request.Payloads[Key].(Payload).Executions)
+	middleware.processExecutions(request.Payloads[&Key].(*Payload).Executions)
 	return err
 }
 
 func (middleware *Middleware) processExecution(e *Execution) {
 	defer e.conn.Close()
 	var s utils.Serializer
+	s.WriteInt32(e.errorId)
 	err := s.WriteString8(e.message)
 	if err != nil {
 		log.Print(err.Error())
@@ -120,5 +121,5 @@ func receiveFatalError(conn *idtcp.Conn, data []byte) {
 	if err != nil {
 		return
 	}
-	log.Println(NewExecution(conn, &errorId, message).Error())
+	log.Println(NewExecution(conn, errorId, message).Error())
 }

@@ -7,19 +7,19 @@ import (
 )
 
 const (
-	C_Version       uint16 = 0
-	C_FatalError    uint16 = 1
-	C_PublicKey     uint16 = 2
-	C_YouJoinRoom   uint16 = 3
-	C_UserInfo      uint16 = 4
-	C_OtherJoinRoom uint16 = 5
-	C_UserLeaveRoom uint16 = 6
-	C_PlayerReady   uint16 = 7
-	C_GameStart     uint16 = 8
-	C_Stone         uint16 = 9
-	C_PlayerRegret  uint16 = 10
-	C_AgreeRegret   uint16 = 11
-	C_PlayerTie     uint16 = 12
+	C_FatalError    uint16 = 0
+	C_PublicKey     uint16 = 1
+	C_YouJoinRoom   uint16 = 2
+	C_UserInfo      uint16 = 3
+	C_OtherJoinRoom uint16 = 4
+	C_UserLeaveRoom uint16 = 5
+	C_PlayerReady   uint16 = 6
+	C_GameStart     uint16 = 7
+	C_Stone         uint16 = 8
+	C_PlayerRegret  uint16 = 9
+	C_AgreeRegret   uint16 = 10
+	C_PlayerTie     uint16 = 11
+	C_AgreeTie      uint16 = 12
 	C_GameOver      uint16 = 13
 	C_Message       uint16 = 14
 )

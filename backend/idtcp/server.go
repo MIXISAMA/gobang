@@ -14,7 +14,7 @@ type Middleware interface {
 }
 
 type MiddlewareKey struct{}
-type PayloadMap map[*MiddlewareKey]interface{}
+type PayloadMap map[**MiddlewareKey]interface{}
 
 type Request struct {
 	Instruction uint16
@@ -59,35 +59,33 @@ func NewServer(
 	}
 
 	server.connectPipe = func(connPayloads PayloadMap) (*Conn, error) {
-
 		tcpConn, err := server.listener.AcceptTCP()
 		conn := &Conn{TCPConn: tcpConn}
 		if err != nil {
 			return conn, err
 		}
-
-		remoteAddress := tcpConn.RemoteAddr().String()
-		log.Println("A client connected : " + remoteAddress)
-
+		log.Printf("%-21s TCP Connected\n", conn.RemoteAddr().String())
 		return conn, nil
 	}
 
 	for i := len(middlewareList) - 1; i >= 0; i-- {
+		ii := i
+		pipe := server.connectPipe
 		server.connectPipe = func(connPayload PayloadMap) (*Conn, error) {
-			return middlewareList[i].ProcessConnect(connPayload, server.connectPipe)
+			return middlewareList[ii].ProcessConnect(connPayload, pipe)
 		}
 	}
 
 	server.disconnectPipe = func(conn *Conn, connPayload PayloadMap) {
-		err := conn.Close()
-		if err != nil {
-			log.Println(err.Error())
-		}
+		conn.Close()
+		log.Printf("%-21s TCP Disconnected\n", conn.RemoteAddr().String())
 	}
 
 	for i := len(middlewareList) - 1; i >= 0; i-- {
+		ii := i
+		pipe := server.disconnectPipe
 		server.disconnectPipe = func(conn *Conn, connPayload PayloadMap) {
-			middlewareList[i].ProcessDisconnect(conn, connPayload, server.disconnectPipe)
+			middlewareList[ii].ProcessDisconnect(conn, connPayload, pipe)
 		}
 	}
 
@@ -102,8 +100,10 @@ func NewServer(
 	}
 
 	for i := len(middlewareList) - 1; i >= 0; i-- {
+		ii := i
+		pipe := server.distributePipe
 		server.distributePipe = func(req *Request) error {
-			return middlewareList[i].ProcessDistribute(req, server.distributePipe)
+			return middlewareList[ii].ProcessDistribute(req, pipe)
 		}
 	}
 
@@ -147,7 +147,7 @@ func (server *Server) requestPipe(conn *Conn, payloads PayloadMap) {
 		}
 		_, err := conn.Read(&req.Instruction, &req.Data)
 		if err != nil {
-			log.Println(err.Error())
+			log.Printf("%-21s TCP ERR: %s", conn.RemoteAddr().String(), err.Error())
 			break
 		}
 
@@ -155,6 +155,7 @@ func (server *Server) requestPipe(conn *Conn, payloads PayloadMap) {
 		err = server.distributePipe(&req)
 		server.pipelineMutex.Unlock()
 		if err != nil {
+			log.Printf("%-21s TCP ERR: %s", conn.RemoteAddr().String(), err.Error())
 			break
 		}
 	}

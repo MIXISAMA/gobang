@@ -152,6 +152,10 @@ func (s *Serializer) WriteUint64(val uint64) {
 	s.Raw = append(s.Raw, data...)
 }
 
+func (s *Serializer) WriteInt32(val int32) {
+	s.WriteUint32(uint32(val))
+}
+
 func (s *Serializer) WriteBytes8(val []byte) error {
 	err := s.WriteUint8_Int(len(val))
 	if err != nil {

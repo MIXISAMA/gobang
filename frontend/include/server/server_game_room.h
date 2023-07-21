@@ -83,6 +83,7 @@ private:
     std::string password_;
     char role_;
 
+    void on_disconnected_();
 
     boost::asio::awaitable<void> send_leave_room_();
     boost::asio::awaitable<void> send_send_message_(const std::string& message);

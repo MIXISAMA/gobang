@@ -1,6 +1,8 @@
 package mdwroom
 
-import "github.com/MIXISAMA/gobang/backend/idtcp"
+import (
+	"github.com/MIXISAMA/gobang/backend/idtcp"
+)
 
 var MaxRooms = 200
 
@@ -28,6 +30,10 @@ func NewMiddleware(
 	c_GameOver uint16,
 	rooms []*ConfigRoom,
 ) *Middleware {
+	maxRooms := MaxRooms
+	if len(rooms) < maxRooms {
+		maxRooms = len(rooms)
+	}
 	middleware := Middleware{
 		s_JoinRoom:      s_JoinRoom,
 		s_LeaveRoom:     s_LeaveRoom,
@@ -35,7 +41,7 @@ func NewMiddleware(
 		c_OtherJoinRoom: c_OtherJoinRoom,
 		c_UserLeaveRoom: c_UserLeaveRoom,
 		c_GameOver:      c_GameOver,
-		Rooms:           make([]*Room, len(rooms[:MaxRooms])),
+		Rooms:           make([]*Room, maxRooms),
 	}
 	for i := range middleware.Rooms {
 		middleware.Rooms[i] = NewRoom(rooms[i].Name, rooms[i].MaxUsers)
@@ -53,7 +59,7 @@ func (middleware *Middleware) ProcessConnect(
 	payloads idtcp.PayloadMap,
 	processConnect func(idtcp.PayloadMap) (*idtcp.Conn, error),
 ) (*idtcp.Conn, error) {
-	payloads[Key] = &Payload{Room: nil}
+	payloads[&Key] = &Payload{Room: nil}
 	return processConnect(payloads)
 }
 
@@ -62,7 +68,7 @@ func (middleware *Middleware) ProcessDisconnect(
 	payloads idtcp.PayloadMap,
 	processDisconnect func(*idtcp.Conn, idtcp.PayloadMap),
 ) {
-
+	processDisconnect(conn, payloads)
 }
 
 func (middleware *Middleware) ProcessDistribute(

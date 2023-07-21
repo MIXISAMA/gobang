@@ -15,7 +15,8 @@ Serializer::Serializer() :
 
 Serializer::Serializer(const std::vector<std::byte> &buffer) :
     raw(buffer),
-    cursor_(0)
+    cursor_(0),
+    head_(8)
 {
 
 }
@@ -183,7 +184,7 @@ int Serializer::read_head_()
         length = n;
     }
     else {
-        throw std::runtime_error("wrong head");
+        assert(false && "wrong head");
     }
     if (cursor_ + length > raw.size()) {
         throw std::runtime_error("out of raw size");

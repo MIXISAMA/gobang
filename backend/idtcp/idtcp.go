@@ -25,7 +25,7 @@ func (conn *Conn) Write(instruction uint16, data []byte) (int, error) {
 
 	payload := append(bufferLength, bufferInstruction...)
 	payload = append(payload, data...)
-	log.Printf("payload len: %d", len(payload))
+	log.Printf("%-21s TCP Sent     [%2d] Length = %d", conn.RemoteAddr().String(), instruction, length)
 	return conn.TCPConn.Write(payload)
 }
 
@@ -48,8 +48,6 @@ func (conn *Conn) ReadN(buffer []byte) error {
 
 func (conn *Conn) Read(instruction *uint16, data *[]byte) (int, error) {
 
-	// conn.buffer = nil
-
 	package_bytes := make([]byte, 2)
 	err := conn.ReadN(package_bytes)
 	if err != nil {
@@ -65,6 +63,8 @@ func (conn *Conn) Read(instruction *uint16, data *[]byte) (int, error) {
 
 	*instruction = binary.LittleEndian.Uint16(buffer[:2])
 	*data = buffer[2:]
+
+	log.Printf("%-21s TCP Received [%2d] Length = %d", conn.RemoteAddr().String(), *instruction, length)
 
 	return length, nil
 }

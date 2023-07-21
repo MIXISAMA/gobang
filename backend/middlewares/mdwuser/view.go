@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/pem"
 	"errors"
 
 	"github.com/MIXISAMA/gobang/backend/idtcp"
@@ -18,15 +17,9 @@ func (middleware *Middleware) sendPublicKey(conn *idtcp.Conn, publicKey *rsa.Pub
 		return err
 	}
 
-	pemData := pem.EncodeToMemory(&pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: pubKeyBytes,
-	})
-
-	var s = utils.MakeSerializer(pemData)
-	s.WriteBytes8(pemData)
+	var s utils.Serializer
+	s.WriteBytes8(pubKeyBytes)
 	s.WriteBytes8(middleware.serverUuid)
-
 	_, err = conn.Write(middleware.c_PublicKey, s.Raw)
 	return err
 }
@@ -52,7 +45,7 @@ func (middleware *Middleware) authorization(request *idtcp.Request) (*User, erro
 		return nil, err
 	}
 
-	privateKey := request.Payloads[Key].(*Payload).PrivateKey
+	privateKey := request.Payloads[&Key].(*Payload).PrivateKey
 	plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
 	if err != nil {
 		return nil, err

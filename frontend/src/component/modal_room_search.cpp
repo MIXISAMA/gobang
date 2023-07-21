@@ -16,6 +16,10 @@ ModalRoomSearch::ModalRoomSearch(gui::Context& context, ServerGameRoom& server_g
 {
     username_[0] = '\0';
     password_[0] = '\0';
+
+    server_game_room.on_join_room(std::bind(
+        &ModalRoomSearch::on_join_room_, this, std::placeholders::_1)
+    );
 }
 
 ModalRoomSearch::~ModalRoomSearch()
@@ -126,20 +130,29 @@ void ModalRoomSearch::content()
     }
 
     ImGui::NewLine();
-    ImGui::Text("%s:", gettext("Your Nickname"));
+    ImGui::Text("%s:", gettext("Your Username"));
     ImGui::SameLine(200);
-    ImGui::PushItemWidth(180);
-    ImGui::InputText("##playername", username_, 64);
+    ImGui::PushItemWidth(250);
+    ImGui::InputText("##username", username_, sizeof(username_));
     ImGui::PopItemWidth();
-    ImGui::SameLine();
+    ImGui::SameLine(470);
 
     char role = '-';
     ImGui::BeginDisabled(selected_room_.get() == nullptr);
-    if (ImGui::Button(gettext("Join Game"))) {
+    if (ImGui::Button(gettext("Join Game"), ImVec2(120, 0))) {
         role = 'P';
     }
-    ImGui::SameLine();
-    if (ImGui::Button(gettext("Watch Just"))) {
+    ImGui::EndDisabled();
+
+    ImGui::Text("%s:", gettext("Your Password"));
+    ImGui::SameLine(200);
+    ImGui::PushItemWidth(250);
+    ImGui::InputText("##password", password_, sizeof(username_));
+    ImGui::PopItemWidth();
+    ImGui::SameLine(470);
+
+    ImGui::BeginDisabled(selected_room_.get() == nullptr);
+    if (ImGui::Button(gettext("Watch Just"), ImVec2(120, 0))) {
         role = 'O';
     }
     ImGui::EndDisabled();

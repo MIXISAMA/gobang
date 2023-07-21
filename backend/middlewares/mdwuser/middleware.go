@@ -3,9 +3,9 @@ package mdwuser
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"errors"
 
 	"github.com/MIXISAMA/gobang/backend/idtcp"
+	"github.com/MIXISAMA/gobang/backend/middlewares/mdwfatal"
 	"github.com/google/uuid"
 )
 
@@ -66,7 +66,7 @@ func (middleware *Middleware) ProcessConnect(
 		return nil, err
 	}
 
-	payloads[Key] = &Payload{
+	payloads[&Key] = &Payload{
 		User:       nil,
 		PrivateKey: privateKey,
 	}
@@ -85,7 +85,7 @@ func (middleware *Middleware) ProcessDisconnect(
 	payloads idtcp.PayloadMap,
 	processDisconnect func(*idtcp.Conn, idtcp.PayloadMap),
 ) {
-
+	processDisconnect(conn, payloads)
 }
 
 func (middleware *Middleware) ProcessDistribute(
@@ -99,12 +99,12 @@ func (middleware *Middleware) ProcessDistribute(
 			middleware.sendAuthorizationFailed(request.Conn, middleware.c_YouJoinRoom)
 			return err
 		}
-		request.Payloads[Key].(*Payload).User = user
+		request.Payloads[&Key].(*Payload).User = user
 	}
 
-	user := request.Payloads[Key].(*Payload).User
+	user := request.Payloads[&Key].(*Payload).User
 	if user == nil {
-		return errors.New("user has not passed the authorization")
+		return mdwfatal.NewExecution(request.Conn, 0, "user has not passed the authorization")
 	}
 
 	err := processDistribute(request)

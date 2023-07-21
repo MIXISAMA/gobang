@@ -47,7 +47,6 @@ func (server *Server) Run() {
 			Conn: server.Conn,
 			Addr: remoteAddr,
 		}
-		log.Println("Received UDP package")
 		go func() {
 			err := server.Pipe(&msg)
 			if err != nil {

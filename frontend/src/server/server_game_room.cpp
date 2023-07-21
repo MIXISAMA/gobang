@@ -13,14 +13,15 @@ ServerGameRoom::ServerGameRoom(
     boost::asio::io_context& io_context
 ) :
     io_context(io_context),
-    distribute_{
-        std::bind(&ServerGameRoom::receive_fatal_error_, this, std::placeholders::_1),
-        std::bind(&ServerGameRoom::receive_public_key_,  this, std::placeholders::_1),
+    client_(io_context, {
+        std::bind(&ServerGameRoom::receive_fatal_error_,     this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_public_key_,      this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_you_join_room_,   this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_user_info_,       this, std::placeholders::_1),
         std::bind(&ServerGameRoom::receive_other_join_room_, this, std::placeholders::_1),
-        std::bind(&ServerGameRoom::receive_leave_room_,  this, std::placeholders::_1),
-        std::bind(&ServerGameRoom::receive_message_,     this, std::placeholders::_1),
-    },
-    client_(io_context, distribute_)
+        std::bind(&ServerGameRoom::receive_leave_room_,      this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_message_,         this, std::placeholders::_1),
+    },  std::bind(&ServerGameRoom::on_disconnected_,         this))
 {
 
 }
@@ -90,6 +91,11 @@ ReadTryQueue<msg_t>& ServerGameRoom::messages()
     return messages_;
 }
 
+void ServerGameRoom::on_disconnected_()
+{
+    Log::Info("disconnected");
+}
+
 boost::asio::awaitable<void> ServerGameRoom::send_leave_room_()
 {
     co_await client_.send((u_int16_t)S_Instruction::Leave_Room, {});
@@ -129,14 +135,14 @@ void ServerGameRoom::receive_public_key_(
 
 
     int res = 0;
-    BIO* bio = BIO_new_mem_buf(pubkey.data(), pubkey.size());
-    EVP_PKEY* pkey = PEM_read_bio_PUBKEY(bio, nullptr, nullptr, nullptr);
+    const unsigned char* pubkeybytes = (const unsigned char*)pubkey.data();
+    EVP_PKEY* pkey = d2i_PUBKEY(NULL, &pubkeybytes, pubkey.size());
     assert(pkey);
     EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(pkey, nullptr);
     assert(ctx);
     res = EVP_PKEY_encrypt_init(ctx);
     assert(res > 0);
-    res = EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
+    res = EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING);
     assert(res > 0);
     unsigned char* plain = (unsigned char*)s2.raw.data();
     size_t plain_size = s2.raw.size();
@@ -149,7 +155,6 @@ void ServerGameRoom::receive_public_key_(
     assert(res > 0);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
-    BIO_free(bio);
 
     std::vector<std::byte> client_uuid_(16);
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
@@ -161,7 +166,7 @@ void ServerGameRoom::receive_public_key_(
     
     boost::asio::co_spawn(
         io_context,
-        client_.send((u_int16_t)S_Instruction::Join_Room, s3.raw),
+        client_.send((u_int16_t)S_Instruction::Join_Room, std::vector<std::byte>(s3.raw)),
         boost::asio::detached
     );
 }

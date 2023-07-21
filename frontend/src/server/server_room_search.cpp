@@ -42,7 +42,9 @@ boost::asio::awaitable<void> ServerRoomSearch::receive_()
             sender_endpoint_,
             boost::asio::use_awaitable
         );
-        Log::Info("ServerRoomSearch received");
+        std::ostringstream oss;
+        oss << "UDP Received [" << sender_endpoint_ << "]";
+        Log::Info(oss.str());
 
         net::Serializer s(recv_buffer_);
         s.head8();
@@ -73,7 +75,6 @@ boost::asio::awaitable<void> ServerRoomSearch::receive_()
 
 boost::asio::awaitable<void> ServerRoomSearch::send_search_room_(const boost::asio::ip::udp::endpoint endpoint)
 {
-    Log::Info("ServerRoomSearch send search room");
     net::Serializer s;
     s << VERSION;
     co_await socket_.async_send_to(
@@ -81,6 +82,9 @@ boost::asio::awaitable<void> ServerRoomSearch::send_search_room_(const boost::as
         endpoint,
         boost::asio::use_awaitable
     );
+    std::ostringstream oss;
+    oss << "UDP Sent     [" << endpoint << "]";
+    Log::Info(oss.str());
 }
 
 bool ConciseRoom::operator < (const ConciseRoom& other) const

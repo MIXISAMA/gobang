@@ -18,24 +18,24 @@ public:
     ~IdtcpSocket() = default;
 
     void async_send_instrution_data(
-        u_int16_t instruction,
+        uint16_t instruction,
         const std::vector<std::byte>& buffers,
         const boost::function<void(const boost::system::error_code&, std::size_t)>& handler
     );
 
     void async_receive_instrution_data(
         const std::function<
-            void(u_int16_t, const std::vector<std::byte>&)
+            void(uint16_t, const std::vector<std::byte>&)
         >& handler
     );
 
     boost::asio::awaitable<void>
     send_instrution_data(
-        u_int16_t instruction,
+        uint16_t instruction,
         const std::vector<std::byte>& buffers
     );
 
-    boost::asio::awaitable<std::pair<u_int16_t, std::vector<std::byte>>>
+    boost::asio::awaitable<std::pair<uint16_t, std::vector<std::byte>>>
     receive_instrution_data();
 
 protected:
@@ -44,16 +44,16 @@ protected:
     std::byte buffer_[65536];
 
     void pack_(
-        u_int16_t instruction,
+        uint16_t instruction,
         const std::vector<std::byte>& data,
         std::byte* idtcp_raw,
-        u_int16_t& idtcp_raw_bytes
+        uint16_t& idtcp_raw_bytes
     );
 
     void unpack_(
         const std::byte* idtcp_raw,
-        u_int16_t data_bytes,
-        u_int16_t& instruction,
+        uint16_t data_bytes,
+        uint16_t& instruction,
         std::vector<std::byte>& data
     );
 
@@ -61,7 +61,7 @@ protected:
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         const std::function<
-            void(u_int16_t, const std::vector<std::byte>&)
+            void(uint16_t, const std::vector<std::byte>&)
         >& handler
     );
 
@@ -73,11 +73,12 @@ class IdtcpClient
 
 public:
 
-    using Distribute = std::vector<std::function<void(const std::vector<std::byte>&)>>;
+    using Distribute = std::function<void(const std::vector<std::byte>&)>;
 
     IdtcpClient(
         boost::asio::io_context& io_context,
-        const Distribute& distribute
+        std::initializer_list<Distribute> distribution,
+        const std::function<void(void)>& disconnected_callback
     );
     ~IdtcpClient();
 
@@ -85,12 +86,19 @@ public:
     connect(const boost::asio::ip::tcp::endpoint& remote_endpoint);
 
     boost::asio::awaitable<void>
-    send(u_int16_t instruction, const std::vector<std::byte>& buffers);
+    send(
+        uint16_t instruction,
+        const std::vector<std::byte> buffers
+    );
+
+    bool connected() const;
 
 protected:
 
     net::IdtcpSocket socket_;
-    Distribute distribute_;
+    std::vector<Distribute> distribution_;
+    std::function<void(void)> on_disconnected_;
+    std::atomic<bool> connected_;
 
     boost::asio::awaitable<void> start_receive_();
 

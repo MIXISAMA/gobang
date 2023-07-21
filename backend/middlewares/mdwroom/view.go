@@ -28,7 +28,7 @@ func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
 		return err
 	}
 
-	user := req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
+	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
 
 	role, err := s.ReadByte()
 	if err != nil {
@@ -59,7 +59,7 @@ func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
 		return err
 	}
 
-	req.Payloads[Key].(*Payload).Room = room
+	req.Payloads[&Key].(*Payload).Room = room
 	return nil
 }
 
@@ -82,11 +82,11 @@ func (middleware *Middleware) sendYouJoinRoom(
 
 	s.WriteUint8_Int(room.MaxUsers)
 
-	var blackUsername = room.BlackPlayer.(*mdwuser.User).GetUsername("")
-	var whiteUsername = room.WhitePlayer.(*mdwuser.User).GetUsername("")
+	blackPlayer, _ := room.BlackPlayer.(*mdwuser.User)
+	whitePlayer, _ := room.WhitePlayer.(*mdwuser.User)
 
-	s.WriteString8(blackUsername)
-	s.WriteString8(whiteUsername)
+	s.WriteString8(blackPlayer.GetUsername(""))
+	s.WriteString8(whitePlayer.GetUsername(""))
 
 	s.WriteUint8_Int(room.Users.Len())
 	for i := room.Users.Front(); i != nil; i = i.Next() {
@@ -116,8 +116,8 @@ func (middleware *Middleware) sendOtherJoinRoom(conn *idtcp.Conn, username strin
 }
 
 func (middleware *Middleware) receiveUserLeaveRoom(req *idtcp.Request) error {
-	room := req.Payloads[Key].(*Payload).Room
-	user := req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
+	room := req.Payloads[&Key].(*Payload).Room
+	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
 	if color := room.PlayerColor(user); color != game.SPACE {
 
 		err := room.leaveAsPlayer(user)
