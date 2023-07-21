@@ -27,9 +27,13 @@ void ServerRoomSearch::search_room(const boost::asio::ip::udp::endpoint &endpoin
     boost::asio::co_spawn(io_context_, send_search_room_(endpoint), boost::asio::detached);
 }
 
+ReadTryQueue<ConciseRoom>& ServerRoomSearch::rooms()
+{
+    return rooms_;
+}
+
 boost::asio::awaitable<void> ServerRoomSearch::receive_()
 {
-    Log::Info("ServerRoomSearch receive_");
     std::vector<std::byte> recv_buffer_(1 << 16);
     boost::asio::ip::udp::endpoint sender_endpoint_;
     while (true) {     
@@ -61,8 +65,8 @@ boost::asio::awaitable<void> ServerRoomSearch::receive_()
             room.endpoint.address(sender_endpoint_.address());
             room.endpoint.port(sender_endpoint_.port());
 
-            std::unique_lock lock(rooms_mutex_);
-            rooms_.push_back(room);
+            RtqWriter<ConciseRoom> rooms(rooms_);
+            rooms.push(room);
         }
     }
 }
@@ -77,16 +81,6 @@ boost::asio::awaitable<void> ServerRoomSearch::send_search_room_(const boost::as
         endpoint,
         boost::asio::use_awaitable
     );
-}
-
-std::vector<ConciseRoom> ServerRoomSearch::new_rooms()
-{
-    if (rooms_mutex_.try_lock()) {
-        std::vector<ConciseRoom> new_rooms = std::move(rooms_);
-        rooms_mutex_.unlock();
-        return new_rooms;
-    }
-    return {};
 }
 
 bool ConciseRoom::operator < (const ConciseRoom& other) const

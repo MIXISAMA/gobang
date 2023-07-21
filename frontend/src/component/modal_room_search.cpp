@@ -8,7 +8,6 @@ namespace gobang
 
 ModalRoomSearch::ModalRoomSearch(gui::Context& context, ServerGameRoom& server_game_room) :
     PopupModal(context, gettext("Search Room"), ImGuiWindowFlags_AlwaysAutoResize),
-    item_current_idx_(-1),
     search_ip_{0xFF, 0xFF, 0xFF, 0xFF},
     search_port_(52039),
     server_room_search_(server_game_room.io_context),
@@ -51,77 +50,75 @@ void ModalRoomSearch::content()
     
     update_rooms_();
     
-    if (ImGui::BeginListBox("##listbox 2",
-        ImVec2(600, 5 * ImGui::GetTextLineHeightWithSpacing())
+    if (ImGui::BeginListBox(
+            "##listbox 2",
+            ImVec2(600, 5 * ImGui::GetTextLineHeightWithSpacing())
     )) {
-        for (int i = 0; i < rooms_.size(); i++) {
-            const bool is_selected = (item_current_idx_ == i);
-            if (ImGui::Selectable(rooms_[i].room_name.c_str(), is_selected)) {
-                item_current_idx_ = i;
+        int i = 0;
+        for (const std::shared_ptr<ConciseRoom> room : rooms_) {
+            if (ImGui::Selectable(room->room_name.c_str(), room == selected_room_)) {
+                selected_room_ = room;
             }
             // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-            if (is_selected) {
+            if (room == selected_room_) {
                 ImGui::SetItemDefaultFocus();
             }
             ImGui::SameLine(280);
-            ImGui::Text("%s", rooms_[i].endpoint.address().to_string().c_str());
+            ImGui::Text("%s", room->endpoint.address().to_string().c_str());
             ImGui::SameLine(450);
-            if (rooms_[i].is_playing) {
+            if (room->is_playing) {
                 ImGui::Text("%s", gettext("Playing"));
             } else {
                 ImGui::Text("%s", gettext("Waiting"));
             }
+            i++;
         }
         ImGui::EndListBox();
     }
 
     ImGui::Separator();
 
-    const ConciseRoom* select_room = nullptr;
-    if (item_current_idx_ >= 0 && item_current_idx_ < rooms_.size()) {
-        select_room = &rooms_[item_current_idx_];
-    }
     ImGui::Text("%s:", gettext("Room Name"));
-    if (select_room != nullptr) {
+    if (selected_room_.get() != nullptr) {
         ImGui::SameLine(200);
-        ImGui::Text("%s", select_room->room_name.c_str());
+        ImGui::Text("%s", selected_room_->room_name.c_str());
     }
 
     ImGui::Text("%s:", gettext("Server Address"));
-    if (select_room != nullptr) {
+    if (selected_room_.get() != nullptr) {
         ImGui::SameLine(200);
         ImGui::Text("%s:%d",
-            select_room->endpoint.address().to_string().c_str(),
-            select_room->endpoint.port()
+            selected_room_->endpoint.address().to_string().c_str(),
+            selected_room_->endpoint.port()
         );
     }
 
 
     ImGui::Text("%s:", gettext("Black Player"));
-    if (select_room != nullptr) {
+    if (selected_room_.get() != nullptr) {
         ImGui::SameLine(200);
-        ImGui::Text("%s", select_room->black_player.c_str());
+        ImGui::Text("%s", selected_room_->black_player.c_str());
     }
 
     ImGui::Text("%s:", gettext("White Player"));
-    if (select_room != nullptr) {
+    if (selected_room_.get() != nullptr) {
         ImGui::SameLine(200);
-        ImGui::Text("%s", select_room->white_player.c_str());
+        ImGui::Text("%s", selected_room_->white_player.c_str());
     }
 
     ImGui::Text("%s:", gettext("Number of Users"));
-    if (select_room != nullptr) {
+    if (selected_room_.get() != nullptr) {
         ImGui::SameLine(200);
         ImGui::Text("%d / %d",
-            select_room->users,
-            select_room->max_users
+            selected_room_->users,
+            selected_room_->max_users
         );
     }
 
     ImGui::Text("%s:", gettext("State"));
-    if (select_room != nullptr) {
+    if (selected_room_.get() != nullptr) {
         ImGui::SameLine(200);
-        if (select_room->is_playing) {
+        if (selected_room_->is_playing) {
             ImGui::Text("%s", gettext("Playing"));
         } else {
             ImGui::Text("%s", gettext("Waiting"));
@@ -137,7 +134,7 @@ void ModalRoomSearch::content()
     ImGui::SameLine();
 
     char role = '-';
-    ImGui::BeginDisabled(select_room == nullptr);
+    ImGui::BeginDisabled(selected_room_.get() == nullptr);
     if (ImGui::Button(gettext("Join Game"))) {
         role = 'P';
     }
@@ -149,21 +146,23 @@ void ModalRoomSearch::content()
 
     if (role != '-') {
         server_game_room_.join_room(
-            rooms_[item_current_idx_].endpoint,
-            rooms_[item_current_idx_].room_id,
+            selected_room_->endpoint,
+            selected_room_->room_id,
             username_,
             password_,
             role
         );
     }
 
-    ImGui::Text("%s", hint_);
+    ImGui::Text("%s", hint_.load());
 }
 
 void ModalRoomSearch::update_rooms_()
 {
-    std::vector<ConciseRoom> new_rooms = server_room_search_.new_rooms();
-    rooms_.insert(rooms_.end(), new_rooms.begin(), new_rooms.end());
+    RtqReader<ConciseRoom> room(server_room_search_.rooms());
+    if (room.locked() && !room.empty()) {
+        rooms_.insert(std::make_shared<ConciseRoom>(room.pop()));
+    }
 }
 
 void ModalRoomSearch::on_search_()
@@ -173,31 +172,24 @@ void ModalRoomSearch::on_search_()
     server_room_search_.search_room(boost::asio::ip::udp::endpoint(address, search_port_));
 }
 
-// bool ModalRoomSearch::should_join_room() const
-// {
-//     return should_join_room_;
-// }
-
-// std::pair<ConciseRoom, bool> ModalRoomSearch::info_join_room() const
-// {
-//     return {rooms_[item_current_idx_], as_a_player_};
-// }
-
-
-// void ModalRoomSearch::join_room_(bool is_player)
-// {
-//     hint_ = Hint_Joining_;
-//     server_game_room_.join_room(
-//         rooms_[item_current_idx_].endpoint,
-//         rooms_[item_current_idx_].id,
-//         player_name_,
-//         is_player
-//     );
-// }
+void ModalRoomSearch::on_join_room_(ServerGameRoom::JoinRoomState state)
+{
+    switch (state) {
+    case ServerGameRoom::JoinRoomState::JOINING:
+        hint_ = Hint_Joining_;
+        break;
+    case ServerGameRoom::JoinRoomState::FAILED:
+        hint_ = Hint_Failed_;
+        break;
+    default:
+        hint_ = Hint_Search_;
+        break;
+    }
+}
 
 const char* ModalRoomSearch::Hint_Search_  = gettext("Please search rooms and choose one to join");
 const char* ModalRoomSearch::Hint_Joining_ = gettext("Joining room, please wait");
-const char* ModalRoomSearch::Hint_Failed_  = gettext("Failed to join room");
+const char* ModalRoomSearch::Hint_Failed_  = gettext("Failed to join room. Maybe duplicate username or wrong password.");
 
 
 } // namespace gobang

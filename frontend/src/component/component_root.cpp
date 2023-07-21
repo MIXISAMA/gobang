@@ -7,9 +7,9 @@ namespace gobang {
 
 ComponentRoot::ComponentRoot(gui::Context& context) :
     gui::Component<ComponentRoot>(context),
-    work_guard_(io_context_.get_executor()),
-    server_game_room_(io_context_),
-    gaming_(false)
+    work_guard_(net_ctx_.get_executor()),
+    server_game_room_(net_ctx_),
+    is_gaming_(false)
 {
     ImGuiIO &io = ImGui::GetIO();
 
@@ -23,9 +23,13 @@ ComponentRoot::ComponentRoot(gui::Context& context) :
 
 
     std::thread thread([this]() {
-        io_context_.run();
+        net_ctx_.run();
     });
     thread.detach();
+
+    server_game_room_.on_join_room(
+        std::bind(&ComponentRoot::on_join_room, this, std::placeholders::_1)
+    );
 
 }
 
@@ -36,7 +40,7 @@ ComponentRoot::~ComponentRoot()
 
 void ComponentRoot::content()
 {
-    if (gaming_) {
+    if (is_gaming_) {
         render_game_room_();
     }
     else {
@@ -51,7 +55,6 @@ void ComponentRoot::render_game_room_()
         component_room_.reset(new ComponentRoom(context_));
     }
     component_room_->render();
-    gaming_ = !component_room_->leave_done();
 }
 
 void ComponentRoot::render_home_window_()
@@ -61,10 +64,11 @@ void ComponentRoot::render_home_window_()
         window_home_.reset(new WindowHome(context_, server_game_room_));
     }
     window_home_->render();
-    // gaming_ = window_home_->modal_room_search().should_join_room();
-    // if (gaming_) {
-    //     auto [room, as_a_player] = window_home_->modal_room_search().info_join_room();
-    // }
+}
+
+void ComponentRoot::on_join_room(ServerGameRoom::JoinRoomState state)
+{
+    is_gaming_ = (state == ServerGameRoom::JoinRoomState::JOINED);
 }
 
 } // namespace gobang

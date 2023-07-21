@@ -116,6 +116,9 @@ public:
     {
         return locked_;
     }
+    bool empty() {
+        return rtq_.queue_.empty();
+    }
     T pop()
     {
         if (!locked_) {

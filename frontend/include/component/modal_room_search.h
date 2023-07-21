@@ -21,17 +21,13 @@ public:
 
     void content() override;
 
-    // bool should_join_room() const;
-    // std::pair<ConciseRoom, bool> info_join_room() const;
-
 private:
 
     ServerRoomSearch server_room_search_;
-
     ServerGameRoom& server_game_room_;
 
-    std::vector<ConciseRoom> rooms_;
-    int item_current_idx_;
+    std::set<std::shared_ptr<ConciseRoom>> rooms_;
+    std::shared_ptr<ConciseRoom> selected_room_;
 
     boost::asio::ip::address_v4::bytes_type search_ip_;
     u_int16_t search_port_;
@@ -40,13 +36,9 @@ private:
 
     void update_rooms_();
     void on_search_();
+    void on_join_room_(ServerGameRoom::JoinRoomState state);
 
-    // bool should_join_room_;
-    // bool as_a_player_;
-
-    
-
-    const char* hint_;
+    std::atomic<const char*> hint_;
 
     static const char* Hint_Search_;
     static const char* Hint_Joining_;

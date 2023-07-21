@@ -20,9 +20,9 @@ public:
 
     enum class JoinRoomState
     {
-        Pending,
-        Done,
-        Failed,
+        JOINING,
+        JOINED,
+        FAILED,
     };
 
     boost::asio::io_context& io_context;
@@ -40,19 +40,17 @@ public:
         char role // P|O
     );
 
-    JoinRoomState join_room_state();
-
     void leave_room();
 
     void send_message(const std::string& message);
     
+    void on_join_room(const std::function<void(JoinRoomState)>& callback);
 
+    const ReadFirstBuffer<game::Room>& room() const;
     ReadTryQueue<game::User>& users();
     ReadTryQueue<msg_t>& messages();
-    // bool has_message();
-    // std::tuple<std::string, time_t, std::string> pop_message();
 
-protected:
+private:
 
     enum class C_Instruction: u_int16_t
     {
@@ -75,13 +73,10 @@ protected:
     ReadFirstBuffer<game::Room> game_room_;
     ReadTryQueue<game::User> users_;
     ReadTryQueue<msg_t> messages_;
+    boost::signals2::signal<void(JoinRoomState)> join_room_signal;
 
     net::IdtcpClient client_;
     const net::IdtcpClient::Distribute distribute_;
-
-    JoinRoomState join_room_state_;
-
-private:
 
     uint16_t room_id_;
     std::string username_;

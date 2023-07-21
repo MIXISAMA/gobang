@@ -13,7 +13,6 @@ ServerGameRoom::ServerGameRoom(
     boost::asio::io_context& io_context
 ) :
     io_context(io_context),
-    join_room_state_(JoinRoomState::Pending),
     distribute_{
         std::bind(&ServerGameRoom::receive_fatal_error_, this, std::placeholders::_1),
         std::bind(&ServerGameRoom::receive_public_key_,  this, std::placeholders::_1),
@@ -38,6 +37,7 @@ void ServerGameRoom::join_room(
     const std::string& password,
     char role
 ) {
+    join_room_signal(JoinRoomState::JOINING);
 
     room_id_ = room_id;
     username_ = username;
@@ -49,11 +49,6 @@ void ServerGameRoom::join_room(
         client_.connect(remote_endpoint),
         boost::asio::detached
     );
-}
-
-ServerGameRoom::JoinRoomState ServerGameRoom::join_room_state()
-{
-    return join_room_state_;
 }
 
 void ServerGameRoom::leave_room()
@@ -72,6 +67,17 @@ void ServerGameRoom::send_message(const std::string& message)
         send_send_message_(message),
         boost::asio::detached
     );
+}
+
+void ServerGameRoom::on_join_room(
+    const std::function<void(JoinRoomState)>& callback
+) {
+    join_room_signal.connect(callback);
+}
+
+const ReadFirstBuffer<game::Room>& ServerGameRoom::room() const
+{
+    return game_room_;
 }
 
 ReadTryQueue<game::User>& ServerGameRoom::users()
@@ -167,6 +173,7 @@ void ServerGameRoom::receive_you_join_room_(
     bool is_success;
     s >> is_success;
     if (!is_success) {
+        join_room_signal(JoinRoomState::FAILED);
         return;
     }
 
@@ -186,6 +193,8 @@ void ServerGameRoom::receive_you_join_room_(
       >> room->regret_player
       >> room->tie_player
       >> room->records;
+
+    join_room_signal(JoinRoomState::JOINED);
 }
 
 void ServerGameRoom::receive_user_info_(
