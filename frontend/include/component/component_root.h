@@ -31,6 +31,7 @@ private:
     > net_work_guard_;
     std::thread net_thread_;
     ServerGameRoom server_game_room_;
+    boost::signals2::connection join_room_connection_;
 
     std::atomic<bool> is_gaming_;
 

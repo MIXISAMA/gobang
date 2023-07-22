@@ -23,14 +23,14 @@ ComponentRoot::ComponentRoot(gui::Context& context) :
     ImGui::GetStyle().FrameRounding = 6.0f;
     ImGui::GetStyle().PopupRounding = 12.0f;    
 
-    server_game_room_.on_join_room(
+    join_room_connection_ = server_game_room_.connect_join_room(
         std::bind(&ComponentRoot::on_join_room, this, std::placeholders::_1)
     );
-
 }
 
 ComponentRoot::~ComponentRoot()
 {
+    join_room_connection_.disconnect();
     net_work_guard_.reset();
     net_ctx_.stop();
     net_thread_.join();

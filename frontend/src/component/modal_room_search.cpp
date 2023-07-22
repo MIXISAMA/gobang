@@ -17,14 +17,14 @@ ModalRoomSearch::ModalRoomSearch(gui::Context& context, ServerGameRoom& server_g
     username_[0] = '\0';
     password_[0] = '\0';
 
-    server_game_room.on_join_room(std::bind(
+    join_room_connection_ = server_game_room.connect_join_room(std::bind(
         &ModalRoomSearch::on_join_room_, this, std::placeholders::_1)
     );
 }
 
 ModalRoomSearch::~ModalRoomSearch()
 {
-    // io_context_room_search_.stop();
+    join_room_connection_.disconnect();
 }
 
 void ModalRoomSearch::content()

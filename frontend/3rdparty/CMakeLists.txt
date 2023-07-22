@@ -29,7 +29,7 @@ target_include_directories(imgui
     PUBLIC glfw/include/
 )
 
-target_link_libraries(imgui glfw3)
+target_link_libraries(imgui glfw)
 
 if (APPLE)
     target_link_libraries(imgui "-framework Cocoa -framework IOKit")
@@ -43,7 +43,7 @@ add_subdirectory(assimp)
 # === assimp ===
 # === boost ===
 
-set(BOOST_INCLUDE_LIBRARIES asio thread uuid)
+set(BOOST_INCLUDE_LIBRARIES asio thread uuid signals2)
 add_subdirectory(boost EXCLUDE_FROM_ALL)
 # add_subdirectory(boost/libs/thread EXCLUDE_FROM_ALL)
 # add_subdirectory(boost)

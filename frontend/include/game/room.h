@@ -46,6 +46,10 @@ struct Room
     void user_join(const std::string& username, std::byte role);
     void user_leave(const std::string& username);
 
+    void stone(std::byte coor);
+
+    void update_board_by_records();
+
 };
 
 } // namespace game

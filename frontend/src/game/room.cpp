@@ -39,6 +39,24 @@ void Room::user_leave(const std::string& username)
     }
 }
 
+void Room::stone(std::byte coor)
+{
+    int r = 0xF0 & (int)(coor >> 4);
+    int c = 0x0F & (int)coor;
+    board[r][c] = (std::byte)(records.size() % 2);
+    records.push_back(coor);
+}
+
+void Room::update_board_by_records()
+{
+    for (int i = 0; i < records.size(); i++) {
+        std::byte coor = records[i];
+        int r = 0xF & (int)(coor >> 4);
+        int c = 0xF & (int)coor;
+        board[r][c] = (std::byte)(records.size() % 2);
+    }
+}
+
 
 } // namespace game
 } // namespace gobang

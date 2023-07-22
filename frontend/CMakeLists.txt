@@ -53,6 +53,7 @@ target_link_libraries(${PROJECT_NAME}
     # imgui
     # Boost::asio
     # Boost::thread
+    Boost::signals2
     Boost::uuid
     ${OPENSSL_LIBRARIES}
     mixi

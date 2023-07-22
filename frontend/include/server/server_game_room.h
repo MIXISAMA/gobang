@@ -44,7 +44,12 @@ public:
 
     void send_message(const std::string& message);
     
-    void on_join_room(const std::function<void(JoinRoomState)>& callback);
+    boost::signals2::connection
+    connect_join_room(const std::function<void(JoinRoomState)>& callback);
+    boost::signals2::connection
+    connect_agree_regret(const std::function<void(bool)>& callback);
+    boost::signals2::connection
+    connect_agree_tie(const std::function<void(bool)>& callback);
 
     const ReadFirstBuffer<game::Room>& room() const;
     ReadTryQueue<game::User>& users();
@@ -73,7 +78,9 @@ private:
     ReadFirstBuffer<game::Room> game_room_;
     ReadTryQueue<game::User> users_;
     ReadTryQueue<msg_t> messages_;
-    boost::signals2::signal<void(JoinRoomState)> join_room_signal;
+    boost::signals2::signal<void(JoinRoomState)> signal_join_room_;
+    boost::signals2::signal<void(bool)> signal_agree_regret_;
+    boost::signals2::signal<void(bool)> signal_agree_tie_;
 
     net::IdtcpClient client_;
     const net::IdtcpClient::Distribute distribute_;
@@ -88,13 +95,21 @@ private:
     boost::asio::awaitable<void> send_leave_room_();
     boost::asio::awaitable<void> send_send_message_(const std::string& message);
 
-    void receive_fatal_error_   (const std::vector<std::byte>& data);
-    void receive_public_key_    (const std::vector<std::byte>& data);
-    void receive_you_join_room_ (const std::vector<std::byte>& data);
-    void receive_user_info_     (const std::vector<std::byte>& data);
+    void receive_fatal_error_    (const std::vector<std::byte>& data);
+    void receive_public_key_     (const std::vector<std::byte>& data);
+    void receive_you_join_room_  (const std::vector<std::byte>& data);
+    void receive_user_info_      (const std::vector<std::byte>& data);
     void receive_other_join_room_(const std::vector<std::byte>& data);
-    void receive_leave_room_                (const std::vector<std::byte>& data);
-    void receive_message_                   (const std::vector<std::byte>& data);
+    void receive_leave_room_     (const std::vector<std::byte>& data);
+    void receive_player_ready_   (const std::vector<std::byte>& data);
+    void receive_game_start_     (const std::vector<std::byte>& data);
+    void receive_player_stone_   (const std::vector<std::byte>& data);
+    void receive_player_regret_  (const std::vector<std::byte>& data);
+    void receive_agree_regret_   (const std::vector<std::byte>& data);
+    void receive_player_tie_     (const std::vector<std::byte>& data);
+    void receive_agree_tie_      (const std::vector<std::byte>& data);
+    void receive_game_over_      (const std::vector<std::byte>& data);
+    void receive_message_        (const std::vector<std::byte>& data);
 
 };
 

@@ -26,6 +26,8 @@ private:
     ServerRoomSearch server_room_search_;
     ServerGameRoom& server_game_room_;
 
+    boost::signals2::connection join_room_connection_;
+
     std::set<std::shared_ptr<ConciseRoom>> rooms_;
     std::shared_ptr<ConciseRoom> selected_room_;
 

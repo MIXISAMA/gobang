@@ -20,6 +20,14 @@ ServerGameRoom::ServerGameRoom(
         std::bind(&ServerGameRoom::receive_user_info_,       this, std::placeholders::_1),
         std::bind(&ServerGameRoom::receive_other_join_room_, this, std::placeholders::_1),
         std::bind(&ServerGameRoom::receive_leave_room_,      this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_player_ready_,    this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_game_start_,      this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_player_stone_,    this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_player_regret_,   this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_agree_regret_,    this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_player_tie_,      this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_agree_tie_,       this, std::placeholders::_1),
+        std::bind(&ServerGameRoom::receive_game_over_,       this, std::placeholders::_1),
         std::bind(&ServerGameRoom::receive_message_,         this, std::placeholders::_1),
     },  std::bind(&ServerGameRoom::on_disconnected_,         this))
 {
@@ -38,7 +46,7 @@ void ServerGameRoom::join_room(
     const std::string& password,
     char role
 ) {
-    join_room_signal(JoinRoomState::JOINING);
+    signal_join_room_(JoinRoomState::JOINING);
 
     room_id_ = room_id;
     username_ = username;
@@ -70,10 +78,21 @@ void ServerGameRoom::send_message(const std::string& message)
     );
 }
 
-void ServerGameRoom::on_join_room(
+boost::signals2::connection ServerGameRoom::connect_join_room(
     const std::function<void(JoinRoomState)>& callback
 ) {
-    join_room_signal.connect(callback);
+    return signal_join_room_.connect(callback);
+}
+
+boost::signals2::connection ServerGameRoom::connect_agree_regret(
+    const std::function<void(bool)>& callback
+) {
+    return signal_agree_regret_.connect(callback);
+}
+boost::signals2::connection ServerGameRoom::connect_agree_tie(
+    const std::function<void(bool)>& callback
+) {
+    return signal_agree_tie_.connect(callback);
 }
 
 const ReadFirstBuffer<game::Room>& ServerGameRoom::room() const
@@ -178,7 +197,7 @@ void ServerGameRoom::receive_you_join_room_(
     bool is_success;
     s >> is_success;
     if (!is_success) {
-        join_room_signal(JoinRoomState::FAILED);
+        signal_join_room_(JoinRoomState::FAILED);
         return;
     }
 
@@ -198,8 +217,9 @@ void ServerGameRoom::receive_you_join_room_(
       >> room->regret_player
       >> room->tie_player
       >> room->records;
+    room->update_board_by_records();
 
-    join_room_signal(JoinRoomState::JOINED);
+    signal_join_room_(JoinRoomState::JOINED);
 }
 
 void ServerGameRoom::receive_user_info_(
@@ -236,6 +256,81 @@ void ServerGameRoom::receive_leave_room_(
     s >> username;
     RfbWriter<game::Room> room(game_room_);
     room->user_leave(username);
+}
+
+void ServerGameRoom::receive_player_ready_(
+    const std::vector<std::byte>& data
+) {
+    net::Serializer s(data);
+    RfbWriter<game::Room> room(game_room_);
+    s >> room->ready_player;
+}
+
+void ServerGameRoom::receive_game_start_(
+    const std::vector<std::byte>& data
+) {
+    std::string black_player;
+    net::Serializer s(data);
+    s >> black_player;
+    RfbWriter<game::Room> room(game_room_);
+    if (room->black_player != black_player) {
+        std::swap(room->black_player, room->white_player);
+    }
+    room->is_playering = true;
+}
+
+void ServerGameRoom::receive_player_stone_(
+    const std::vector<std::byte>& data
+) {
+    std::byte coor;
+    net::Serializer s(data);
+    s >> coor;
+    RfbWriter<game::Room> room(game_room_);
+    room->stone(coor);
+}
+
+void ServerGameRoom::receive_player_regret_(
+    const std::vector<std::byte>& data
+) {
+    net::Serializer s(data);
+    RfbWriter<game::Room> room(game_room_);
+    s >> room->regret_player;
+}
+
+void ServerGameRoom::receive_agree_regret_(
+    const std::vector<std::byte>& data
+) {
+    bool agree;
+    net::Serializer s(data);
+    s >> agree;
+    signal_agree_regret_(agree);
+}
+
+void ServerGameRoom::receive_player_tie_(
+    const std::vector<std::byte>& data
+) {
+    net::Serializer s(data);
+    RfbWriter<game::Room> room(game_room_);
+    s >> room->tie_player;
+}
+
+void ServerGameRoom::receive_agree_tie_(
+    const std::vector<std::byte>& data
+) {
+    bool agree;
+    net::Serializer s(data);
+    s >> agree;
+    signal_agree_tie_(agree);
+}
+
+void ServerGameRoom::receive_game_over_(
+    const std::vector<std::byte>& data
+) {
+    std::byte winner;
+    bool surrender;
+    net::Serializer s(data);
+    s >> winner >> surrender;
+    // todo
 }
 
 void ServerGameRoom::receive_message_(
