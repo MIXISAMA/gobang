@@ -7,7 +7,9 @@ namespace gobang {
 
 ComponentRoot::ComponentRoot(gui::Context& context) :
     gui::Component<ComponentRoot>(context),
-    work_guard_(net_ctx_.get_executor()),
+    net_ctx_(),
+    net_work_guard_(net_ctx_.get_executor()),
+    net_thread_([this]() {net_ctx_.run();}),
     server_game_room_(net_ctx_),
     is_gaming_(false)
 {
@@ -19,13 +21,7 @@ ComponentRoot::ComponentRoot(gui::Context& context) :
     );
 
     ImGui::GetStyle().FrameRounding = 6.0f;
-    ImGui::GetStyle().PopupRounding = 12.0f;
-
-
-    std::thread thread([this]() {
-        net_ctx_.run();
-    });
-    thread.detach();
+    ImGui::GetStyle().PopupRounding = 12.0f;    
 
     server_game_room_.on_join_room(
         std::bind(&ComponentRoot::on_join_room, this, std::placeholders::_1)
@@ -35,7 +31,9 @@ ComponentRoot::ComponentRoot(gui::Context& context) :
 
 ComponentRoot::~ComponentRoot()
 {
-
+    net_work_guard_.reset();
+    net_ctx_.stop();
+    net_thread_.join();
 }
 
 void ComponentRoot::content()

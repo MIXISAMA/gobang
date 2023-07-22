@@ -171,6 +171,7 @@ IdtcpClient::connect(const boost::asio::ip::tcp::endpoint& remote_endpoint)
     );
     co_await start_receive_();
     on_disconnected_();
+    socket_.close();
 }
 
 boost::asio::awaitable<void>

@@ -26,7 +26,10 @@ private:
     std::unique_ptr<ComponentRoom> component_room_;
 
     boost::asio::io_context net_ctx_;
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard_;
+    boost::asio::executor_work_guard<
+        boost::asio::io_context::executor_type
+    > net_work_guard_;
+    std::thread net_thread_;
     ServerGameRoom server_game_room_;
 
     std::atomic<bool> is_gaming_;
