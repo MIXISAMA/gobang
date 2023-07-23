@@ -8,7 +8,7 @@ out vec3 Normal;
 // out vec2 TexCoords;
 
 uniform mat4 model;
-layout (std140) uniform Camera
+layout (std140, binding = 0) uniform Camera
 {
     mat4 projection;
     mat4 view;

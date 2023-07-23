@@ -93,16 +93,24 @@ void Program::set_uniform_mat4(GLint location, const float* value) const
     glUniformMatrix4fv(location, 1, GL_FALSE, value);
 }
 
-void Program::set_uniform_blocks_binding_points(
-    const std::initializer_list<std::string>& names
-) const
-{
-    int bp = 0;
-    for (const std::string& name : names) {
-        GLuint index = glGetUniformBlockIndex(id_, name.c_str());
-        glUniformBlockBinding(id_, index, bp);
-        bp++;
-    }
+// void Program::set_uniform_blocks_binding_points(
+//     const std::initializer_list<std::string>& names
+// ) const
+// {
+//     int bp = 0;
+//     for (const std::string& name : names) {
+//         GLuint index = glGetUniformBlockIndex(id_, name.c_str());
+//         glUniformBlockBinding(id_, index, bp);
+//         bp++;
+//     }
+// }
+
+void Program::set_uniform_blocks_binding_point(
+    const std::string& name,
+    GLuint binding_point
+) const {
+    GLuint index = glGetUniformBlockIndex(id_, name.c_str());
+    glUniformBlockBinding(id_, index, binding_point);
 }
 
 

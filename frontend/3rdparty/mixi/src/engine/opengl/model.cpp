@@ -8,126 +8,123 @@ namespace gl
 namespace eng
 {
 
-ModelCreator::ModelCreator(TexturesManager* textures_manager) :
-    process_flag_(aiProcess_Triangulate | aiProcess_FlipUVs)
+Material::Material(const aiMaterial* material) :
+    name(material->GetName().C_Str()),
+    shininess(0.5)
 {
-    if (textures_manager == nullptr) {
-        is_internal_textures_manager_ = false;
-        textures_manager_ = textures_manager;
-    } else {
-        is_internal_textures_manager_ = true;
-        textures_manager_ = new TexturesManager;
-    }
-};
+    material->Get(AI_MATKEY_SHININESS, shininess);
 
-ModelCreator::~ModelCreator()
-{
-    if (is_internal_textures_manager_) {
-        delete textures_manager_;
+    aiString diffuse_tex_path;
+    material->GetTexture(aiTextureType_DIFFUSE, 0, &diffuse_tex_path);
+    if (diffuse_tex_path.length != 0) {
+        diffuse = TexturesManager::Get(diffuse_tex_path.C_Str());
+    }
+
+    aiString specular_tex_path;
+    material->GetTexture(aiTextureType_SPECULAR, 0, &specular_tex_path);
+    if (specular_tex_path.length != 0) {
+        specular = TexturesManager::Get(specular_tex_path.C_Str());
     }
 }
 
-void ModelCreator::process_flag(unsigned int p_flag)
+Mesh::Mesh(
+    const aiMesh* mesh,
+    const std::vector<std::shared_ptr<Material>>& all_materials
+) :
+    name(mesh->mName.C_Str()),
+    material(all_materials[mesh->mMaterialIndex])
 {
-    process_flag_ = p_flag;
+    if (!mesh->HasNormals()) {
+        throw std::runtime_error("model has no normals");
+    }
+    std::vector<float> vertices;
+    vertices.reserve(mesh->mNumVertices * 6);
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        vertices.push_back(mesh->mVertices[i].x);
+        vertices.push_back(mesh->mVertices[i].y);
+        vertices.push_back(mesh->mVertices[i].z);
+        vertices.push_back(mesh->mNormals[i].x);
+        vertices.push_back(mesh->mNormals[i].y);
+        vertices.push_back(mesh->mNormals[i].z);
+    }
+    std::shared_ptr<VertexBuffer> vbo = std::make_shared<VertexBuffer>(
+        vertices.size() * sizeof(float),
+        vertices.data(),
+        Buffer::Usage::STATIC_READ,
+        mesh->mNumVertices,
+        std::vector<VertexBuffer::Descriptor>{
+            {3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0},
+            {3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat))},
+        }
+    );
+    vertex_array.bind_vertex_buffer(vbo, {{0, 0}, {1, 1}});
 }
 
-Model* ModelCreator::new_model(const char* filepath)
+void Mesh::draw() const
 {
-    model_ = new Model;
-    scene_ = importer_.ReadFile(filepath, process_flag_);
-
-    for (int i = 0; i < scene_->mNumMaterials; i++) {
-        process_material_(scene_->mMaterials[i]);
+    if (on_draw) {
+        on_draw(*this);
     }
-    recursively_visit_nodes_(scene_->mRootNode);
-
-    return model_;
+    vertex_array.draw();
 }
 
-void ModelCreator::process_material_(const aiMaterial* material)
+void Node::draw() const
 {
-
+    if (on_draw) {
+        on_draw(*this);
+    }
+    for (std::shared_ptr<Mesh> mesh : meshes) {
+        mesh->draw();
+    }
+    for (const Node& child : children) {
+        child.draw();
+    }
 }
 
-void ModelCreator::process_node_(const aiNode* node)
+Model::Model(const char* filepath, unsigned int p_flags)
 {
-    std::cout << "node: " << node->mName.C_Str() << std::endl;
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(filepath, p_flags);
+
+    std::vector<std::shared_ptr<Material>> all_materials;
+    all_materials.reserve(scene->mNumMaterials);
+    for (int i = 0; i < scene->mNumMaterials; i++) {
+        all_materials.emplace_back(std::make_shared<Material>(scene->mMaterials[i]));
+    }
+
+    std::vector<std::shared_ptr<Mesh>> all_meshes;
+    all_meshes.reserve(scene->mNumMeshes);
+    for (int i = 0; i < scene->mNumMeshes; i++) {
+        all_meshes.emplace_back(std::make_shared<Mesh>(scene->mMeshes[i], all_materials));
+    }
+
+    recursively_visit_nodes_(scene->mRootNode, root_node, all_meshes);
 }
 
-void ModelCreator::process_mesh_(const aiMesh* mesh)
+void Model::draw() const
 {
-    std::cout << "mesh: " << mesh->mName.C_Str() << std::endl;
-
-    bool has_normals = mesh->HasNormals();
-    int num_uv_channels = mesh->GetNumUVChannels();
-
-    int stride = (3 + (has_normals ? 3 : 0) + num_uv_channels * 2) * sizeof(float);
-
-    std::byte data[mesh->mNumVertices * stride];
-    for (int i = 0; i < mesh->mNumVertices; i++)
-
-    if (mesh->HasNormals()) {
-        mesh->mNormals; // ...todo
-    }
-    
-    
-    for (int j = 0; j < num_uv_channels; j++) {
-        const aiVector3D* coords = mesh->mTextureCoords[j];
-        // const aiString* name = mesh->mTextureCoordsNames[j];
-
-        
-    }
-
-
-    const aiMaterial* material = scene_->mMaterials[mesh->mMaterialIndex];
-    int num_textures_diffuse = material->GetTextureCount(aiTextureType_DIFFUSE);
-    for (int i = 0; i < num_textures_diffuse; i++) {
-        aiString path;
-        material->GetTexture(aiTextureType_DIFFUSE, i, &path);
-        // ...todo
-    }
-
-    // mesh->mVertices;
-    // mesh->mNumVertices;
-    
-    // mesh->mNormals;
-
-    // mesh->mNumUVComponents;
-
-    // const aiMaterial* material = scene_->mMaterials[mesh->mMaterialIndex];
-    // material->GetTextureCount();
-
-    
-
-    // mesh->mNumFaces;
-    
-
-
-
-    // gl::VertexBuffer::Ptr vertex_buffer = std::make_shared<gl::VertexBuffer>(
-    //     mesh->mNumVertices * sizeof(aiVector3D),
-    //     Buffer::Usage::STATIC_DRAW,
-    //     mesh->mNumVertices,
-    //     std::vector<gl::VertexBuffer::Descriptor>{{
-    //         .size = 3,
-    //         .type = GL_FLOAT,
-    //         .normalized = GL_FALSE,
-    //         .stride     = sizeof(glm::vec3),
-    //         .pointer    = (void*)0
-    //     }}
-    // );
-
+    root_node.draw();
 }
 
-void ModelCreator::recursively_visit_nodes_(const aiNode* node)
-{
-    for (int i = 0; i < node->mNumMeshes; i++) {
-        process_mesh_(scene_->mMeshes[node->mMeshes[i]]);
+void Model::recursively_visit_nodes_(
+    const aiNode* ai_node,
+    Node& my_node,
+    const std::vector<std::shared_ptr<Mesh>>& all_meshes
+) {
+    my_node.name.assign(ai_node->mName.C_Str());
+
+    my_node.meshes.reserve(ai_node->mNumMeshes);
+    for (int i = 0; i < ai_node->mNumMeshes; i++) {
+        my_node.meshes.push_back(all_meshes[ai_node->mMeshes[i]]);
     }
 
-    for (int i = 0; i < node->mNumChildren; i++) {
-        recursively_visit_nodes_(node->mChildren[i]);
+    my_node.children.resize(ai_node->mNumChildren);
+    for (int i = 0; i < ai_node->mNumChildren; i++) {
+        recursively_visit_nodes_(
+            ai_node->mChildren[i],
+            my_node.children[i],
+            all_meshes
+        );
     }
 }
 

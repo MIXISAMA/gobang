@@ -27,8 +27,9 @@ public:
     void set_uniform_vec3 (GLint location, const float* value) const;
     void set_uniform_mat4 (GLint location, const float* value) const;
 
-    void set_uniform_blocks_binding_points(
-        const std::initializer_list<std::string>& names
+    void set_uniform_blocks_binding_point(
+        const std::string& name,
+        GLuint binding_point
     ) const;
 
 private:

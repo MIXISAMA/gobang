@@ -21,6 +21,7 @@ public:
 
     ModelCameraProgram(
         const CameraUniformBuffer::Ptr& camera_uniform_buffer,
+        GLuint binding_point,
         const Shader& vertex_shader,
         const Shader& fragment_shader
     );

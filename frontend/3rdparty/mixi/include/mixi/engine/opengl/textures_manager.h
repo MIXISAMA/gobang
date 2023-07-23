@@ -16,11 +16,13 @@ class TexturesManager
 
 public:
 
-    Texture2D::Ptr get_or_create(const std::filesystem::path& filepath);
+    static std::shared_ptr<Texture2D> Get(const std::filesystem::path& filepath);
+    static void Remove(const std::filesystem::path& filepath);
+    static void Clear();
 
 protected:
 
-    std::map<std::filesystem::path, Texture2D::Ptr> textures_;
+    static std::map<std::filesystem::path, std::shared_ptr<Texture2D>> Textures_;
 
 };
 

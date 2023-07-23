@@ -14,15 +14,35 @@ namespace eng
 {
 
 
-class Mesh
+struct Material
 {
+    std::string name;
+    std::shared_ptr<Texture2D> diffuse;
+    std::shared_ptr<Texture2D> specular;
+    float shininess;
+    Material(const aiMaterial* material);
+};
 
-public:
+struct Mesh
+{
+    std::string name;
+    std::shared_ptr<Material> material;
+    VertexArray vertex_array;
+    std::function<void(const Mesh&)> on_draw;
+    Mesh(
+        const aiMesh* mesh,
+        const std::vector<std::shared_ptr<Material>>& all_materials
+    );
+    void draw() const;
+};
 
-    VertexArray::Ptr vertex_array_;
-    BaseMaterial::Ptr material_;
-    Program::Ptr program_;
-    // int a = GL_MAX_UNIFORM_BLOCK_BINDINGS;
+struct Node
+{
+    std::string name;
+    std::vector<Node> children;
+    std::vector<std::shared_ptr<Mesh>> meshes;
+    std::function<void(const Node&)> on_draw;
+    void draw() const;
 };
 
 class Model
@@ -30,54 +50,21 @@ class Model
 
 public:
 
-    // Model();
-
-    struct Node
-    {
-        using Ptr = std::shared_ptr<Node>;
-        std::vector<VertexArray::Ptr> vertex_arrays_;
-        std::vector<Node::Ptr> children_;
-    };
-
-protected:
-
-    std::vector<VertexArray::Ptr> vertex_arrays_;
-    std::vector<AssimpMaterial> materials_;
-    std::vector<UniformBuffer::Ptr> uniform_buffers_;
-    Node root_node_;
-
-};
-
-class ModelCreator
-{
-
-public:
-
-    ModelCreator(TexturesManager* textures_manager = nullptr);
-    virtual ~ModelCreator();
-
-    Model* new_model(const char* filepath);
-
-    void process_flag(unsigned int p_flag);
+    Node root_node;
+    std::function<void(const Model&)> on_draw;
+    Model(
+        const char* filepath,
+        unsigned int p_flags = aiProcess_Triangulate | aiProcess_FlipUVs
+    );
+    void draw() const;
 
 protected:
 
-    TexturesManager* textures_manager_;
-    bool is_internal_textures_manager_;
-
-    Assimp::Importer importer_;
-    unsigned int process_flag_;
-    
-    const aiScene* scene_;
-    Model* model_;
-
-    void process_material_(const aiMaterial* material);
-    void process_node_(const aiNode* node);
-    void process_mesh_(const aiMesh* mesh);
-
-private:
-
-    void recursively_visit_nodes_(const aiNode* node);
+    void recursively_visit_nodes_(
+        const aiNode* ai_node,
+        Node& my_node,
+        const std::vector<std::shared_ptr<Mesh>>& all_meshes
+    );
 
 };
 

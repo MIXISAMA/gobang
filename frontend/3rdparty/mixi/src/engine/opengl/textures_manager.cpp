@@ -8,24 +8,31 @@ namespace gl
 namespace eng
 {
 
-Texture2D::Ptr TexturesManager::get_or_create(const std::filesystem::path& filepath)
+std::shared_ptr<Texture2D> TexturesManager::Get(const std::filesystem::path& filepath)
 {
-    auto iter = textures_.find(filepath);
-    if (iter != textures_.end()) {
+    auto iter = Textures_.find(filepath);
+    if (iter != Textures_.end()) {
         return iter->second;
     }
 
     img::Image img(filepath);
-    Texture2D::Ptr tex(new Texture2D);
+    std::shared_ptr<Texture2D> tex(new Texture2D);
     tex->update_image(
         img.width(),
         img.height(),
         gl::Texture2D::Format::RGBA,
         img.data()
     );
-    textures_[filepath] = tex;
+    Textures_[filepath] = tex;
     return tex;
 }
+
+void TexturesManager::Clear()
+{
+    Textures_.clear();
+}
+
+std::map<std::filesystem::path, std::shared_ptr<Texture2D>> TexturesManager::Textures_;
 
 } // namespace eng
 } // namespace gl

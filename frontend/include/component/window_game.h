@@ -1,15 +1,11 @@
 #pragma once
 #include "pch.h"
 #include "mixi/gui/component.h"
-
 #include "mixi/geometry/camera.h"
-
 #include "mixi/render/opengl/buffer.h"
-#include "mixi/render/opengl/vertex_array.h"
-
 #include "mixi/engine/opengl/program.h"
+#include "mixi/engine/opengl/model.h"
 
-// #include "engine/opengl/drawable_node.h"
 
 namespace mixi
 {
@@ -30,11 +26,15 @@ private:
     geo::Camera camera_;
 
     gl::FrameBuffer frame_buffer_;
-    gl::VertexArray vertex_array_;
 
     gl::eng::CameraUniformBuffer::Ptr uniform_buffer_camera_;
     gl::eng::ModelCameraProgram::Ptr program_;
     // gl::eng::DrawableGroup drawable_group_;
+
+    gl::eng::Model chessboard_model_;
+    const gl::eng::Node* chessboard_node_;
+
+    void node_helper_(const gl::eng::Node&);
 
 };
 

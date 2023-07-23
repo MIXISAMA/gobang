@@ -1,7 +1,7 @@
 #include "component/component_root.h"
 
 #include "mixi/core/i18n.h"
-
+#include "mixi/engine/opengl/textures_manager.h"
 namespace mixi {
 namespace gobang {
 
@@ -34,6 +34,7 @@ ComponentRoot::~ComponentRoot()
     net_work_guard_.reset();
     net_ctx_.stop();
     net_thread_.join();
+    gl::eng::TexturesManager::Clear();
 }
 
 void ComponentRoot::content()
