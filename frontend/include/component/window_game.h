@@ -1,13 +1,13 @@
 #pragma once
 #include "pch.h"
-#include "gui/component.h"
+#include "mixi/gui/component.h"
 
-#include "geometry/camera.h"
+#include "mixi/geometry/camera.h"
 
-#include "render/opengl/buffer.h"
-#include "render/opengl/vertex_array.h"
+#include "mixi/render/opengl/buffer.h"
+#include "mixi/render/opengl/vertex_array.h"
 
-#include "engine/opengl/program.h"
+#include "mixi/engine/opengl/program.h"
 
 // #include "engine/opengl/drawable_node.h"
 

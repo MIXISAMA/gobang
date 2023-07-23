@@ -1,8 +1,8 @@
 #pragma once
 #include "pch.h"
-#include "gui/component.h"
+#include "mixi/gui/component.h"
 
-#include "render/opengl/texture.h"
+#include "mixi/render/opengl/texture.h"
 
 #include "game/room.h"
 #include "component/modal_confirm_leave.h"

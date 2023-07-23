@@ -1,8 +1,8 @@
 #include "server/server_room_search.h"
 
-#include "core/log.h"
+#include "mixi/core/log.h"
 
-#include "net/serializer.h"
+#include "mixi/net/serializer.h"
 
 namespace mixi
 {

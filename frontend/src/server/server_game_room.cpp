@@ -1,7 +1,7 @@
 #include "server/server_game_room.h"
 
-#include "core/log.h"
-#include "net/serializer.h"
+#include "mixi/core/log.h"
+#include "mixi/net/serializer.h"
 #include "game/chess.h"
 
 namespace mixi
@@ -112,6 +112,7 @@ ReadTryQueue<msg_t>& ServerGameRoom::messages()
 
 void ServerGameRoom::on_disconnected_()
 {
+    signal_join_room_(JoinRoomState::FAILED);
     Log::Info("disconnected");
 }
 

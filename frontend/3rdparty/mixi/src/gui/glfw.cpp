@@ -1,6 +1,6 @@
-#include "gui/glfw.h"
+#include "mixi/gui/glfw.h"
 
-#include "core/log.h"
+#include "mixi/core/log.h"
 
 namespace mixi
 {

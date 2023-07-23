@@ -1,5 +1,5 @@
 #include "component/window_game.h"
-// #include "mixi/engine/opengl/model.h"
+#include "mixi/engine/opengl/model.h"
 
 namespace mixi {
 namespace gobang {

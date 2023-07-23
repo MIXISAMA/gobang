@@ -25,7 +25,7 @@ ComponentRoom::~ComponentRoom()
 void ComponentRoom::content()
 {
     RtqReader<msg_t> messages(server_game_room_.messages());
-    if (messages.locked()) {
+    if (messages.locked() && !messages.empty()) {
         auto [nickname, time, text] = messages.pop();
         std::ostringstream oss;
         oss << std::put_time(std::localtime(&time), "%T")

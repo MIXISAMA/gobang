@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "gui/component.h"
+#include "mixi/gui/component.h"
 
 #include "server/server_game_room.h"
 

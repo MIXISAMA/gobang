@@ -1,6 +1,6 @@
-#include "gui/application.h"
+#include "mixi/gui/application.h"
 
-#include "core/log.h"
+#include "mixi/core/log.h"
 
 namespace mixi
 {

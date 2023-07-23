@@ -1,4 +1,4 @@
-#include "render/opengl/vertex_array.h"
+#include "mixi/render/opengl/vertex_array.h"
 
 namespace mixi
 {

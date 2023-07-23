@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-#include "gui/component.h"
+#include "mixi/gui/component.h"
 
 #include "component/window_home.h"
 #include "component/component_room.h"
@@ -33,12 +33,12 @@ private:
     ServerGameRoom server_game_room_;
     boost::signals2::connection join_room_connection_;
 
-    std::atomic<bool> is_gaming_;
+    std::atomic<bool> joined_game_;
 
     void render_game_room_();
     void render_home_window_();
 
-    void on_join_room(ServerGameRoom::JoinRoomState state);
+    void on_join_room_(ServerGameRoom::JoinRoomState state);
 
 };
 

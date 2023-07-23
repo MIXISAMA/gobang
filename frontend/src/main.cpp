@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "core/i18n.h"
-#include "gui/application.h"
+#include "mixi/core/i18n.h"
+#include "mixi/gui/application.h"
 #include "component/component_root.h"
 
 

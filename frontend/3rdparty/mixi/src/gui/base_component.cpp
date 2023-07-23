@@ -1,4 +1,4 @@
-#include "gui/base_component.h"
+#include "mixi/gui/base_component.h"
 
 namespace mixi
 {

@@ -1,5 +1,5 @@
-#include "net/idtcp.h"
-#include "core/log.h"
+#include "mixi/net/idtcp.h"
+#include "mixi/core/log.h"
 
 namespace mixi
 {

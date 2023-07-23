@@ -1,4 +1,4 @@
-#include "geometry/camera.h"
+#include "mixi/geometry/camera.h"
 
 namespace mixi
 {

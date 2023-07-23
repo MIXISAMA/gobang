@@ -1,6 +1,6 @@
-#include "image/image.h"
+#include "mixi/image/image.h"
 
-#include "core/log.h"
+#include "mixi/core/log.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION

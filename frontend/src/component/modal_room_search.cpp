@@ -1,5 +1,5 @@
 #include "component/modal_room_search.h"
-#include "core/log.h"
+#include "mixi/core/log.h"
 
 namespace mixi
 {

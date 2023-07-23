@@ -1,6 +1,6 @@
 #include "component/component_root.h"
 
-#include "core/i18n.h"
+#include "mixi/core/i18n.h"
 
 namespace mixi {
 namespace gobang {
@@ -11,7 +11,7 @@ ComponentRoot::ComponentRoot(gui::Context& context) :
     net_work_guard_(net_ctx_.get_executor()),
     net_thread_([this]() {net_ctx_.run();}),
     server_game_room_(net_ctx_),
-    is_gaming_(false)
+    joined_game_(false)
 {
     ImGuiIO &io = ImGui::GetIO();
 
@@ -24,7 +24,7 @@ ComponentRoot::ComponentRoot(gui::Context& context) :
     ImGui::GetStyle().PopupRounding = 12.0f;    
 
     join_room_connection_ = server_game_room_.connect_join_room(
-        std::bind(&ComponentRoot::on_join_room, this, std::placeholders::_1)
+        std::bind(&ComponentRoot::on_join_room_, this, std::placeholders::_1)
     );
 }
 
@@ -38,7 +38,7 @@ ComponentRoot::~ComponentRoot()
 
 void ComponentRoot::content()
 {
-    if (is_gaming_) {
+    if (joined_game_) {
         render_game_room_();
     }
     else {
@@ -64,9 +64,9 @@ void ComponentRoot::render_home_window_()
     window_home_->render();
 }
 
-void ComponentRoot::on_join_room(ServerGameRoom::JoinRoomState state)
+void ComponentRoot::on_join_room_(ServerGameRoom::JoinRoomState state)
 {
-    is_gaming_ = (state == ServerGameRoom::JoinRoomState::JOINED);
+    joined_game_ = (state == ServerGameRoom::JoinRoomState::JOINED);
 }
 
 } // namespace gobang

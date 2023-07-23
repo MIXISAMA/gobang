@@ -1,4 +1,4 @@
-#include "render/opengl/bind.h"
+#include "mixi/render/opengl/bind.h"
 
 namespace mixi
 {

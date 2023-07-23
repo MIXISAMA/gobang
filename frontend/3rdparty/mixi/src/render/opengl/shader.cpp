@@ -1,4 +1,4 @@
-#include "render/opengl/shader.h"
+#include "mixi/render/opengl/shader.h"
 
 namespace mixi
 {

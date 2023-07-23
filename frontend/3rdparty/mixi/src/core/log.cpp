@@ -1,4 +1,4 @@
-#include "core/log.h"
+#include "mixi/core/log.h"
 
 namespace mixi
 {

@@ -1,4 +1,4 @@
-#include "engine/opengl/model.h"
+#include "mixi/engine/opengl/model.h"
 
 
 namespace mixi

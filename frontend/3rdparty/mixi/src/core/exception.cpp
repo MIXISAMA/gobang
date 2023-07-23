@@ -1,4 +1,4 @@
-#include "core/exception.h"
+#include "mixi/core/exception.h"
 
 namespace mixi
 {

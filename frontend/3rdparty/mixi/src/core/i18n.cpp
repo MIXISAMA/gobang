@@ -1,4 +1,4 @@
-#include "core/i18n.h"
+#include "mixi/core/i18n.h"
 
 namespace mixi
 {

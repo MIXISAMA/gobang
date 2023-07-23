@@ -1,5 +1,5 @@
-#include "engine/opengl/textures_manager.h"
-#include "image/image.h"
+#include "mixi/engine/opengl/textures_manager.h"
+#include "mixi/image/image.h"
 
 namespace mixi
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pch.h"
-#include "core/lock.h"
+#include "mixi/core/lock.h"
 
 namespace mixi
 {

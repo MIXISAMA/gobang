@@ -1,4 +1,4 @@
-#include "engine/opengl/uniform_buffer.h"
+#include "mixi/engine/opengl/uniform_buffer.h"
 
 namespace mixi
 {

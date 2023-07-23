@@ -1,4 +1,4 @@
-#include "geometry/geo2d.h"
+#include "mixi/geometry/geo2d.h"
 
 namespace mixi
 {

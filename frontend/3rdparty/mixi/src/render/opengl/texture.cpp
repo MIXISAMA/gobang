@@ -1,4 +1,4 @@
-#include "render/opengl/texture.h"
+#include "mixi/render/opengl/texture.h"
 
 namespace mixi
 {

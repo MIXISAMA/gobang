@@ -1,4 +1,4 @@
-#include "render/opengl/buffer.h"
+#include "mixi/render/opengl/buffer.h"
 
 namespace mixi
 {

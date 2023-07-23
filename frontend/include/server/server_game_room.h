@@ -3,8 +3,8 @@
 #include "pch.h"
 #include "game/room.h"
 
-#include "core/lock.h"
-#include "net/idtcp.h"
+#include "mixi/core/lock.h"
+#include "mixi/net/idtcp.h"
 
 namespace mixi
 {

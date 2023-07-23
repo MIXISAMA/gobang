@@ -1,6 +1,6 @@
 #include "component/window_dashboard.h"
 
-#include "image/image.h"
+#include "mixi/image/image.h"
 
 namespace mixi {
 namespace gobang {

@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-#include "gui/component.h"
+#include "mixi/gui/component.h"
 
 #include "component/modal_room_search.h"
 #include "component/modal_room_create.h"
