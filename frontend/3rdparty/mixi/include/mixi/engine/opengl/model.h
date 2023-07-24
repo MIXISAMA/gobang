@@ -27,7 +27,7 @@ struct Mesh
 {
     std::string name;
     std::shared_ptr<Material> material;
-    VertexArray vertex_array;
+    std::shared_ptr<VertexBuffer> vertex_buffer;
     std::function<void(const Mesh&)> on_draw;
     Mesh(
         const aiMesh* mesh,

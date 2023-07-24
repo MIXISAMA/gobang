@@ -3,8 +3,8 @@
 #include "mixi/gui/component.h"
 #include "mixi/geometry/camera.h"
 #include "mixi/render/opengl/buffer.h"
-#include "mixi/engine/opengl/program.h"
 #include "mixi/engine/opengl/model.h"
+#include "drawable/program.h"
 
 
 namespace mixi
@@ -23,16 +23,14 @@ public:
 
 private:
 
-    geo::Camera camera_;
-
     gl::FrameBuffer frame_buffer_;
 
-    gl::eng::CameraUniformBuffer::Ptr uniform_buffer_camera_;
-    gl::eng::ModelCameraProgram::Ptr program_;
-    // gl::eng::DrawableGroup drawable_group_;
+    std::shared_ptr<geo::Camera> camera_;
+    std::shared_ptr<ChessboardProgram> program_;
+    std::shared_ptr<gl::VertexArray> vao_chessboard_;
 
-    gl::eng::Model chessboard_model_;
-    const gl::eng::Node* chessboard_node_;
+    // gl::eng::Model chessboard_model_;
+    // const gl::eng::Node* chessboard_node_;
 
     void node_helper_(const gl::eng::Node&);
 

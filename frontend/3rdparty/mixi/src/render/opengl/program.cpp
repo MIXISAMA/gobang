@@ -87,10 +87,22 @@ void Program::set_uniform_vec3(GLint location, const float* value) const
     glUniform3fv(location, 1, value);
 }
 
+void Program::set_uniform_vec3(GLint location, const glm::vec3& value) const
+{
+    use();
+    glUniform3fv(location, 1, glm::value_ptr(value));
+}
+
 void Program::set_uniform_mat4(GLint location, const float* value) const
 {
     use();
     glUniformMatrix4fv(location, 1, GL_FALSE, value);
+}
+
+void Program::set_uniform_mat4(GLint location, const glm::mat4& value) const
+{
+    use();
+    glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
 // void Program::set_uniform_blocks_binding_points(

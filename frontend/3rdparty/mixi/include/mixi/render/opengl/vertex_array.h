@@ -42,7 +42,7 @@ public:
 
     void bind_vertex_buffer(
         const VertexBuffer::Ptr& vertex_buffer,
-        const std::vector<std::pair<int, int>>& location_descriptor_map
+        const std::vector<int>& descriptor_indexes
     );
     void bind_element_buffer(
         const ElementBuffer::Ptr& element_buffer

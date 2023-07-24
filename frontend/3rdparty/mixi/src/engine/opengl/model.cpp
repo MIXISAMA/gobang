@@ -34,11 +34,23 @@ Mesh::Mesh(
     name(mesh->mName.C_Str()),
     material(all_materials[mesh->mMaterialIndex])
 {
+    if (mesh->mNumVertices == 0) {
+        return;
+    }
     if (!mesh->HasNormals()) {
         throw std::runtime_error("model has no normals");
     }
+
+    int num_tex = 0;
+    int columns = 6;
+    for (int num_tex = 0; num_tex < AI_MAX_NUMBER_OF_TEXTURECOORDS; num_tex++) {
+        if (!mesh->HasTextureCoords(num_tex)) {
+            break;
+        }
+    }
+    columns += num_tex * 2;
     std::vector<float> vertices;
-    vertices.reserve(mesh->mNumVertices * 6);
+    vertices.reserve(mesh->mNumVertices * columns);
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         vertices.push_back(mesh->mVertices[i].x);
         vertices.push_back(mesh->mVertices[i].y);
@@ -46,18 +58,31 @@ Mesh::Mesh(
         vertices.push_back(mesh->mNormals[i].x);
         vertices.push_back(mesh->mNormals[i].y);
         vertices.push_back(mesh->mNormals[i].z);
+        for (int j = 0; j < num_tex; j++) {
+            vertices.push_back(mesh->mTextureCoords[j][i].x);
+            vertices.push_back(mesh->mTextureCoords[j][i].y);
+        }
     }
-    std::shared_ptr<VertexBuffer> vbo = std::make_shared<VertexBuffer>(
+    std::vector<VertexBuffer::Descriptor> descriptor;
+    descriptor.reserve(num_tex + 2);
+    descriptor.emplace_back("vertex", 3, GL_FLOAT, GL_FALSE);
+    descriptor.emplace_back("normal", 3, GL_FLOAT, GL_FALSE);
+    for (int i = 0; i < num_tex; i++) {
+        std::string texture_name = "texture ";
+        if (mesh->HasTextureCoordsName(i)) {
+            texture_name += mesh->GetTextureCoordsName(i)->C_Str();
+        } else {
+            texture_name += std::to_string(i);
+        }
+        descriptor.emplace_back(texture_name, 2, GL_FLOAT, GL_FALSE);
+    }
+    vertex_buffer = std::make_shared<VertexBuffer>(
         vertices.size() * sizeof(float),
         vertices.data(),
         Buffer::Usage::STATIC_READ,
         mesh->mNumVertices,
-        std::vector<VertexBuffer::Descriptor>{
-            {3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0},
-            {3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat))},
-        }
+        descriptor
     );
-    vertex_array.bind_vertex_buffer(vbo, {{0, 0}, {1, 1}});
 }
 
 void Mesh::draw() const
@@ -65,7 +90,7 @@ void Mesh::draw() const
     if (on_draw) {
         on_draw(*this);
     }
-    vertex_array.draw();
+    // vertex_array.draw();
 }
 
 void Node::draw() const

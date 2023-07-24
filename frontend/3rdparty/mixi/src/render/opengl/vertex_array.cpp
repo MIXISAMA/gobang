@@ -36,22 +36,31 @@ void VertexArray::mode(Mode m)
     mode_ = m;
 }
 
+std::map<GLenum, int> TypeSize_ =
+{
+    {GL_FLOAT, sizeof(float)},
+    {GL_INT,   sizeof(int  )},
+};
+
 void VertexArray::bind_vertex_buffer(
     const VertexBuffer::Ptr& vertex_buffer,
-    const std::vector<std::pair<int, int>>& location_descriptor_map
+    const std::vector<int>& descriptor_indexes
 ) {
     bind();
     vertex_buffer->bind();
-
     vertex_buffer_ = vertex_buffer;
 
-    for (auto [location, idx]: location_descriptor_map) {
-        const std::vector<VertexBuffer::Descriptor>& ds = vertex_buffer->descriptors();
-        const VertexBuffer::Descriptor& d = ds[idx];
-        glVertexAttribPointer(location, d.size, d.type, d.normalized, d.stride, d.pointer);
-        glEnableVertexAttribArray(location);
+    int stride = 0;
+    for (const VertexBuffer::Descriptor d : vertex_buffer->descriptors()) {
+        stride += d.size * TypeSize_[d.type];
     }
-
+    int offset = 0;
+    for (int i = 0; i < descriptor_indexes.size(); i++) {
+        const VertexBuffer::Descriptor& d = vertex_buffer->descriptors()[i];
+        glVertexAttribPointer(i, d.size, d.type, d.normalized, stride, (void*)(intptr_t)offset);
+        glEnableVertexAttribArray(i);
+        offset += d.size * TypeSize_[d.type];
+    }
 }
 
 void VertexArray::bind_element_buffer(
@@ -132,6 +141,7 @@ int VertexArray::Cal_Elements_Count_(Mode m, int count)
     case Mode::PATCHES:
         return count;
     }
+    throw std::runtime_error("wrong mode");
 }
 
 } // namespace gl

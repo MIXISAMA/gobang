@@ -8,20 +8,15 @@ namespace gobang {
 
 WindowGame::WindowGame(gui::Context& context) :
     gui::Window(context, gettext("Gobang Game")),
-    camera_({0.0f, 0.0f, 20.0f}),
-    uniform_buffer_camera_(new gl::eng::CameraUniformBuffer()),
-    program_(new gl::eng::ModelCameraProgram(
-        uniform_buffer_camera_, 0,
-        gl::Shader("resource/glsl/multiple_lights.vert", GL_VERTEX_SHADER),
-        gl::Shader("resource/glsl/demo2.frag", GL_FRAGMENT_SHADER)
-        // gl::Shader("resource/glsl/demo.vert", GL_VERTEX_SHADER),
-        // gl::Shader("resource/glsl/demo2.frag", GL_FRAGMENT_SHADER)
-    )),
-    chessboard_model_("resource/model/chessboard.obj")
+    camera_(std::make_shared<geo::Camera>(glm::vec3(0.0f, 0.0f, 20.0f))),
+    program_(std::make_shared<ChessboardProgram>(
+        camera_,
+        gl::Shader("resource/glsl/default.vert", GL_VERTEX_SHADER),
+        gl::Shader("resource/glsl/default.frag", GL_FRAGMENT_SHADER)
+    ))
 {
-    glm::mat4 model(1.0f);
-    program_->update_model(glm::value_ptr(model));
-    node_helper_(chessboard_model_.root_node);
+    gl::eng::Model chessboard_model("resource/model/chessboard.obj");
+    node_helper_(chessboard_model.root_node);
 }
 
 WindowGame::~WindowGame()
@@ -43,14 +38,11 @@ void WindowGame::content()
         height != frame_buffer_.texture().height()
     ) {
         frame_buffer_.resize(width, height);
-        glm::mat4 projection = glm::perspective(
+        program_->set_projection(glm::perspective(
             glm::radians(45.0f),
             width / height,
             0.1f, 1000.0f
-        );
-        uniform_buffer_camera_->update_projection(
-            glm::value_ptr(projection)
-        );
+        ));
     }
 
     // drawable_group_.rotate(0.5f, {1, 1, 1});
@@ -61,8 +53,8 @@ void WindowGame::content()
     glClearColor(0.1f, 0.0f, 0.2f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    program_->use();
-    chessboard_model_.draw();
+    program_->prepare_use();
+    vao_chessboard_->draw();
 
     frame_buffer_.unbind();
 
@@ -77,24 +69,26 @@ void WindowGame::content()
     }
     ImGuiIO& io = ImGui::GetIO();
     if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        camera_.yaw_right_pitch_up_(
+        camera_->yaw_right_pitch_up_(
             io.MouseDelta.x * 0.3f,
             io.MouseDelta.y * 0.3f
         );
     }
     if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
-        camera_.move_right(io.MouseDelta.x * 0.01f);
-        camera_.move_up   (io.MouseDelta.y * 0.01f);
+        camera_->move_right(io.MouseDelta.x * 0.01f);
+        camera_->move_up   (io.MouseDelta.y * 0.01f);
     }
-    camera_.move_forward(io.MouseWheel);
-    glm::mat4 view = camera_.view_matrix();
-    uniform_buffer_camera_->update_view(glm::value_ptr(view));
+    camera_->move_forward(io.MouseWheel);
 }
 
 void WindowGame::node_helper_(const gl::eng::Node& node) {
     std::cout << node.name << std::endl;
     if (node.name == "chessboard") {
-        chessboard_node_ = &node;
+        if (node.meshes.empty()) {
+            throw std::runtime_error("wrong chessboard model");
+        }
+        program_->set_material(node.meshes[0]->material.get());
+        vao_chessboard_ = program_->gen_vertex_array(node.meshes[0]->vertex_buffer);
     }
     for (const gl::eng::Node& child : node.children) {
         node_helper_(child);

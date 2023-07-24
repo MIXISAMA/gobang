@@ -26,6 +26,8 @@ public:
     void set_uniform_float(GLint location, float        value) const;
     void set_uniform_vec3 (GLint location, const float* value) const;
     void set_uniform_mat4 (GLint location, const float* value) const;
+    void set_uniform_vec3 (GLint location, const glm::vec3& value) const;
+    void set_uniform_mat4 (GLint location, const glm::mat4& value) const;
 
     void set_uniform_blocks_binding_point(
         const std::string& name,

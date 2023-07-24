@@ -1,4 +1,5 @@
 #include "mixi/render/opengl/shader.h"
+#include "mixi/core/log.h"
 
 namespace mixi
 {
@@ -44,6 +45,7 @@ void Shader::check_compile_errors_() const
     glGetShaderiv(id_, GL_COMPILE_STATUS, &success);
     if (!success) {
         glGetShaderInfoLog(id_, 1024, NULL, info_log);
+        Log::Error(info_log);
         throw std::runtime_error(info_log);
     }
 }
