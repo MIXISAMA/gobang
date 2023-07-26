@@ -20,8 +20,9 @@ ChessboardProgram::ChessboardProgram(
 {
     set_model(glm::mat4(1.0f));
 
-    set_uniform_int(get_uniform_location("uMaterial.diffuse"),  0); // GL_TEXTURE0
-    set_uniform_int(get_uniform_location("uMaterial.specular"), 1); // GL_TEXTURE1
+    set_uniform_int(get_uniform_location("uMaterial.diffuse"), 0); // GL_TEXTURE0
+    set_uniform_int(get_uniform_location("uMaterial.normals"), 1); // GL_TEXTURE1
+    // set_uniform_float(get_uniform_location("uMaterial.shininess"), 32.0f);
 
     set_uniform_vec3(get_uniform_location("uLight.position"), glm::vec3(1.2f, 1.0f, 2.0f));
     set_uniform_vec3(get_uniform_location("uLight.ambient"),  glm::vec3(0.2f, 0.2f, 0.2f));
@@ -35,8 +36,8 @@ void ChessboardProgram::set_material(const gl::eng::Material* material)
     if (material == nullptr) {
         return;
     }
-    texture_diffuse_ = material->diffuse;
-    texture_specular_ = material->specular;
+    texture_diffuse_ = material->texture_diffuse;
+    texture_normals_ = material->texture_normals;
     set_uniform_int(location_material_shininess_, material->shininess);
 }
 
@@ -53,21 +54,8 @@ void ChessboardProgram::set_model(const glm::mat4& model)
 gl::VertexArray::Ptr ChessboardProgram::gen_vertex_array(
     gl::VertexBuffer::Ptr vbo
 ) {
-    std::vector<int> idx(vbo->descriptors().size(), -1);
-    for (int i = 0; i < vbo->descriptors().size(); i++) {
-        const gl::VertexBuffer::Descriptor& d = vbo->descriptors()[i];
-        if (d.name == "vertex") {
-            idx[i] = 0;
-        }
-        else if (d.name == "normal") {
-            idx[i] = 1;
-        }
-        else if (d.name.substr(0, 8) == "texture") {
-            idx[i] = 2;
-        }
-    }
     gl::VertexArray::Ptr vao = std::make_shared<gl::VertexArray>();
-    vao->bind_vertex_buffer(vbo, idx);
+    vao->bind_vertex_buffer(vbo, {"vertex", "normal", "tangent", "bitangent", "texture 0"});
     return vao;
 }
 
@@ -77,9 +65,9 @@ void ChessboardProgram::prepare_use() const
         glActiveTexture(GL_TEXTURE0);
         texture_diffuse_->bind();
     }
-    if (texture_specular_.get() != nullptr) {
+    if (texture_normals_.get() != nullptr) {
         glActiveTexture(GL_TEXTURE1);
-        texture_specular_->bind();
+        texture_normals_->bind();
     }
     use();
     set_uniform_vec3(location_view_pos_, camera_->position());

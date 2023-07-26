@@ -43,8 +43,8 @@ std::map<GLenum, int> TypeSize_ =
 };
 
 void VertexArray::bind_vertex_buffer(
-    const VertexBuffer::Ptr& vertex_buffer,
-    const std::vector<int>& descriptor_indexes
+    VertexBuffer::Ptr vertex_buffer,
+    const std::vector<std::string>& location_names
 ) {
     bind();
     vertex_buffer->bind();
@@ -54,12 +54,16 @@ void VertexArray::bind_vertex_buffer(
     for (const VertexBuffer::Descriptor d : vertex_buffer->descriptors()) {
         stride += d.size * TypeSize_[d.type];
     }
-    int offset = 0;
-    for (int i = 0; i < descriptor_indexes.size(); i++) {
-        const VertexBuffer::Descriptor& d = vertex_buffer->descriptors()[i];
-        glVertexAttribPointer(i, d.size, d.type, d.normalized, stride, (void*)(intptr_t)offset);
-        glEnableVertexAttribArray(i);
-        offset += d.size * TypeSize_[d.type];
+
+    for (int i = 0; i < location_names.size(); i++) {
+        int offset = 0;
+        for (const VertexBuffer::Descriptor d : vertex_buffer->descriptors()) {
+            if (d.name == location_names[i]) {
+                glVertexAttribPointer(i, d.size, d.type, d.normalized, stride, (void*)(intptr_t)offset);
+                glEnableVertexAttribArray(i);
+            }
+            offset += d.size * TypeSize_[d.type];
+        }
     }
 }
 

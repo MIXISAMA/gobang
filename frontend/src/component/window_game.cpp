@@ -8,14 +8,17 @@ namespace gobang {
 
 WindowGame::WindowGame(gui::Context& context) :
     gui::Window(context, gettext("Gobang Game")),
-    camera_(std::make_shared<geo::Camera>(glm::vec3(0.0f, 0.0f, 20.0f))),
+    camera_(std::make_shared<geo::Camera>(glm::vec3(0.0f, 0.0f, 20.0f), glm::vec3(0.0f, -1.0f, 0.0f))),
     program_(std::make_shared<ChessboardProgram>(
         camera_,
-        gl::Shader("resource/glsl/default.vert", GL_VERTEX_SHADER),
-        gl::Shader("resource/glsl/default.frag", GL_FRAGMENT_SHADER)
+        gl::Shader("resource/glsl/chessboard_default.vert", GL_VERTEX_SHADER),
+        gl::Shader("resource/glsl/chessboard_default.frag", GL_FRAGMENT_SHADER)
     ))
 {
-    gl::eng::Model chessboard_model("resource/model/chessboard.obj");
+    gl::eng::Model chessboard_model(
+        "resource/model/chessboard.obj",
+        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace
+    );
     node_helper_(chessboard_model.root_node);
 }
 

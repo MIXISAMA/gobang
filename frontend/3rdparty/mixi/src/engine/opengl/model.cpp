@@ -17,13 +17,19 @@ Material::Material(const aiMaterial* material) :
     aiString diffuse_tex_path;
     material->GetTexture(aiTextureType_DIFFUSE, 0, &diffuse_tex_path);
     if (diffuse_tex_path.length != 0) {
-        diffuse = TexturesManager::Get(diffuse_tex_path.C_Str());
+        texture_diffuse = TexturesManager::Get(diffuse_tex_path.C_Str());
     }
 
     aiString specular_tex_path;
     material->GetTexture(aiTextureType_SPECULAR, 0, &specular_tex_path);
     if (specular_tex_path.length != 0) {
-        specular = TexturesManager::Get(specular_tex_path.C_Str());
+        texture_specular = TexturesManager::Get(specular_tex_path.C_Str());
+    }
+
+    aiString normals_tex_path;
+    material->GetTexture(aiTextureType_NORMALS, 0, &normals_tex_path);
+    if (normals_tex_path.length != 0) {
+        texture_normals = TexturesManager::Get(normals_tex_path.C_Str());
     }
 }
 
@@ -37,45 +43,71 @@ Mesh::Mesh(
     if (mesh->mNumVertices == 0) {
         return;
     }
-    if (!mesh->HasNormals()) {
-        throw std::runtime_error("model has no normals");
-    }
 
-    int num_tex = 0;
-    int columns = 6;
-    for (int num_tex = 0; num_tex < AI_MAX_NUMBER_OF_TEXTURECOORDS; num_tex++) {
-        if (!mesh->HasTextureCoords(num_tex)) {
+    int stride = 3;
+    if (mesh->HasNormals()) {
+        stride += 3;
+    }
+    if (mesh->HasTangentsAndBitangents()) {
+        stride += 6;
+    }
+    for (int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++) {
+        if (!mesh->HasTextureCoords(i)) {
             break;
         }
+        stride += 2;
     }
-    columns += num_tex * 2;
-    std::vector<float> vertices;
-    vertices.reserve(mesh->mNumVertices * columns);
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        vertices.push_back(mesh->mVertices[i].x);
-        vertices.push_back(mesh->mVertices[i].y);
-        vertices.push_back(mesh->mVertices[i].z);
-        vertices.push_back(mesh->mNormals[i].x);
-        vertices.push_back(mesh->mNormals[i].y);
-        vertices.push_back(mesh->mNormals[i].z);
-        for (int j = 0; j < num_tex; j++) {
-            vertices.push_back(mesh->mTextureCoords[j][i].x);
-            vertices.push_back(mesh->mTextureCoords[j][i].y);
-        }
-    }
+
     std::vector<VertexBuffer::Descriptor> descriptor;
-    descriptor.reserve(num_tex + 2);
+    std::vector<float> vertices;
+    vertices.resize(mesh->mNumVertices * stride);
+
+    int offset = 0;
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        vertices[i * stride + offset + 0] = mesh->mVertices[i].x;
+        vertices[i * stride + offset + 1] = mesh->mVertices[i].y;
+        vertices[i * stride + offset + 2] = mesh->mVertices[i].z;
+    }
+    offset += 3;
     descriptor.emplace_back("vertex", 3, GL_FLOAT, GL_FALSE);
-    descriptor.emplace_back("normal", 3, GL_FLOAT, GL_FALSE);
-    for (int i = 0; i < num_tex; i++) {
-        std::string texture_name = "texture ";
-        if (mesh->HasTextureCoordsName(i)) {
-            texture_name += mesh->GetTextureCoordsName(i)->C_Str();
-        } else {
-            texture_name += std::to_string(i);
+    
+    if (mesh->HasNormals()) {
+        for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+            vertices[i * stride + offset + 0] = mesh->mNormals[i].x;
+            vertices[i * stride + offset + 1] = mesh->mNormals[i].y;
+            vertices[i * stride + offset + 2] = mesh->mNormals[i].z;
         }
+        offset += 3;
+        descriptor.emplace_back("normal", 3, GL_FLOAT, GL_FALSE);
+    }
+
+    if (mesh->HasTangentsAndBitangents()) {
+        for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+            vertices[i * stride + offset + 0] = mesh->mTangents[i].x;
+            vertices[i * stride + offset + 1] = mesh->mTangents[i].y;
+            vertices[i * stride + offset + 2] = mesh->mTangents[i].z;
+            vertices[i * stride + offset + 3] = mesh->mBitangents[i].x;
+            vertices[i * stride + offset + 4] = mesh->mBitangents[i].y;
+            vertices[i * stride + offset + 5] = mesh->mBitangents[i].z;
+        }
+        offset += 6;
+        descriptor.emplace_back("tangent",   3, GL_FLOAT, GL_FALSE);
+        descriptor.emplace_back("bitangent", 3, GL_FLOAT, GL_FALSE);
+    }
+
+    for (int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++) {
+        if (!mesh->HasTextureCoords(i)) {
+            break;
+        }
+        for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
+            vertices[i * stride + offset + 0] = mesh->mTextureCoords[i][j].x;
+            vertices[i * stride + offset + 1] = mesh->mTextureCoords[i][j].y;
+        }
+        offset += 2;
+        std::string texture_name = "texture " + std::to_string(i);
         descriptor.emplace_back(texture_name, 2, GL_FLOAT, GL_FALSE);
     }
+
     vertex_buffer = std::make_shared<VertexBuffer>(
         vertices.size() * sizeof(float),
         vertices.data(),

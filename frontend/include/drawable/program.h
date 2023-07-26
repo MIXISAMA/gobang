@@ -33,7 +33,7 @@ private:
     const std::shared_ptr<geo::Camera> camera_;
 
     std::shared_ptr<gl::Texture2D> texture_diffuse_;
-    std::shared_ptr<gl::Texture2D> texture_specular_;
+    std::shared_ptr<gl::Texture2D> texture_normals_;
 
     GLint location_material_shininess_;
     GLint location_view_pos_;

@@ -41,8 +41,8 @@ public:
     void mode(Mode m);
 
     void bind_vertex_buffer(
-        const VertexBuffer::Ptr& vertex_buffer,
-        const std::vector<int>& descriptor_indexes
+        VertexBuffer::Ptr vertex_buffer,
+        const std::vector<std::string>& location_names
     );
     void bind_element_buffer(
         const ElementBuffer::Ptr& element_buffer

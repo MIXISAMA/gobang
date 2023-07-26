@@ -17,8 +17,9 @@ namespace eng
 struct Material
 {
     std::string name;
-    std::shared_ptr<Texture2D> diffuse;
-    std::shared_ptr<Texture2D> specular;
+    std::shared_ptr<Texture2D> texture_diffuse;
+    std::shared_ptr<Texture2D> texture_specular;
+    std::shared_ptr<Texture2D> texture_normals;
     float shininess;
     Material(const aiMaterial* material);
 };

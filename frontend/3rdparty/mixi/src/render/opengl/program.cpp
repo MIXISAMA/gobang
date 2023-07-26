@@ -19,7 +19,7 @@ Program::Program(const std::initializer_list<Shader>& shaders)
     GLint size; // size of the variable
     GLenum type; // type of the variable (float, vec3 or mat4, etc)
 
-    const GLsizei bufSize = 16; // maximum name length
+    const GLsizei bufSize = 64; // maximum name length
     GLchar name[bufSize]; // variable name in GLSL
     GLsizei length; // name length
 
