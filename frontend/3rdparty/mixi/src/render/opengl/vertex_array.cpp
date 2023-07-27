@@ -61,6 +61,7 @@ void VertexArray::bind_vertex_buffer(
             if (d.name == location_names[i]) {
                 glVertexAttribPointer(i, d.size, d.type, d.normalized, stride, (void*)(intptr_t)offset);
                 glEnableVertexAttribArray(i);
+                break;
             }
             offset += d.size * TypeSize_[d.type];
         }

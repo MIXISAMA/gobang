@@ -20,6 +20,7 @@ struct Material
     std::shared_ptr<Texture2D> texture_diffuse;
     std::shared_ptr<Texture2D> texture_specular;
     std::shared_ptr<Texture2D> texture_normals;
+    std::shared_ptr<Texture2D> texture_height;
     float shininess;
     Material(const aiMaterial* material);
 };

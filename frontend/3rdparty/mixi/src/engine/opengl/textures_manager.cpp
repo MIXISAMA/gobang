@@ -16,7 +16,7 @@ std::shared_ptr<Texture2D> TexturesManager::Get(const std::filesystem::path& fil
     }
 
     img::Image img(filepath);
-    std::shared_ptr<Texture2D> tex(new Texture2D);
+    std::shared_ptr<Texture2D> tex = std::make_shared<Texture2D>();
     tex->update_image(
         img.width(),
         img.height(),

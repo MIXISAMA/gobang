@@ -34,7 +34,7 @@ public:
 
     Texture2D(
         GLint min_mag_filter = GL_LINEAR,
-        GLint warp_s_t       = GL_REPEAT
+        GLint warp_st        = GL_MIRRORED_REPEAT
     );
     ~Texture2D();
 

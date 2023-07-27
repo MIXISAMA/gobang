@@ -24,10 +24,10 @@ ChessboardProgram::ChessboardProgram(
     set_uniform_int(get_uniform_location("uMaterial.normals"), 1); // GL_TEXTURE1
     // set_uniform_float(get_uniform_location("uMaterial.shininess"), 32.0f);
 
-    set_uniform_vec3(get_uniform_location("uLight.position"), glm::vec3(1.2f, 1.0f, 2.0f));
+    set_uniform_vec3(get_uniform_location("uLight.position"), glm::vec3(3.0f, 3.0f, 3.0f));
     set_uniform_vec3(get_uniform_location("uLight.ambient"),  glm::vec3(0.2f, 0.2f, 0.2f));
-    set_uniform_vec3(get_uniform_location("uLight.diffuse"),  glm::vec3(0.5f, 0.5f, 0.5f));
-    set_uniform_vec3(get_uniform_location("uLight.specular"), glm::vec3(1.0f, 1.0f, 1.0f));
+    set_uniform_vec3(get_uniform_location("uLight.diffuse"),  glm::vec3(0.6f, 0.6f, 0.6f));
+    set_uniform_vec3(get_uniform_location("uLight.specular"), glm::vec3(0.1f, 0.1f, 0.1f));
 }
 
 
@@ -37,8 +37,17 @@ void ChessboardProgram::set_material(const gl::eng::Material* material)
         return;
     }
     texture_diffuse_ = material->texture_diffuse;
-    texture_normals_ = material->texture_normals;
+    texture_normals_ = material->texture_height;
     set_uniform_int(location_material_shininess_, material->shininess);
+
+    texture_diffuse_->bind();
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    texture_normals_->bind();
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 }
 
 void ChessboardProgram::set_projection(const glm::mat4& projection)

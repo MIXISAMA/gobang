@@ -17,7 +17,7 @@ WindowGame::WindowGame(gui::Context& context) :
 {
     gl::eng::Model chessboard_model(
         "resource/model/chessboard.obj",
-        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace
+        aiProcess_FlipUVs | aiProcess_CalcTangentSpace
     );
     node_helper_(chessboard_model.root_node);
 }

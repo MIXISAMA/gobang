@@ -5,7 +5,7 @@ namespace mixi
 namespace gl
 {
 
-Texture2D::Texture2D(GLint min_mag_filter, GLint warp_s_t) :
+Texture2D::Texture2D(GLint min_mag_filter, GLint warp_st) :
     width_(0),
     height_(0)
 {
@@ -13,8 +13,8 @@ Texture2D::Texture2D(GLint min_mag_filter, GLint warp_s_t) :
     Bind b(*this);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_mag_filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, min_mag_filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, warp_s_t);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, warp_s_t);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, warp_st);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, warp_st);
 }
 
 Texture2D::~Texture2D()

@@ -15,21 +15,31 @@ Material::Material(const aiMaterial* material) :
     material->Get(AI_MATKEY_SHININESS, shininess);
 
     aiString diffuse_tex_path;
-    material->GetTexture(aiTextureType_DIFFUSE, 0, &diffuse_tex_path);
-    if (diffuse_tex_path.length != 0) {
-        texture_diffuse = TexturesManager::Get(diffuse_tex_path.C_Str());
+    if (material->GetTexture(aiTextureType_DIFFUSE, 0, &diffuse_tex_path) == AI_SUCCESS) {
+        texture_diffuse = TexturesManager::Get(
+            std::filesystem::path("resource/model") / diffuse_tex_path.C_Str()
+        );
     }
 
     aiString specular_tex_path;
-    material->GetTexture(aiTextureType_SPECULAR, 0, &specular_tex_path);
-    if (specular_tex_path.length != 0) {
-        texture_specular = TexturesManager::Get(specular_tex_path.C_Str());
+    if (material->GetTexture(aiTextureType_SPECULAR, 0, &specular_tex_path) == AI_SUCCESS) {
+        texture_specular = TexturesManager::Get(
+            std::filesystem::path("resource/model") / specular_tex_path.C_Str()
+        );
     }
 
     aiString normals_tex_path;
-    material->GetTexture(aiTextureType_NORMALS, 0, &normals_tex_path);
-    if (normals_tex_path.length != 0) {
-        texture_normals = TexturesManager::Get(normals_tex_path.C_Str());
+    if (material->GetTexture(aiTextureType_NORMALS, 0, &normals_tex_path) == AI_SUCCESS) {
+        texture_normals = TexturesManager::Get(
+            std::filesystem::path("resource/model") / normals_tex_path.C_Str()
+        );
+    }
+
+    aiString height_tex_path;
+    if (material->GetTexture(aiTextureType_HEIGHT, 0, &height_tex_path) == AI_SUCCESS) {
+        texture_height = TexturesManager::Get(
+            std::filesystem::path("resource/model") / height_tex_path.C_Str()
+        );
     }
 }
 
@@ -100,8 +110,8 @@ Mesh::Mesh(
             break;
         }
         for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
-            vertices[i * stride + offset + 0] = mesh->mTextureCoords[i][j].x;
-            vertices[i * stride + offset + 1] = mesh->mTextureCoords[i][j].y;
+            vertices[j * stride + offset + 0] = mesh->mTextureCoords[i][j].x;
+            vertices[j * stride + offset + 1] = mesh->mTextureCoords[i][j].y;
         }
         offset += 2;
         std::string texture_name = "texture " + std::to_string(i);
