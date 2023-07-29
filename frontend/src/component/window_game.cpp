@@ -8,18 +8,26 @@ namespace gobang {
 
 WindowGame::WindowGame(gui::Context& context) :
     gui::Window(context, gettext("Gobang Game")),
-    camera_(std::make_shared<geo::Camera>(glm::vec3(0.0f, 0.0f, 20.0f), glm::vec3(0.0f, -1.0f, 0.0f))),
+    camera_(std::make_shared<geo::Camera>(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f))),
     program_(std::make_shared<ChessboardProgram>(
         camera_,
         gl::Shader("resource/glsl/chessboard_default.vert", GL_VERTEX_SHADER),
         gl::Shader("resource/glsl/chessboard_default.frag", GL_FRAGMENT_SHADER)
     ))
 {
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
     gl::eng::Model chessboard_model(
         "resource/model/chessboard.obj",
         aiProcess_FlipUVs | aiProcess_CalcTangentSpace
     );
     node_helper_(chessboard_model.root_node);
+    gl::eng::Model chesspiece_model(
+        "resource/model/chesspiece.obj",
+        aiProcess_FlipUVs
+    );
+    node_helper_(chesspiece_model.root_node);
+    camera_->pitch(-45.0f);
 }
 
 WindowGame::~WindowGame()
@@ -40,18 +48,17 @@ void WindowGame::content()
         width  != frame_buffer_.texture().width() ||
         height != frame_buffer_.texture().height()
     ) {
-        frame_buffer_.resize(width, height);
-        program_->set_projection(glm::perspective(
+        projection_ = glm::perspective(
             glm::radians(45.0f),
             width / height,
             0.1f, 1000.0f
-        ));
+        );
+        frame_buffer_.resize(width, height);
+        program_->set_projection(projection_);
     }
 
-    // drawable_group_.rotate(0.5f, {1, 1, 1});
-
     /* render frame */
-    frame_buffer_.bind();
+    gl::Bind bind(frame_buffer_);
     glViewport(0, 0, width, height);
     glClearColor(0.1f, 0.0f, 0.2f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -59,18 +66,29 @@ void WindowGame::content()
     program_->prepare_use();
     vao_chessboard_->draw();
 
-    frame_buffer_.unbind();
+    ImGuiIO& io = ImGui::GetIO();
 
     ImGui::Image(
         (void*)(intptr_t)frame_buffer_.texture().id(),
-        content_region_size
+        content_region_size,
+        ImVec2(0, 1), ImVec2(1, 0)
     );
 
-    /* calculate transformation */
     if (!ImGui::IsItemHovered()) {
         return;
     }
-    ImGuiIO& io = ImGui::GetIO();
+
+    ImVec2 cursor_in_frame = read_cursor_in_frame_();
+
+    glm::vec3 cursor_in_world_coor = read_cursor_world_coor_(
+        cursor_in_frame.x, cursor_in_frame.y,
+        width, height
+    );
+
+    // todo
+    // std::cout << "yaw " << camera_->yaw() << " ";
+    // std::cout << "pitch " << camera_->pitch() << std::endl;
+    
     if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
         camera_->yaw_right_pitch_up_(
             io.MouseDelta.x * 0.3f,
@@ -82,6 +100,41 @@ void WindowGame::content()
         camera_->move_up   (io.MouseDelta.y * 0.01f);
     }
     camera_->move_forward(io.MouseWheel);
+}
+
+ImVec2 WindowGame::read_cursor_in_frame_()
+{
+    ImVec2 mouse_delta = ImGui::GetMouseDragDelta();
+    ImVec2 mouse_pos  = ImGui::GetMousePos();
+    ImVec2 window_pos = ImGui::GetWindowPos();
+    ImVec2 image_pos  = ImGui::GetWindowContentRegionMin();
+    image_pos.x += window_pos.x;
+    image_pos.y += window_pos.y;
+    return ImVec2(mouse_pos.x - image_pos.x, mouse_pos.y - image_pos.y);
+}
+
+glm::vec3 WindowGame::read_cursor_world_coor_(
+    float x, float y,
+    float width, float height
+) {
+    float depth;
+    glReadPixels(
+        x, height - y,
+        1, 1,
+        GL_DEPTH_COMPONENT,
+        GL_FLOAT,
+        &depth
+    );
+
+    glm::vec4 clip(
+        (2.0f * x / width) - 1.0f,
+        1.0f - (2.0f * y / height),
+        2.0f * depth - 1.0f,
+        1.0f
+    );
+
+    glm::vec4 world_coords = glm::inverse(projection_ * camera_->view_matrix()) * clip;
+    return world_coords / world_coords.w;
 }
 
 void WindowGame::node_helper_(const gl::eng::Node& node) {

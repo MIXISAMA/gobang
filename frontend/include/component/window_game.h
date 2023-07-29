@@ -29,8 +29,13 @@ private:
     std::shared_ptr<ChessboardProgram> program_;
     std::shared_ptr<gl::VertexArray> vao_chessboard_;
 
-    // gl::eng::Model chessboard_model_;
-    // const gl::eng::Node* chessboard_node_;
+    glm::mat4 projection_;
+
+    ImVec2 read_cursor_in_frame_();
+    glm::vec3 read_cursor_world_coor_(
+        float x, float y,
+        float width, float height
+    );
 
     void node_helper_(const gl::eng::Node&);
 
