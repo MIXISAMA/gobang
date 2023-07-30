@@ -69,4 +69,9 @@ func TestMarshalInvalidStruct(t *testing.T) {
 	i2 := Invalid2{aa: i1}
 	_, err = Marshal(i2)
 	assert.Equal(t, errors.New("unhandled type"), err)
+
+	i3, _ := newFoo()
+	i3.b = RandomString(300)
+	_, err = Marshal(i3)
+	assert.Equal(t, errors.New("string with len_bytes 1 must have length <= 255"), err)
 }
