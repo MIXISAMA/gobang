@@ -1,9 +1,13 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
+	"reflect"
 )
+
+type char uint8
 
 type Serializer struct {
 	Raw    []byte
@@ -16,6 +20,102 @@ func MakeSerializer(Raw []byte) *Serializer {
 	s.cursor = 0
 	return s
 }
+
+func Marshal(obj any) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	t := reflect.TypeOf(obj)
+	v := reflect.ValueOf(obj)
+	fields := reflect.VisibleFields(t)
+	for _, field := range fields {
+		kind := field.Type.Kind()
+		value := v.FieldByIndex(field.Index)
+		var err error
+		switch kind {
+		// includes char, uint8
+		case reflect.Uint8:
+			err = buf.WriteByte(uint8(value.Uint()))
+		case reflect.Uint16:
+			err = binary.Write(buf, binary.LittleEndian, uint16(value.Uint()))
+		case reflect.Uint32:
+			err = binary.Write(buf, binary.LittleEndian, uint32(value.Uint()))
+		case reflect.Uint64:
+			err = binary.Write(buf, binary.LittleEndian, value.Uint())
+		case reflect.Bool:
+			if value.Bool() {
+				err = buf.WriteByte(0xFF)
+			} else {
+				err = buf.WriteByte(0x00)
+			}
+		case reflect.String:
+			err = writeLen(&field, &value, buf)
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = buf.Write([]byte(value.String()))
+
+		// []bytes
+		case reflect.Slice:
+			if field.Type.Elem().Kind() != reflect.Uint8 {
+				return nil, errors.New("unhandled type")
+			}
+
+			err = writeLen(&field, &value, buf)
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = buf.Write(value.Bytes())
+
+		default:
+			err = errors.New("unhandled type")
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return buf.Bytes(), nil
+}
+
+func writeLen(field *reflect.StructField, value *reflect.Value, buf *bytes.Buffer) error {
+	len_bytes_str := field.Tag.Get("len_bytes")
+	var err error
+	if len_bytes_str != "1" && len_bytes_str != "2" {
+		err = errors.New("invalid `len_bytes` struct tag")
+	} else {
+		var len_v int
+		if field.Type.Kind() == reflect.String {
+			len_v = len(value.String())
+		} else {
+			len_v = len(value.Bytes())
+		}
+		if len_bytes_str == "1" {
+			if len_v > 255 || len_v < 0 {
+				err = errors.New("string with len_bytes 1 must have length <= 255")
+			} else {
+				err = buf.WriteByte(uint8(len_v))
+			}
+		} else {
+			if len_v > 65535 || len_v < 0 {
+				err = errors.New("string with len_bytes 1 must have length <= 65535")
+			} else {
+				err = binary.Write(buf, binary.LittleEndian, uint16(len_v))
+			}
+		}
+	}
+	return err
+}
+
+func Unmarshal(b []byte, v any) error {
+	if reflect.ValueOf(v).Kind() == reflect.Ptr {
+		return errors.New("cannot unmarshal to a non-pointer type")
+	}
+	return nil
+}
+
+// APIs below are deprecated
 
 func (s *Serializer) ReadByte() (byte, error) {
 	if s.cursor >= len(s.Raw) {
