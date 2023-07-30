@@ -33,7 +33,7 @@ func newFoo() (Foo, []byte) {
 	buf.WriteByte(foo.a)
 	buf.WriteByte(uint8(len(foo.b)))
 	buf.Write([]byte(foo.b))
-	fmt.Println(len(foo.c))
+	// fmt.Println(len(foo.c))
 	binary.Write(buf, binary.LittleEndian, uint16(len(foo.c)))
 	buf.Write(foo.c)
 	buf.WriteByte(byte(foo.d))
@@ -74,4 +74,17 @@ func TestMarshalInvalidStruct(t *testing.T) {
 	i3.b = RandomString(300)
 	_, err = Marshal(i3)
 	assert.Equal(t, errors.New("string with len_bytes 1 must have length <= 255"), err)
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	foo, _ := newFoo()
+	for n := 0; n < b.N; n++ {
+		Marshal(foo)
+	}
+}
+
+func BenchmarkRawWrite(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		newFoo()
+	}
 }
