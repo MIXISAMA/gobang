@@ -7,24 +7,26 @@ import (
 	"reflect"
 )
 
+// For now, serializer can only serialize centain basic types
+// refer to design doc for more info
+
+// string and byte types must have a `len_bytes` struct tag
+// e.g. B []byte `len_bytes:"2"`
+
+// fields to be serialized must be exported
+// since package reflect can only change exported fields' values
+
 type char uint8
 
-type Serializer struct {
-	Raw    []byte
-	cursor int
-}
-
-func MakeSerializer(Raw []byte) *Serializer {
-	s := new(Serializer)
-	s.Raw = Raw
-	s.cursor = 0
-	return s
-}
-
+// Marshal can accept both an object or a pointer
 func Marshal(obj any) ([]byte, error) {
-	buf := new(bytes.Buffer)
+	if reflect.ValueOf(obj).Kind() == reflect.Ptr {
+		obj = reflect.ValueOf(obj).Elem().Interface()
+	}
+
 	t := reflect.TypeOf(obj)
 	v := reflect.ValueOf(obj)
+	buf := new(bytes.Buffer)
 	fields := reflect.VisibleFields(t)
 	for _, field := range fields {
 		kind := field.Type.Kind()
@@ -79,9 +81,8 @@ func Marshal(obj any) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func writeLen(field *reflect.StructField, value *reflect.Value, buf *bytes.Buffer) error {
+func writeLen(field *reflect.StructField, value *reflect.Value, buf *bytes.Buffer) (err error) {
 	len_bytes_str := field.Tag.Get("len_bytes")
-	var err error
 	if len_bytes_str != "1" && len_bytes_str != "2" {
 		err = errors.New("invalid `len_bytes` struct tag")
 	} else {
@@ -108,14 +109,130 @@ func writeLen(field *reflect.StructField, value *reflect.Value, buf *bytes.Buffe
 	return err
 }
 
-func Unmarshal(b []byte, v any) error {
-	if reflect.ValueOf(v).Kind() == reflect.Ptr {
+// Unmarshal only accepts a pointer to an object
+// because it modifies data in place
+func Unmarshal(b []byte, obj any) error {
+	if reflect.ValueOf(obj).Kind() != reflect.Ptr {
 		return errors.New("cannot unmarshal to a non-pointer type")
 	}
+
+	t := reflect.TypeOf(obj).Elem()
+	v := reflect.ValueOf(obj).Elem()
+	buf := bytes.NewBuffer(b)
+	fields := reflect.VisibleFields(t)
+	for _, field := range fields {
+		kind := field.Type.Kind()
+		value := v.FieldByIndex(field.Index)
+		var err error
+		switch kind {
+		// includes char, uint8
+		case reflect.Uint8:
+			var data uint8
+			data, err = buf.ReadByte()
+			value.SetUint(uint64(data))
+		case reflect.Uint16:
+			var data uint16
+			err = binary.Read(buf, binary.LittleEndian, &data)
+			value.SetUint(uint64(data))
+		case reflect.Uint32:
+			var data uint32
+			err = binary.Read(buf, binary.LittleEndian, &data)
+			value.SetUint(uint64(data))
+		case reflect.Uint64:
+			var data uint64
+			err = binary.Read(buf, binary.LittleEndian, &data)
+			value.SetUint(uint64(data))
+		case reflect.Bool:
+			var data byte
+			data, err = buf.ReadByte()
+			if err != nil {
+				return err
+			}
+			if data == 0xFF {
+				value.SetBool(true)
+			} else if data == 0x00 {
+				value.SetBool(false)
+			} else {
+				err = errors.New("unexpected byte")
+			}
+		case reflect.String:
+			data, err := readData(&field, &value, buf)
+			if err != nil {
+				return err
+			}
+
+			value.SetString(string(data))
+
+		// []bytes
+		case reflect.Slice:
+			if field.Type.Elem().Kind() != reflect.Uint8 {
+				return errors.New("unhandled type")
+			}
+
+			data, err := readData(&field, &value, buf)
+			if err != nil {
+				return err
+			}
+
+			value.SetBytes(data)
+
+		default:
+			err = errors.New("unhandled type")
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
+func readData(field *reflect.StructField, value *reflect.Value, buf *bytes.Buffer) (data []byte, err error) {
+	len_bytes_str := field.Tag.Get("len_bytes")
+	var length int
+	if len_bytes_str != "1" && len_bytes_str != "2" {
+		err = errors.New("invalid `len_bytes` struct tag")
+	} else {
+		if len_bytes_str == "1" {
+			var data uint8
+			data, err = buf.ReadByte()
+			length = int(uint8(data))
+		} else {
+			var data uint16
+			err = binary.Read(buf, binary.LittleEndian, &data)
+			length = int(data)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	data = make([]byte, length)
+	n, err := buf.Read(data)
+	if err != nil {
+		return nil, err
+	}
+	if n != length {
+		return nil, errors.New("not enough bytes to read")
+	}
+
+	return data, nil
+}
+
 // APIs below are deprecated
+
+type Serializer struct {
+	Raw    []byte
+	cursor int
+}
+
+func MakeSerializer(Raw []byte) *Serializer {
+	s := new(Serializer)
+	s.Raw = Raw
+	s.cursor = 0
+	return s
+}
 
 func (s *Serializer) ReadByte() (byte, error) {
 	if s.cursor >= len(s.Raw) {

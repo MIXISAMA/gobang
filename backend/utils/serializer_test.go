@@ -11,34 +11,34 @@ import (
 )
 
 type Foo struct {
-	a uint8
-	b string `len_bytes:"1"`
-	c []byte `len_bytes:"2"`
-	d char
-	e bool
-	f byte
+	A uint8
+	B string `len_bytes:"1"`
+	C []byte `len_bytes:"2"`
+	D char
+	E bool
+	F byte
 }
 
 func newFoo() (Foo, []byte) {
 	foo := Foo{
-		a: 123,
-		b: "xxxx",
-		c: []byte("xxxxbbbbbbb"),
-		d: 'x',
-		e: true,
-		f: byte(0xAA),
+		A: 123,
+		B: "xxxx",
+		C: []byte("xxxxbbbbbbb"),
+		D: 'x',
+		E: true,
+		F: byte(0xAA),
 	}
 
 	buf := new(bytes.Buffer)
-	buf.WriteByte(foo.a)
-	buf.WriteByte(uint8(len(foo.b)))
-	buf.Write([]byte(foo.b))
+	buf.WriteByte(foo.A)
+	buf.WriteByte(uint8(len(foo.B)))
+	buf.Write([]byte(foo.B))
 	// fmt.Println(len(foo.c))
-	binary.Write(buf, binary.LittleEndian, uint16(len(foo.c)))
-	buf.Write(foo.c)
-	buf.WriteByte(byte(foo.d))
+	binary.Write(buf, binary.LittleEndian, uint16(len(foo.C)))
+	buf.Write(foo.C)
+	buf.WriteByte(byte(foo.D))
 	buf.WriteByte(0xFF)
-	buf.WriteByte(foo.f)
+	buf.WriteByte(foo.F)
 
 	return foo, buf.Bytes()
 }
@@ -46,13 +46,16 @@ func newFoo() (Foo, []byte) {
 func TestMarshal(t *testing.T) {
 	assert := assert.New(t)
 
-	foo, buf2 := newFoo()
-	buf, err := Marshal(foo)
+	foo, buf := newFoo()
+	buf2, err := Marshal(foo)
+	assert.Nil(err)
+	buf3, err := Marshal(&foo)
 	assert.Nil(err)
 
 	fmt.Println(buf)
 
-	assert.Equal(buf2, buf)
+	assert.Equal(buf, buf2)
+	assert.Equal(buf, buf3)
 }
 
 func TestMarshalInvalidStruct(t *testing.T) {
@@ -71,9 +74,26 @@ func TestMarshalInvalidStruct(t *testing.T) {
 	assert.Equal(t, errors.New("unhandled type"), err)
 
 	i3, _ := newFoo()
-	i3.b = RandomString(300)
+	i3.B = RandomString(300)
 	_, err = Marshal(i3)
 	assert.Equal(t, errors.New("string with len_bytes 1 must have length <= 255"), err)
+}
+
+func TestUnmarshal(t *testing.T) {
+	assert := assert.New(t)
+
+	foo, buf := newFoo()
+	var foo2 Foo
+	err := Unmarshal(buf, &foo2)
+	assert.Nil(err)
+	assert.Equal(foo, foo2)
+}
+
+func TestUnmarshalOnlyAcceptPtr(t *testing.T) {
+	_, buf := newFoo()
+	var foo2 Foo
+	err := Unmarshal(buf, foo2)
+	assert.NotNil(t, err)
 }
 
 func BenchmarkMarshal(b *testing.B) {
