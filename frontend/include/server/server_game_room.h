@@ -51,7 +51,7 @@ public:
     boost::signals2::connection
     connect_agree_tie(const std::function<void(bool)>& callback);
 
-    const ReadFirstBuffer<game::Room>& room() const;
+    ReadFirstBuffer<game::Room>& room();
     ReadTryQueue<game::User>& users();
     ReadTryQueue<msg_t>& messages();
 

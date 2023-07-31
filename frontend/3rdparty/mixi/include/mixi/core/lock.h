@@ -35,7 +35,7 @@ template <typename T>
 class RfbReader
 {
 public:
-    RfbReader(const ReadFirstBuffer<T>& rfb) :
+    RfbReader(ReadFirstBuffer<T>& rfb) :
         rfb_(rfb)
     {
         rfb_.mutex_.lock_shared();
@@ -49,7 +49,7 @@ public:
         return &rfb_.buffer_[rfb_.read_id_];
     }
 private:
-    const ReadFirstBuffer<T>& rfb_;
+    ReadFirstBuffer<T>& rfb_;
 };
 
 template <typename T>

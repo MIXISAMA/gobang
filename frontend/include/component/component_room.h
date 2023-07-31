@@ -17,23 +17,19 @@ class ComponentRoom : public gui::Component<ComponentRoom>
 {
 public:
 
-    ComponentRoom(gui::Context& context);
-    ~ComponentRoom();
+    ComponentRoom(gui::Context& context, ServerGameRoom& server);
 
     void content() override;
 
-    bool leave_done();
+    // bool leave_done();
 
 private:
 
-    game::Room game_room_;
+    ServerGameRoom& server_;
 
-    boost::asio::io_context io_context_game_room_;
-    ServerGameRoom server_game_room_;
-
-    WindowDashboard window_dashboard_;
     WindowGame window_game_;
     WindowChat window_chat_;
+    WindowDashboard window_dashboard_;
 };
     
 } // namespace gobang

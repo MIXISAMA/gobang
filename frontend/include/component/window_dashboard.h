@@ -1,10 +1,9 @@
 #pragma once
 #include "pch.h"
 #include "mixi/gui/component.h"
-
 #include "mixi/render/opengl/texture.h"
 
-#include "game/room.h"
+#include "server/server_game_room.h"
 #include "component/modal_confirm_leave.h"
 
 namespace mixi
@@ -18,7 +17,7 @@ public:
 
     WindowDashboard(
         gui::Context& context,
-        const game::Room& room
+        ServerGameRoom& server
     );
     ~WindowDashboard();
 
@@ -28,7 +27,7 @@ public:
 
 private:
 
-    const game::Room& room_;
+    ServerGameRoom& server_;
 
     gl::Texture2D tex_exit_;
     gl::Texture2D tex_window_;

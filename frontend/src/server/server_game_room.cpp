@@ -95,7 +95,7 @@ boost::signals2::connection ServerGameRoom::connect_agree_tie(
     return signal_agree_tie_.connect(callback);
 }
 
-const ReadFirstBuffer<game::Room>& ServerGameRoom::room() const
+ReadFirstBuffer<game::Room>& ServerGameRoom::room()
 {
     return game_room_;
 }

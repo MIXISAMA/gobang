@@ -61,7 +61,7 @@ void ComponentRoot::render_game_room_()
 {
     if (component_room_.get() == nullptr) {
         window_home_.reset();
-        component_room_.reset(new ComponentRoom(context_));
+        component_room_ = std::make_unique<ComponentRoom>(context_, server_game_room_);
     }
     component_room_->render();
 }
