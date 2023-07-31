@@ -19,3 +19,6 @@
 [submodule "frontend/3rdparty/boost"]
 	path = frontend/3rdparty/boost
 	url = https://github.com/boostorg/boost
+[submodule "frontend/3rdparty/freetype"]
+	path = frontend/3rdparty/freetype
+	url = https://gitlab.freedesktop.org/freetype/freetype

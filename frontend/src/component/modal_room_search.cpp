@@ -8,12 +8,17 @@ namespace gobang
 
 ModalRoomSearch::ModalRoomSearch(gui::Context& context, ServerGameRoom& server_game_room) :
     PopupModal(context, gettext("Search Room"), ImGuiWindowFlags_AlwaysAutoResize),
+    popup_emoji_(context),
     search_ip_{0xFF, 0xFF, 0xFF, 0xFF},
     search_port_(52039),
     server_room_search_(server_game_room.io_context),
     server_game_room_(server_game_room),
     hint_(Hint_Search_)
 {
+    popup_emoji_.selectable_flags(ImGuiSelectableFlags_DontClosePopups);
+    popup_emoji_.on_selected(std::bind(&ModalRoomSearch::on_select_password_emoji_, this, std::placeholders::_1));
+    popup_emoji_.on_backspace(std::bind(&ModalRoomSearch::on_backspace_password_emoji_, this));
+
     username_[0] = '\0';
     password_[0] = '\0';
 
@@ -147,10 +152,16 @@ void ModalRoomSearch::content()
     ImGui::Text("%s:", gettext("Your Password"));
     ImGui::SameLine(200);
     ImGui::PushItemWidth(250);
-    ImGui::InputText("##password", password_, sizeof(username_));
+    ImGui::InputText("##password", password_, sizeof(password_));
     ImGui::PopItemWidth();
-    ImGui::SameLine(470);
+    // std::cout << std::strlen(password_) << password_ << std::endl;
+    if (ImGui::IsItemActive()) {
+        popup_emoji_.open();
+    }
+    popup_emoji_.render();
 
+    
+    ImGui::SameLine(470);
     ImGui::BeginDisabled(selected_room_.get() == nullptr);
     if (ImGui::Button(gettext("Watch Just"), ImVec2(120, 0))) {
         role = 'O';
@@ -197,6 +208,22 @@ void ModalRoomSearch::on_join_room_(ServerGameRoom::JoinRoomState state)
     default:
         hint_ = Hint_Search_;
         break;
+    }
+}
+
+void ModalRoomSearch::on_select_password_emoji_(const char* emoji)
+{
+    if (std::strlen(password_) >= std::min(((int)sizeof(password_)) - 5, 6 * 4)) {
+        return;
+    }
+    std::strcat(password_, emoji);
+}
+
+void ModalRoomSearch::on_backspace_password_emoji_(void)
+{
+    int password_len = std::strlen(password_);
+    if (password_len >= 4) {
+        password_[password_len - 4] = '\0';
     }
 }
 

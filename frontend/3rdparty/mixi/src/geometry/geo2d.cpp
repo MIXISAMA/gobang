@@ -38,6 +38,7 @@ std::vector<glm::vec3> Geometry2D::normals(Axis axis) const
     case Axis::Z :
         return std::vector<glm::vec3>(vertices_2d_.size(), {0.0f, 0.0f, 1.0f});
     }
+    throw std::runtime_error("wrong axis");
 }
 
 std::vector<glm::vec2> Geometry2D::texture_uvs(float scale) const

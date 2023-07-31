@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "mixi/gui/component.h"
 
+#include "component/popup_emoji.h"
 #include "server/server_room_search.h"
 #include "server/server_game_room.h"
 
@@ -23,6 +24,8 @@ public:
 
 private:
 
+    PopupEmoji popup_emoji_;
+
     ServerRoomSearch server_room_search_;
     ServerGameRoom& server_game_room_;
 
@@ -39,6 +42,8 @@ private:
     void update_rooms_();
     void on_search_();
     void on_join_room_(ServerGameRoom::JoinRoomState state);
+    void on_select_password_emoji_(const char* emoji);
+    void on_backspace_password_emoji_(void);
 
     std::atomic<const char*> hint_;
 

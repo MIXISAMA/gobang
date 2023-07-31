@@ -8,16 +8,11 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(3rdparty)
 
-# find_package(glfw3 REQUIRED)
-
 find_package(Gettext REQUIRED)
 find_package(Intl REQUIRED)
 
 set(OPENSSL_USE_STATIC_LIBS TRUE)
 find_package(OpenSSL REQUIRED)
-# find_package(Boost REQUIRED COMPONENTS system)
-
-# find_package(Assimp REQUIRED)
 
 # ==========================
 
@@ -29,7 +24,6 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_SOURCE_DIR}/include/
     PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/mixi/include/
 
-    # PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/glfw/include/
     PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/glad/include/
     PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/stb/
     PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/glm/
@@ -46,21 +40,11 @@ target_link_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-    # assimp
-    # glad
-    # glfw
-    # # ${glfw_LIBRARIES}
-    # imgui
-    # Boost::asio
-    # Boost::thread
     Boost::signals2
     Boost::uuid
     ${OPENSSL_LIBRARIES}
     mixi
-    # ${Intl_LIBRARIES}
-    # ${Boost_SYSTEM_LIBRARY_RELEASE}
 )
-
 
 
 if (APPLE)

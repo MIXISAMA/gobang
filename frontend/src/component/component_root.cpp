@@ -20,6 +20,16 @@ ComponentRoot::ComponentRoot(gui::Context& context) :
         nullptr, io.Fonts->GetGlyphRangesChineseFull()
     );
 
+    static ImFontConfig cfg;
+    cfg.OversampleH = cfg.OversampleV = 1;
+    cfg.MergeMode = true;
+    cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_LoadColor;
+    static ImWchar ranges[] = { 0x1, 0x1FFFF, 0 };
+    io.Fonts->AddFontFromFileTTF(
+        "resource/font/seguiemj.ttf", 22.0f,
+        &cfg, ranges
+    );
+
     ImGui::GetStyle().FrameRounding = 6.0f;
     ImGui::GetStyle().PopupRounding = 12.0f;    
 
@@ -60,7 +70,7 @@ void ComponentRoot::render_home_window_()
 {
     if (window_home_.get() == nullptr) {
         component_room_.reset();
-        window_home_.reset(new WindowHome(context_, server_game_room_));
+        window_home_ = std::make_unique<WindowHome>(context_, server_game_room_);
     }
     window_home_->render();
 }

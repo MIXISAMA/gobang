@@ -38,6 +38,26 @@ ImGuiWindowFlags FlagsAble::flags()
     return flags_;
 }
 
+Popup::Popup(Context& context, const std::string name) :
+    Component(context),
+    NameAble(name)
+{
+
+}
+
+void Popup::open()
+{
+    ImGui::OpenPopup(name_.c_str());
+}
+
+void Popup::render()
+{
+    if (!ImGui::BeginPopup(name_.c_str())) {
+        return;
+    }
+    content();
+    ImGui::EndPopup();
+}
 
 PopupModal::PopupModal(Context& context, const std::string name, ImGuiWindowFlags flag) :
     Component(context),

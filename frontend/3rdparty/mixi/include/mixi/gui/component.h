@@ -72,6 +72,21 @@ protected:
 
 };
 
+class Popup:
+    public Component<Popup>,
+    public NameAble
+{
+public:
+
+    Popup(
+        Context& context,
+        const std::string name
+    );
+
+    void render() override;
+
+    void open();
+};
 
 class PopupModal :
     public Component<PopupModal>,

@@ -12,6 +12,12 @@ add_library(glad STATIC ./glad/src/gl.c)
 target_include_directories(glad PUBLIC ./glad/include)
 
 # === glad ===
+# === freetype ===
+
+set(FT_DISABLE_HARFBUZZ ON)
+add_subdirectory(freetype)
+
+# === freetype ===
 # === imgui ===
 
 add_library(imgui STATIC
@@ -21,15 +27,26 @@ add_library(imgui STATIC
     ./imgui/imgui_widgets.cpp 
     ./imgui/backends/imgui_impl_glfw.cpp
     ./imgui/backends/imgui_impl_opengl3.cpp
+    ./imgui/misc/freetype/imgui_freetype.cpp
+)
+
+target_compile_definitions(imgui
+    PUBLIC IMGUI_ENABLE_FREETYPE
+    PUBLIC IMGUI_USE_WCHAR32
 )
 
 target_include_directories(imgui
     PUBLIC ./imgui/
     PUBLIC ./imgui/backends/
-    PUBLIC glfw/include/
+    PUBLIC ./imgui/misc/freetype/
+    PUBLIC ./glfw/include/
+    PUBLIC ./freetype/include
 )
 
-target_link_libraries(imgui glfw)
+target_link_libraries(imgui
+    glfw
+    freetype
+)
 
 if (APPLE)
     target_link_libraries(imgui "-framework Cocoa -framework IOKit")
@@ -59,7 +76,6 @@ target_include_directories(
     mixi
     PUBLIC mixi/include/
     PUBLIC glad/include/
-    # PUBLIC glfw/include/
     PUBLIC imgui/
     PUBLIC imgui/backends/
     PUBLIC glm/
@@ -82,8 +98,6 @@ target_link_libraries(mixi
     Boost::asio
     Boost::thread
     ${Intl_LIBRARIES}
-    # Boost
-    # ${Boost_SYSTEM_LIBRARY_RELEASE}
 )
 
 # === mixi ===
