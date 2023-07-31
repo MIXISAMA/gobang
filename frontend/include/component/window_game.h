@@ -4,7 +4,8 @@
 #include "mixi/geometry/camera.h"
 #include "mixi/render/opengl/buffer.h"
 #include "mixi/engine/opengl/model.h"
-#include "drawable/program.h"
+#include "drawable/chessboard.h"
+#include "drawable/chesspiece.h"
 
 
 namespace mixi
@@ -26,8 +27,10 @@ private:
     gl::FrameBuffer frame_buffer_;
 
     std::shared_ptr<geo::Camera> camera_;
-    std::shared_ptr<ChessboardProgram> program_;
+    std::shared_ptr<ChessboardProgram> program_chessboard_;
+    std::shared_ptr<ChesspieceProgram> program_chesspiece_;
     std::shared_ptr<gl::VertexArray> vao_chessboard_;
+    std::shared_ptr<gl::VertexArray> vao_chesspiece_;
 
     glm::mat4 projection_;
 

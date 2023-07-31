@@ -18,7 +18,7 @@ uniform Material uMaterial;
 uniform Light    uLight;
 
 in VS_OUT {
-    vec3 fragPos;
+    // vec3 fragPos;
     vec2 texCoords;
     vec3 tangentLightPos;
     vec3 tangentViewPos;

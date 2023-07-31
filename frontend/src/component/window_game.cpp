@@ -9,10 +9,15 @@ namespace gobang {
 WindowGame::WindowGame(gui::Context& context) :
     gui::Window(context, gettext("Gobang Game")),
     camera_(std::make_shared<geo::Camera>(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f))),
-    program_(std::make_shared<ChessboardProgram>(
+    program_chessboard_(std::make_shared<ChessboardProgram>(
         camera_,
         gl::Shader("resource/glsl/chessboard_default.vert", GL_VERTEX_SHADER),
         gl::Shader("resource/glsl/chessboard_default.frag", GL_FRAGMENT_SHADER)
+    )),
+    program_chesspiece_(std::make_shared<ChesspieceProgram>(
+        camera_,
+        gl::Shader("resource/glsl/chesspiece_default.vert", GL_VERTEX_SHADER),
+        gl::Shader("resource/glsl/chesspiece_default.frag", GL_FRAGMENT_SHADER)
     ))
 {
     glEnable(GL_DEPTH_TEST);
@@ -54,7 +59,8 @@ void WindowGame::content()
             0.1f, 1000.0f
         );
         frame_buffer_.resize(width, height);
-        program_->set_projection(projection_);
+        program_chessboard_->set_projection(projection_);
+        program_chesspiece_->set_projection(projection_);
     }
 
     /* render frame */
@@ -63,7 +69,7 @@ void WindowGame::content()
     glClearColor(0.1f, 0.0f, 0.2f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    program_->prepare_use();
+    program_chessboard_->prepare_use();
     vao_chessboard_->draw();
 
     ImGuiIO& io = ImGui::GetIO();
@@ -85,9 +91,10 @@ void WindowGame::content()
         width, height
     );
 
-    // todo
-    // std::cout << "yaw " << camera_->yaw() << " ";
-    // std::cout << "pitch " << camera_->pitch() << std::endl;
+    program_chesspiece_->prepare_use();
+    program_chesspiece_->set_color(glm::vec3(0.07f, 0.07f, 0.07f));
+    program_chesspiece_->set_model(glm::translate(glm::mat4(1.0f), cursor_in_world_coor));
+    vao_chesspiece_->draw();
     
     if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
         camera_->yaw_right_pitch_up_(
@@ -143,8 +150,11 @@ void WindowGame::node_helper_(const gl::eng::Node& node) {
         if (node.meshes.empty()) {
             throw std::runtime_error("wrong chessboard model");
         }
-        program_->set_material(node.meshes[0]->material.get());
-        vao_chessboard_ = program_->gen_vertex_array(node.meshes[0]->vertex_buffer);
+        program_chessboard_->set_material(node.meshes[0]->material.get());
+        vao_chessboard_ = program_chessboard_->gen_vertex_array(node.meshes[0]->vertex_buffer);
+    }
+    if (node.name == "chesspiece") {
+        vao_chesspiece_ = program_chesspiece_->gen_vertex_array(node.meshes[0]->vertex_buffer);
     }
     for (const gl::eng::Node& child : node.children) {
         node_helper_(child);
