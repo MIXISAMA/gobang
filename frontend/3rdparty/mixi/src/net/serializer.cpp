@@ -120,6 +120,12 @@ Serializer& Serializer::operator << (std::byte val)
     return *this;
 }
 
+Serializer& Serializer::operator << (char val)
+{
+    raw.push_back((std::byte)val);
+    return *this;
+}
+
 Serializer& Serializer::operator << (bool val)
 {
     if (val) {

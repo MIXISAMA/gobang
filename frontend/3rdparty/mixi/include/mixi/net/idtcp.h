@@ -78,7 +78,8 @@ public:
     IdtcpClient(
         boost::asio::io_context& io_context,
         std::initializer_list<Distribute> distribution,
-        const std::function<void(void)>& disconnected_callback
+        const std::function<void(void)>& connected_callback = [](){},
+        const std::function<void(void)>& disconnected_callback = [](){}
     );
     ~IdtcpClient();
 
@@ -97,6 +98,7 @@ protected:
 
     net::IdtcpSocket socket_;
     std::vector<Distribute> distribution_;
+    std::function<void(void)> on_connected_;
     std::function<void(void)> on_disconnected_;
     std::atomic<bool> connected_;
 

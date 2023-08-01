@@ -148,10 +148,12 @@ void IdtcpSocket::handle_receive_(
 IdtcpClient::IdtcpClient(
     boost::asio::io_context& io_context,
     std::initializer_list<Distribute> distribution,
+    const std::function<void(void)>& connected_callback,
     const std::function<void(void)>& disconnected_callback
 ) : 
     socket_(io_context, boost::asio::ip::tcp::endpoint()),
     distribution_(distribution),
+    on_connected_(connected_callback),
     on_disconnected_(disconnected_callback)
 {
 
@@ -165,10 +167,18 @@ IdtcpClient::~IdtcpClient()
 boost::asio::awaitable<void>
 IdtcpClient::connect(const boost::asio::ip::tcp::endpoint& remote_endpoint)
 {
-    co_await socket_.async_connect(
-        remote_endpoint,
-        boost::asio::use_awaitable
-    );
+    try {
+        co_await socket_.async_connect(
+            remote_endpoint,
+            boost::asio::use_awaitable
+        );
+    }
+    catch(...) {
+        on_disconnected_();
+        socket_.close();
+        co_return;
+    }
+    on_connected_();
     co_await start_receive_();
     on_disconnected_();
     socket_.close();

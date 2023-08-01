@@ -44,6 +44,8 @@ private:
     void on_join_room_(ServerGameRoom::JoinRoomState state);
     void on_select_password_emoji_(const char* emoji);
     void on_backspace_password_emoji_(void);
+    
+    bool join_btn_disabled_() const;
 
     std::atomic<const char*> hint_;
 

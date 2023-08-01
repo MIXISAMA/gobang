@@ -59,20 +59,36 @@ private:
 
     enum class C_Instruction: u_int16_t
     {
-        Generic_Error_Notification = 0x0000,
-        All_Room_Information,
-        Join_Room,
-        Leave_Room,
-        Message,
+        FATAL_ERROR = 0x0000,
+        PUBLIC_KEY,
+        YOU_JOIN_ROOM,
+        USER_INFO,
+        OTHER_JOIN_ROOM,
+        USER_LEAVE,
+        PLAYER_READY,
+        GAME_START,
+        PLAYER_STONE,
+        PLAYER_REGRET,
+        AGREE_REGRET,
+        PLAYER_TIE,
+        AGREE_TIE,
+        GAME_OVER,
+        MESSAGE,
     };
 
     enum class S_Instruction: u_int16_t
     {
-        Generic_Error_Notification = 0x0000,
-        All_Room_Information,
-        Join_Room,
-        Leave_Room,
-        Message,
+        FATAL_ERROR = 0x0000,
+        USER_JOIN_ROOM,
+        USER_INFO,
+        USER_LEAVE,
+        PLAYER_STONE,
+        PLAYER_REGRET,
+        AGREE_REGRET,
+        PLAYER_TIE,
+        AGREE_TIE,
+        GIVE_UP,
+        MESSAGE,
     };
 
     ReadFirstBuffer<game::Room> game_room_;
@@ -85,11 +101,12 @@ private:
     net::IdtcpClient client_;
     const net::IdtcpClient::Distribute distribute_;
 
-    uint16_t room_id_;
+    uint8_t room_id_;
     std::string username_;
     std::string password_;
     char role_;
 
+    void on_connected_();
     void on_disconnected_();
 
     boost::asio::awaitable<void> send_leave_room_();

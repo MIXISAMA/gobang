@@ -143,7 +143,8 @@ void ModalRoomSearch::content()
     ImGui::SameLine(470);
 
     char role = '-';
-    ImGui::BeginDisabled(selected_room_.get() == nullptr);
+    bool disabled = join_btn_disabled_();
+    ImGui::BeginDisabled(disabled);
     if (ImGui::Button(gettext("Join Game"), ImVec2(120, 0))) {
         role = 'P';
     }
@@ -154,7 +155,7 @@ void ModalRoomSearch::content()
     ImGui::PushItemWidth(250);
     ImGui::InputText("##password", password_, sizeof(password_));
     ImGui::PopItemWidth();
-    // std::cout << std::strlen(password_) << password_ << std::endl;
+
     if (ImGui::IsItemActive()) {
         popup_emoji_.open();
     }
@@ -162,7 +163,7 @@ void ModalRoomSearch::content()
 
     
     ImGui::SameLine(470);
-    ImGui::BeginDisabled(selected_room_.get() == nullptr);
+    ImGui::BeginDisabled(disabled);
     if (ImGui::Button(gettext("Watch Just"), ImVec2(120, 0))) {
         role = 'O';
     }
@@ -191,7 +192,6 @@ void ModalRoomSearch::update_rooms_()
 
 void ModalRoomSearch::on_search_()
 {
-    rooms_.clear();
     boost::asio::ip::address_v4 address = boost::asio::ip::make_address_v4(search_ip_);
     server_room_search_.search_room(boost::asio::ip::udp::endpoint(address, search_port_));
 }
@@ -225,6 +225,17 @@ void ModalRoomSearch::on_backspace_password_emoji_(void)
     if (password_len >= 4) {
         password_[password_len - 4] = '\0';
     }
+}
+
+bool ModalRoomSearch::join_btn_disabled_() const
+{
+    int password_len = std::strlen(password_);
+    int username_len = std::strlen(username_);
+    return (
+        selected_room_.get() == nullptr
+     || username_len < 4
+     || password_len < 4 
+    );
 }
 
 const char* ModalRoomSearch::Hint_Search_  = gettext("Please search rooms and choose one to join");

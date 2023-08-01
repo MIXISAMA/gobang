@@ -33,6 +33,7 @@ public:
     Serializer& operator >> (std::vector<std::byte>& ret);
 
     Serializer& operator << (std::byte   val);
+    Serializer& operator << (char        val);
     Serializer& operator << (bool        val);
     Serializer& operator << (uint8_t     val);
     Serializer& operator << (uint16_t    val);

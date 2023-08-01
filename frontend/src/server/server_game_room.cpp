@@ -29,7 +29,8 @@ ServerGameRoom::ServerGameRoom(
         std::bind(&ServerGameRoom::receive_agree_tie_,       this, std::placeholders::_1),
         std::bind(&ServerGameRoom::receive_game_over_,       this, std::placeholders::_1),
         std::bind(&ServerGameRoom::receive_message_,         this, std::placeholders::_1),
-    },  std::bind(&ServerGameRoom::on_disconnected_,         this))
+    },  std::bind(&ServerGameRoom::on_connected_,            this),
+        std::bind(&ServerGameRoom::on_disconnected_,         this))
 {
 
 }
@@ -110,6 +111,23 @@ ReadTryQueue<msg_t>& ServerGameRoom::messages()
     return messages_;
 }
 
+void ServerGameRoom::on_connected_()
+{
+    net::Serializer s;
+    s.head8();
+    s << room_id_
+      << username_;
+    s.head16();
+    s << password_
+      << role_;
+
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::USER_JOIN_ROOM, std::vector<std::byte>(s.raw)),
+        boost::asio::detached
+    );
+}
+
 void ServerGameRoom::on_disconnected_()
 {
     signal_join_room_(JoinRoomState::FAILED);
@@ -118,14 +136,14 @@ void ServerGameRoom::on_disconnected_()
 
 boost::asio::awaitable<void> ServerGameRoom::send_leave_room_()
 {
-    co_await client_.send((u_int16_t)S_Instruction::Leave_Room, {});
+    co_await client_.send((u_int16_t)S_Instruction::USER_LEAVE, {});
 }
 
 boost::asio::awaitable<void> ServerGameRoom::send_send_message_(const std::string& message)
 {
     net::Serializer s;
     s << message;
-    co_await client_.send((u_int16_t)S_Instruction::Message, s.raw);
+    co_await client_.send((u_int16_t)S_Instruction::MESSAGE, s.raw);
 }
 
 void ServerGameRoom::receive_fatal_error_(
@@ -186,7 +204,7 @@ void ServerGameRoom::receive_public_key_(
     
     boost::asio::co_spawn(
         io_context,
-        client_.send((u_int16_t)S_Instruction::Join_Room, std::vector<std::byte>(s3.raw)),
+        client_.send((u_int16_t)S_Instruction::USER_JOIN_ROOM, std::vector<std::byte>(s3.raw)),
         boost::asio::detached
     );
 }
