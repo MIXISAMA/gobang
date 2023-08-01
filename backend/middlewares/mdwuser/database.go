@@ -1,18 +1,44 @@
 package mdwuser
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
+
+	"crypto/sha256"
+	"crypto/subtle"
+	b64 "encoding/base64"
 
 	"github.com/MIXISAMA/gobang/backend/idtcp"
+	"github.com/MIXISAMA/gobang/backend/utils"
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 var (
 	ErrUserNotFound  = errors.New("username is not found")
 	ErrWrongPassword = errors.New("password is wrong")
 )
+
+func hasher_encode(password, salt []byte) string {
+	iterations := 720000 // derived from https://github.com/django/django/blob/22b0b73c7732ba67db4e69fd9fa75aad84c8e5c4/django/contrib/auth/hashers.py#L316
+
+	hash := pbkdf2.Key(password, salt, iterations, 32, sha256.New)
+	hash_str := b64.StdEncoding.EncodeToString(hash)
+	return fmt.Sprintf("pbkdf2$%v$%v$%v", iterations, string(salt), hash_str)
+}
+
+func hasher_verify(password []byte, encoded string) bool {
+	splited := strings.Split(encoded, "$")
+	salt := splited[2]
+	encoded_2 := hasher_encode(password, []byte(salt))
+	if subtle.ConstantTimeCompare([]byte(encoded), []byte(encoded_2)) == 0 {
+		return false
+	} else {
+		return true
+	}
+}
 
 type Database struct {
 	path string
@@ -34,7 +60,7 @@ func NewDatabase(path string) (*Database, error) {
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS user (
 			username TEXT PRIMARY KEY,
-			password BLOB,
+			password TEXT,
 			wins     INTEGER DEFAULT 0,
 			ties     INTEGER DEFAULT 0,
 			losses   INTEGER DEFAULT 0,
@@ -48,7 +74,7 @@ func NewDatabase(path string) (*Database, error) {
 	return &Database{path: path}, nil
 }
 
-func (database *Database) authorization(username string, password []byte) error {
+func (database *Database) authenticate(username string, password []byte) error {
 	db, err := sql.Open("sqlite3", database.path)
 	if err != nil {
 		return err
@@ -66,13 +92,13 @@ func (database *Database) authorization(username string, password []byte) error 
 
 	row := stmt.QueryRow(username)
 
-	var dbPassword []byte
+	var dbPassword string
 	err = row.Scan(&dbPassword)
 	if err != nil {
 		return ErrUserNotFound
 
 	}
-	if !bytes.Equal(password, dbPassword) {
+	if !hasher_verify(password, dbPassword) {
 		return ErrWrongPassword
 	}
 
@@ -93,7 +119,8 @@ func (database *Database) register(username string, password []byte) error {
 		return err
 	}
 	defer stmt2.Close()
-	_, err = stmt2.Exec(username, password)
+	hashed_password := hasher_encode(password, []byte(utils.RandomString(16)))
+	_, err = stmt2.Exec(username, hashed_password)
 	if err != nil {
 		return err
 	}

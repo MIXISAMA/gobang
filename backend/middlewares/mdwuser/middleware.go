@@ -56,6 +56,13 @@ type Payload struct {
 	PrivateKey *rsa.PrivateKey
 }
 
+type InstructionJoinRoom struct {
+	RoomID   int8
+	Username string `len_bytes:"1"`
+	Password []byte `len_bytes:"2"`
+	Role     rune
+}
+
 func (middleware *Middleware) ProcessConnect(
 	payloads idtcp.PayloadMap,
 	processConnect func(idtcp.PayloadMap) (*idtcp.Conn, error),
@@ -76,7 +83,6 @@ func (middleware *Middleware) ProcessConnect(
 		return conn, err
 	}
 
-	err = middleware.sendPublicKey(conn, &privateKey.PublicKey)
 	return conn, err
 }
 
@@ -94,9 +100,9 @@ func (middleware *Middleware) ProcessDistribute(
 ) error {
 
 	if request.Instruction == middleware.s_JoinRoom {
-		user, err := middleware.authorization(request)
+		user, err := middleware.authenticate(request)
 		if err != nil {
-			middleware.sendAuthorizationFailed(request.Conn, middleware.c_YouJoinRoom)
+			middleware.sendAuthenticationFailed(request.Conn, middleware.c_YouJoinRoom)
 			return err
 		}
 		request.Payloads[&Key].(*Payload).User = user
@@ -104,7 +110,7 @@ func (middleware *Middleware) ProcessDistribute(
 
 	user := request.Payloads[&Key].(*Payload).User
 	if user == nil {
-		return mdwfatal.NewExecution(request.Conn, 0, "user has not passed the authorization")
+		return mdwfatal.NewExecution(request.Conn, 0, "user has not passed the authentication")
 	}
 
 	err := processDistribute(request)

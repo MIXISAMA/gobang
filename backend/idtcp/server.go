@@ -113,6 +113,8 @@ func NewServer(
 func (server *Server) Run() {
 	defer server.connWaitGroup.Wait()
 
+	log.Println("Server Started")
+
 	for {
 		payloads := make(PayloadMap)
 		server.listenerMutex.Lock()
