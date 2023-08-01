@@ -27,7 +27,7 @@ struct Room
 {
 
     std::string name;
-    int max_users;
+    uint8_t max_users;
 
     std::string black_player;
     std::string white_player;

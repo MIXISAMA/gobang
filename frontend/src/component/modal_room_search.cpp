@@ -192,6 +192,7 @@ void ModalRoomSearch::update_rooms_()
 
 void ModalRoomSearch::on_search_()
 {
+    rooms_.clear(); // todo: custom comparison function
     boost::asio::ip::address_v4 address = boost::asio::ip::make_address_v4(search_ip_);
     server_room_search_.search_room(boost::asio::ip::udp::endpoint(address, search_port_));
 }
