@@ -1,5 +1,6 @@
 #include "component/window_game.h"
 #include "mixi/engine/opengl/model.h"
+#include "util/file_reader.h"
 
 namespace mixi {
 namespace gobang {
@@ -33,6 +34,8 @@ WindowGame::WindowGame(gui::Context& context) :
     );
     node_helper_(chesspiece_model.root_node);
     camera_->pitch(-45.0f);
+
+    read_stone_coors_helper_("resource/model/chessboard.obj");
 }
 
 WindowGame::~WindowGame()
@@ -91,11 +94,28 @@ void WindowGame::content()
         width, height
     );
 
-    program_chesspiece_->prepare_use();
-    program_chesspiece_->set_color(glm::vec3(0.07f, 0.07f, 0.07f));
-    program_chesspiece_->set_model(glm::translate(glm::mat4(1.0f), cursor_in_world_coor));
-    vao_chesspiece_->draw();
+    int pickup_i = -1;
+    int pickup_j = -1;
+    glm::vec3 piece_coor;
+    for (int i = 0; i < 15; i++) {
+        for (int j = 0; j < 15; j++) {
+            if (glm::length(cursor_in_world_coor - stone_coors_[i][j]) < pickup_radius_) {
+                pickup_i = i;
+                pickup_j = j;
+                break;
+            }
+        }
+    }
     
+    if (pickup_i != -1) {
+        program_chesspiece_->prepare_use();
+        program_chesspiece_->set_color(glm::vec3(0.07f, 0.07f, 0.07f));
+        program_chesspiece_->set_model(
+            glm::translate(glm::mat4(1.0f), stone_coors_[pickup_i][pickup_j])
+        );
+        vao_chesspiece_->draw();
+    }
+
     if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
         camera_->yaw_right_pitch_up_(
             io.MouseDelta.x * 0.3f,
@@ -159,6 +179,46 @@ void WindowGame::node_helper_(const gl::eng::Node& node) {
     for (const gl::eng::Node& child : node.children) {
         node_helper_(child);
     }
+}
+
+void WindowGame::read_stone_coors_helper_(const std::filesystem::path& filepath)
+{
+    char nouse;
+    float x, y, z;
+    glm::vec3 lower_left, lower_right, upper_left;
+    int status = 0b000;
+    std::string coor_string;
+    std::string obj_name;
+    FileReverseReader reader(filepath);
+    while (status != 0b111 && reader.getline(obj_name)) {
+        if (obj_name == "o lower-left") {
+            std::stringstream ss(coor_string);
+            ss >> nouse >> x >> y >> z;
+            lower_left = glm::vec3(x, y, z);
+            status |= 0b001;
+        }
+        else if (obj_name == "o lower-right") {
+            std::stringstream ss(coor_string);
+            ss >> nouse >> x >> y >> z;
+            lower_right = glm::vec3(x, y, z);
+            status |= 0b010;
+        }
+        else if (obj_name == "o upper-left") {
+            std::stringstream ss(coor_string);
+            ss >> nouse >> x >> y >> z;
+            upper_left = glm::vec3(x, y, z);
+            status |= 0b100;
+        }
+        coor_string = std::move(obj_name);
+    }
+    glm::vec3 vx = (lower_right - lower_left) / 14;
+    glm::vec3 vy = (upper_left  - lower_left) / 14;
+    for (int i = 0; i < 15; i++) {
+        for (int j = 0; j < 15; j++) {
+            stone_coors_[i][j] = lower_left + vy * i + vx * j;
+        }
+    }
+    pickup_radius_ = glm::length(vx) * 0.5;
 }
 
 } // namespace gobang

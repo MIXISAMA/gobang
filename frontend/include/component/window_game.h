@@ -34,6 +34,9 @@ private:
 
     glm::mat4 projection_;
 
+    glm::vec3 stone_coors_[15][15];
+    float pickup_radius_;
+
     ImVec2 read_cursor_in_frame_();
     glm::vec3 read_cursor_world_coor_(
         float x, float y,
@@ -41,6 +44,7 @@ private:
     );
 
     void node_helper_(const gl::eng::Node&);
+    void read_stone_coors_helper_(const std::filesystem::path& filepath);
 
 };
 
