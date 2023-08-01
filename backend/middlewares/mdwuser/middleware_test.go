@@ -2,6 +2,7 @@ package mdwuser
 
 import (
 	"net"
+	"os"
 	"testing"
 
 	"github.com/MIXISAMA/gobang/backend/idtcp"
@@ -14,9 +15,17 @@ const (
 	C_YouJoinRoom uint16 = 2
 )
 
-func newMiddleware() *Middleware {
+func TestHasher(t *testing.T) {
+	password := []byte("foo")
+	hashed_password := hasher_encode(password, []byte(utils.RandomString(16)))
+	assert.True(t, hasher_verify(password, hashed_password))
+	assert.False(t, hasher_verify([]byte("bar"), hashed_password))
+}
+
+func newMiddleware(t *testing.T) *Middleware {
 	databasePath := "test.db"
 	NewDatabase(databasePath)
+	t.Cleanup(func() { os.Remove("test.db") })
 
 	userMiddleware, _ := NewMiddleware(
 		S_JoinRoom,
@@ -57,7 +66,7 @@ func newRequest(instruction uint16, data []byte) (*idtcp.Request, *net.TCPConn) 
 func TestAuthentication(t *testing.T) {
 	assert := assert.New(t)
 
-	m := newMiddleware()
+	m := newMiddleware(t)
 
 	i_join_room := InstructionJoinRoom{
 		RoomID:   0,

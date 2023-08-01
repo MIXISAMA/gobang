@@ -1,2 +1,5 @@
 .vscode/
 build/
+cover.out
+sqlite3.db
+test.db
