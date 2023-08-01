@@ -30,7 +30,6 @@ func main() {
 
 	userMiddleware, err := mdwuser.NewMiddleware(
 		server.S_JoinRoom,
-		server.C_PublicKey,
 		server.C_YouJoinRoom,
 		conf.DatabasePath,
 		conf.Uuid,

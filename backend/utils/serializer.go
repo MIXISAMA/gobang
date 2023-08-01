@@ -16,7 +16,7 @@ import (
 // fields to be serialized must be exported
 // since package reflect can only change exported fields' values
 
-type char uint8
+type Char uint8
 
 // Marshal can accept both an object or a pointer
 func Marshal(obj any) ([]byte, error) {

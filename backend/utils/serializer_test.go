@@ -14,7 +14,7 @@ type Foo struct {
 	A uint8
 	B string `len_bytes:"1"`
 	C []byte `len_bytes:"2"`
-	D char
+	D Char
 	E bool
 	F byte
 }

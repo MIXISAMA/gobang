@@ -1,17 +1,14 @@
 package mdwuser
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-
 	"github.com/MIXISAMA/gobang/backend/idtcp"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwfatal"
+	"github.com/MIXISAMA/gobang/backend/utils"
 	"github.com/google/uuid"
 )
 
 type Middleware struct {
 	s_JoinRoom    uint16
-	c_PublicKey   uint16
 	c_YouJoinRoom uint16
 	database      *Database
 	serverUuid    []byte
@@ -19,7 +16,6 @@ type Middleware struct {
 
 func NewMiddleware(
 	s_JoinRoom uint16,
-	c_PublicKey uint16,
 	c_YouJoinRoom uint16,
 	databasePath string,
 	serverUuid string,
@@ -42,7 +38,6 @@ func NewMiddleware(
 
 	return &Middleware{
 		s_JoinRoom:    s_JoinRoom,
-		c_PublicKey:   c_PublicKey,
 		c_YouJoinRoom: c_YouJoinRoom,
 		database:      database,
 		serverUuid:    uuidBytes,
@@ -52,30 +47,22 @@ func NewMiddleware(
 var Key = new(idtcp.MiddlewareKey)
 
 type Payload struct {
-	User       *User
-	PrivateKey *rsa.PrivateKey
+	User *User
 }
 
 type InstructionJoinRoom struct {
-	RoomID   int8
+	RoomID   uint8
 	Username string `len_bytes:"1"`
 	Password []byte `len_bytes:"2"`
-	Role     rune
+	Role     utils.Char
 }
 
 func (middleware *Middleware) ProcessConnect(
 	payloads idtcp.PayloadMap,
 	processConnect func(idtcp.PayloadMap) (*idtcp.Conn, error),
 ) (*idtcp.Conn, error) {
-
-	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
-	if err != nil {
-		return nil, err
-	}
-
 	payloads[&Key] = &Payload{
-		User:       nil,
-		PrivateKey: privateKey,
+		User: nil,
 	}
 
 	conn, err := processConnect(payloads)
