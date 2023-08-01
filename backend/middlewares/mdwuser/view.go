@@ -2,6 +2,7 @@ package mdwuser
 
 import (
 	"errors"
+	"log"
 
 	"github.com/MIXISAMA/gobang/backend/idtcp"
 	"github.com/MIXISAMA/gobang/backend/utils"
@@ -11,6 +12,7 @@ func (middleware *Middleware) sendAuthenticationFailed(conn *idtcp.Conn, instruc
 	var s utils.Serializer
 	s.WriteBoolean(false)
 	_, err := conn.Write(instruction, s.Raw)
+	log.Println("sent AuthenticationFailed msg")
 	return err
 }
 

@@ -59,6 +59,9 @@ func (middleware *Middleware) ProcessConnect(
 	payload := &Payload{Executions: list.New()}
 	payloads[&Key] = payload
 	conn, err := processConnect(payloads)
+	if err != nil {
+		log.Printf("an error occurred: %v", err)
+	}
 	switch e := err.(type) {
 	case *Execution:
 		middleware.processExecution(e)
@@ -83,6 +86,9 @@ func (middleware *Middleware) ProcessDistribute(
 		receiveFatalError(request.Conn, request.Data)
 	}
 	err := processDistribute(request)
+	if err != nil {
+		log.Printf("an error occurred: %v", err)
+	}
 	switch e := err.(type) {
 	case *Execution:
 		middleware.processExecution(e)

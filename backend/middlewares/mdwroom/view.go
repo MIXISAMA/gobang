@@ -10,33 +10,22 @@ import (
 )
 
 func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
-
-	s := utils.MakeSerializer(req.Data)
-
-	roomIdU8, err := s.ReadUint8()
+	i_join_room := new(mdwuser.InstructionJoinRoom)
+	err := utils.Unmarshal(req.Data, i_join_room)
 	if err != nil {
 		return err
 	}
-	roomId := int(roomIdU8)
-	if roomId >= len(middleware.Rooms) {
+
+	if int(i_join_room.RoomID) >= len(middleware.Rooms) {
 		return errors.New("wrong room id")
 	}
-	room := middleware.Rooms[roomId]
-
-	_, err = s.ReadBytes8()
-	if err != nil {
-		return err
-	}
+	room := middleware.Rooms[i_join_room.RoomID]
 
 	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
 
-	role, err := s.ReadByte()
-	if err != nil {
-		return err
-	}
-	if role == 'P' {
+	if i_join_room.Role == 'P' {
 		err = room.joinAsPlayer(user)
-	} else if role == 'O' {
+	} else if i_join_room.Role == 'O' {
 		err = room.joinAsOnlooker(user)
 	} else {
 		return errors.New("wrong role")

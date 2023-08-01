@@ -1,7 +1,7 @@
 address: 0.0.0.0:52039
 servername: mixi server
-uuid:
-databasepath: ""
+uuid: d0235dbd-d00e-4389-9924-18540b09b33b
+databasepath: "./sqlite3.db"
 rooms:
 - name: gobang room 1
   maxuser: 0

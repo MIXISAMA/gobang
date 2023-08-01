@@ -94,7 +94,6 @@ func NewServer(
 			return fmt.Errorf("wrong instruction: %d", req.Instruction)
 		}
 
-		log.Printf("Received Instruction: %d\n", req.Instruction)
 		err := server.distributeList[req.Instruction](req)
 		return err
 	}
@@ -148,6 +147,7 @@ func (server *Server) requestPipe(conn *Conn, payloads PayloadMap) {
 			Payloads: payloads,
 		}
 		_, err := conn.Read(&req.Instruction, &req.Data)
+		log.Printf("received instruction %v", req.Instruction)
 		if err != nil {
 			log.Printf("%-21s TCP ERR: %s", conn.RemoteAddr().String(), err.Error())
 			break
