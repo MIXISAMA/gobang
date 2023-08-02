@@ -19,6 +19,8 @@ public:
 
     ComponentRoom(gui::Context& context, ServerGameRoom& server);
 
+protected:
+
     void content() override;
 
     // bool leave_done();
@@ -30,6 +32,11 @@ private:
     WindowGame window_game_;
     WindowChat window_chat_;
     WindowDashboard window_dashboard_;
+
+    std::byte role_;
+
+    void on_stone_(int r, int c);
+
 };
     
 } // namespace gobang

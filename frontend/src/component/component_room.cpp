@@ -12,7 +12,11 @@ ComponentRoom::ComponentRoom(gui::Context& context, ServerGameRoom& server) :
     window_chat_(context),
     window_dashboard_(context, server)
 {
-
+    RfbReader<game::Room> room(server_.room());
+    window_game_.role(room->role(server.username()));
+    window_game_.on_stone(std::bind(
+        &ComponentRoom::on_stone_, this, std::placeholders::_1, std::placeholders::_2
+    ));
 }
 
 void ComponentRoom::content()
@@ -43,6 +47,11 @@ void ComponentRoom::content()
 //     }
 //     return false;
 // }
+
+void ComponentRoom::on_stone_(int r, int c)
+{
+    server_.send_player_stone((std::byte)((r << 4) | c));
+}
 
 } // namespace gobang
 } // namespace mixi

@@ -170,7 +170,7 @@ void ModalRoomSearch::content()
     ImGui::EndDisabled();
 
     if (role != '-') {
-        server_game_room_.join_room(
+        server_game_room_.connect_and_send_join_room(
             selected_room_->endpoint,
             selected_room_->room_id,
             username_,

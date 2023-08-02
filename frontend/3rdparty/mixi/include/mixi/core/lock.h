@@ -25,7 +25,7 @@ public:
 
 protected:
 
-    std::shared_mutex mutex_;
+    mutable std::shared_mutex mutex_;
     int read_id_;
     T buffer_[2];
 
@@ -35,7 +35,7 @@ template <typename T>
 class RfbReader
 {
 public:
-    RfbReader(ReadFirstBuffer<T>& rfb) :
+    RfbReader(const ReadFirstBuffer<T>& rfb) :
         rfb_(rfb)
     {
         rfb_.mutex_.lock_shared();
@@ -49,7 +49,7 @@ public:
         return &rfb_.buffer_[rfb_.read_id_];
     }
 private:
-    ReadFirstBuffer<T>& rfb_;
+    const ReadFirstBuffer<T>& rfb_;
 };
 
 template <typename T>

@@ -12,6 +12,8 @@ public:
 
     virtual void render();
 
+protected:
+
     virtual void content() = 0;
 
 };

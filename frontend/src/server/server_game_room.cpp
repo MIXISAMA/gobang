@@ -40,7 +40,7 @@ ServerGameRoom::~ServerGameRoom()
 
 }
 
-void ServerGameRoom::join_room(
+void ServerGameRoom::connect_and_send_join_room(
     const boost::asio::ip::tcp::endpoint& remote_endpoint,
     uint8_t room_id,
     const std::string& username,
@@ -61,20 +61,39 @@ void ServerGameRoom::join_room(
     );
 }
 
-void ServerGameRoom::leave_room()
+void ServerGameRoom::send_leave_room() const
 {
     boost::asio::co_spawn(
         io_context,
-        send_leave_room_(),
+        client_.send((u_int16_t)S_Instruction::USER_LEAVE, {}),
+        boost::asio::detached
+    );
+}
+
+const std::string& ServerGameRoom::username() const
+{
+    return username_;
+}
+
+void ServerGameRoom::send_player_stone(std::byte coor) const
+{
+    net::Serializer s;
+    RfbReader<game::Room> room(game_room_);
+    s << (uint8_t)room->records.size() << coor;
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::PLAYER_STONE, s.raw),
         boost::asio::detached
     );
 }
 
 void ServerGameRoom::send_message(const std::string& message)
 {
+    net::Serializer s;
+    s << message;
     boost::asio::co_spawn(
         io_context,
-        send_send_message_(message),
+        client_.send((u_int16_t)S_Instruction::MESSAGE, s.raw),
         boost::asio::detached
     );
 }
@@ -123,7 +142,7 @@ void ServerGameRoom::on_connected_()
 
     boost::asio::co_spawn(
         io_context,
-        client_.send((u_int16_t)S_Instruction::USER_JOIN_ROOM, std::vector<std::byte>(s.raw)),
+        client_.send((uint16_t)S_Instruction::USER_JOIN_ROOM, std::vector<std::byte>(s.raw)),
         boost::asio::detached
     );
 }
@@ -132,18 +151,6 @@ void ServerGameRoom::on_disconnected_()
 {
     signal_join_room_(JoinRoomState::FAILED);
     Log::Info("disconnected");
-}
-
-boost::asio::awaitable<void> ServerGameRoom::send_leave_room_()
-{
-    co_await client_.send((u_int16_t)S_Instruction::USER_LEAVE, {});
-}
-
-boost::asio::awaitable<void> ServerGameRoom::send_send_message_(const std::string& message)
-{
-    net::Serializer s;
-    s << message;
-    co_await client_.send((u_int16_t)S_Instruction::MESSAGE, s.raw);
 }
 
 void ServerGameRoom::receive_fatal_error_(
@@ -204,7 +211,7 @@ void ServerGameRoom::receive_public_key_(
     
     boost::asio::co_spawn(
         io_context,
-        client_.send((u_int16_t)S_Instruction::USER_JOIN_ROOM, std::vector<std::byte>(s3.raw)),
+        client_.send((uint16_t)S_Instruction::USER_JOIN_ROOM, std::vector<std::byte>(s3.raw)),
         boost::asio::detached
     );
 }

@@ -8,6 +8,17 @@ namespace gobang
 namespace game
 {
 
+std::byte Room::role(const std::string& username) const
+{
+    if (username == black_player) {
+        return BLACK;
+    }
+    if (username == white_player) {
+        return WHITE;
+    }
+    return SPACE;
+}
+
 void Room::user_join(const std::string& username, std::byte role)
 {
     if (role == BLACK) {

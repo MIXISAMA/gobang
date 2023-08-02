@@ -11,6 +11,7 @@ class GlfwWindow
 public:
 
     GlfwWindow(const char* title, int width, int height);
+    ~GlfwWindow();
 
     GLFWwindow* glfw_window() const;
 

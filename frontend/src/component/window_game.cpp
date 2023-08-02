@@ -1,6 +1,7 @@
 #include "component/window_game.h"
 #include "mixi/engine/opengl/model.h"
 #include "util/file_reader.h"
+#include "game/room.h"
 
 namespace mixi {
 namespace gobang {
@@ -19,7 +20,9 @@ WindowGame::WindowGame(gui::Context& context) :
         camera_,
         gl::Shader("resource/glsl/chesspiece_default.vert", GL_VERTEX_SHADER),
         gl::Shader("resource/glsl/chesspiece_default.frag", GL_FRAGMENT_SHADER)
-    ))
+    )),
+    role_(game::SPACE),
+    on_stone_([](int, int){})
 {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -41,6 +44,16 @@ WindowGame::WindowGame(gui::Context& context) :
 WindowGame::~WindowGame()
 {
 
+}
+
+void WindowGame::role(std::byte role)
+{
+    role_ = role;
+}
+
+void WindowGame::on_stone(std::function<void(int, int)> f)
+{
+    on_stone_ = f;
 }
 
 void WindowGame::content()

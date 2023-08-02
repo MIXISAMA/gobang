@@ -32,6 +32,11 @@ GlfwWindow::GlfwWindow(const char* title, int width, int height) :
     // glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 }
 
+GlfwWindow::~GlfwWindow()
+{
+    glfwDestroyWindow(glfw_window_);
+}
+
 GLFWwindow* GlfwWindow::glfw_window() const
 {
     return glfw_window_;

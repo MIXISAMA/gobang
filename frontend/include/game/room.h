@@ -43,6 +43,8 @@ struct Room
     std::byte board[15][15];
     std::vector<std::byte> records;
 
+    std::byte role(const std::string& username) const;
+
     void user_join(const std::string& username, std::byte role);
     void user_leave(const std::string& username);
 

@@ -21,7 +21,7 @@ void IdtcpSocket::async_send_instrution_data(
     const boost::function<void(const boost::system::error_code&, std::size_t)>& handler
 ) {
     uint16_t send_buf_bytes;
-    pack_(instruction, buffers, send_buffer_, send_buf_bytes);
+    Pack_(instruction, buffers, send_buffer_, send_buf_bytes);
     async_send(boost::asio::buffer(send_buffer_, send_buf_bytes), handler);
 }
 
@@ -43,10 +43,10 @@ boost::asio::awaitable<void>
 IdtcpSocket::send_instrution_data(
     uint16_t instruction,
     const std::vector<std::byte>& buffers
-) {
+) const {
     uint16_t send_buf_bytes;
-    pack_(instruction, buffers, send_buffer_, send_buf_bytes);
-    co_await async_send(
+    Pack_(instruction, buffers, send_buffer_, send_buf_bytes);
+    co_await const_cast<IdtcpSocket*>(this)->async_send(
         boost::asio::buffer(send_buffer_, send_buf_bytes),
         boost::asio::use_awaitable
     );
@@ -77,11 +77,11 @@ IdtcpSocket::receive_instrution_data()
     }
 
     std::pair<uint16_t, std::vector<std::byte>> id;
-    unpack_(buffer_, bytes_package, id.first, id.second);
+    Unpack_(buffer_, bytes_package, id.first, id.second);
     co_return id;
 }
 
-void IdtcpSocket::pack_(
+void IdtcpSocket::Pack_(
     uint16_t instruction,
     const std::vector<std::byte>& data,
     std::byte* idtcp_raw,
@@ -96,15 +96,15 @@ void IdtcpSocket::pack_(
     memcpy(idtcp_raw + 4, data.data(), data.size());
 }
 
-void IdtcpSocket::unpack_(
+void IdtcpSocket::Unpack_(
     const std::byte* idtcp_raw,
     uint16_t idtcp_raw_bytes,
     uint16_t& instruction,
     std::vector<std::byte>& data
 ) {
     data.resize(idtcp_raw_bytes - 4);
-    instruction = (uint16_t)buffer_[3] << 8 | (uint16_t)buffer_[2];
-    memcpy(data.data(), &buffer_[4], idtcp_raw_bytes - 4);
+    instruction = (uint16_t)idtcp_raw[3] << 8 | (uint16_t)idtcp_raw[2];
+    memcpy(data.data(), &idtcp_raw[4], idtcp_raw_bytes - 4);
 }
 
 void IdtcpSocket::handle_receive_(
@@ -140,7 +140,7 @@ void IdtcpSocket::handle_receive_(
 
     uint16_t instruction;
     std::vector<std::byte> data;
-    unpack_(buffer_, package_bytes_, instruction, data);
+    Unpack_(buffer_, package_bytes_, instruction, data);
     handler(instruction, data);
 }
 
@@ -188,7 +188,7 @@ boost::asio::awaitable<void>
 IdtcpClient::send(
     uint16_t instruction,
     const std::vector<std::byte> buffers
-) {
+) const {
     co_await socket_.send_instrution_data(instruction, buffers);
 }
 

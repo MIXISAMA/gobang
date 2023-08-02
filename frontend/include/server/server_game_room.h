@@ -32,7 +32,7 @@ public:
     );
     ~ServerGameRoom();
 
-    void join_room(
+    void connect_and_send_join_room(
         const boost::asio::ip::tcp::endpoint& remote_endpoint,
         uint8_t room_id,
         const std::string& username,
@@ -40,8 +40,14 @@ public:
         char role // P|O
     );
 
-    void leave_room();
-
+    void send_user_info() const;
+    void send_leave_room() const;
+    void send_player_stone(std::byte coor) const;
+    void send_player_regret() const;
+    void send_agree_regret() const;
+    void send_player_tie() const;
+    void send_agree_tie() const;
+    void send_give_up() const;
     void send_message(const std::string& message);
     
     boost::signals2::connection
@@ -55,9 +61,11 @@ public:
     ReadTryQueue<game::User>& users();
     ReadTryQueue<msg_t>& messages();
 
+    const std::string& username() const;
+
 private:
 
-    enum class C_Instruction: u_int16_t
+    enum class C_Instruction: uint16_t
     {
         FATAL_ERROR = 0x0000,
         PUBLIC_KEY,
@@ -76,7 +84,7 @@ private:
         MESSAGE,
     };
 
-    enum class S_Instruction: u_int16_t
+    enum class S_Instruction: uint16_t
     {
         FATAL_ERROR = 0x0000,
         USER_JOIN_ROOM,
@@ -108,9 +116,6 @@ private:
 
     void on_connected_();
     void on_disconnected_();
-
-    boost::asio::awaitable<void> send_leave_room_();
-    boost::asio::awaitable<void> send_send_message_(const std::string& message);
 
     void receive_fatal_error_    (const std::vector<std::byte>& data);
     void receive_public_key_     (const std::vector<std::byte>& data);

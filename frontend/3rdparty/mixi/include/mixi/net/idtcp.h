@@ -33,26 +33,26 @@ public:
     send_instrution_data(
         uint16_t instruction,
         const std::vector<std::byte>& buffers
-    );
+    ) const;
 
     boost::asio::awaitable<std::pair<uint16_t, std::vector<std::byte>>>
     receive_instrution_data();
 
 protected:
 
-    std::byte send_buffer_[65536];
-    std::byte buffer_[65536];
+    mutable std::byte send_buffer_[65536];
+    mutable std::byte buffer_[65536];
 
-    void pack_(
+    static void Pack_(
         uint16_t instruction,
         const std::vector<std::byte>& data,
         std::byte* idtcp_raw,
         uint16_t& idtcp_raw_bytes
     );
 
-    void unpack_(
+    static void Unpack_(
         const std::byte* idtcp_raw,
-        uint16_t data_bytes,
+        uint16_t idtcp_raw_bytes,
         uint16_t& instruction,
         std::vector<std::byte>& data
     );
@@ -90,7 +90,7 @@ public:
     send(
         uint16_t instruction,
         const std::vector<std::byte> buffers
-    );
+    ) const;
 
     bool connected() const;
 

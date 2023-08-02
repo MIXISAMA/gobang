@@ -20,6 +20,11 @@ public:
     WindowGame(gui::Context& context);
     ~WindowGame();
 
+    void role(std::byte role);
+    void on_stone(std::function<void(int, int)> f);
+
+protected:
+
     void content() override;
 
 private:
@@ -36,6 +41,9 @@ private:
 
     glm::vec3 stone_coors_[15][15];
     float pickup_radius_;
+
+    std::byte role_;
+    std::function<void(int, int)> on_stone_;
 
     ImVec2 read_cursor_in_frame_();
     glm::vec3 read_cursor_world_coor_(
