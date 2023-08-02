@@ -2,6 +2,7 @@ package mdwroom
 
 import (
 	"errors"
+	"log"
 
 	"github.com/MIXISAMA/gobang/backend/game"
 	"github.com/MIXISAMA/gobang/backend/idtcp"
@@ -57,43 +58,46 @@ func (middleware *Middleware) sendYouJoinRoom(
 	isSuccess bool,
 	room *Room,
 ) error {
-
-	var s utils.Serializer
-
-	s.WriteBoolean(isSuccess)
-
 	if !isSuccess {
+		var s utils.Serializer
+		s.WriteBoolean(false)
 		_, err := conn.Write(middleware.c_YouJoinRoom, s.Raw)
 		return err
 	}
 
-	s.WriteString8(room.Name)
-
-	s.WriteUint8_Int(room.MaxUsers)
-
 	blackPlayer, _ := room.BlackPlayer.(*mdwuser.User)
 	whitePlayer, _ := room.WhitePlayer.(*mdwuser.User)
 
-	s.WriteString8(blackPlayer.GetUsername(""))
-	s.WriteString8(whitePlayer.GetUsername(""))
-
-	s.WriteUint8_Int(room.Users.Len())
+	var onlookers []string
 	for i := room.Users.Front(); i != nil; i = i.Next() {
 		user := i.Value.(*mdwuser.User)
 		if user == room.BlackPlayer || user == room.WhitePlayer {
 			continue
 		}
-		s.WriteString8(user.Username)
+		onlookers = append(onlookers, user.Username)
 	}
 
-	s.WriteByte(room.ReadyColor)
-	s.WriteBoolean(room.IsPlaying)
-	s.WriteByte(room.RegretColor)
-	s.WriteByte(room.TieColor)
+	c_you_join_room := InstructionClientYouJoinRoom{
+		IsSuccess:     isSuccess,
+		RoomName:      room.Name,
+		MaxUsers:      uint8(room.MaxUsers),
+		BlackUsername: blackPlayer.GetUsername(""),
+		WhileUsername: whitePlayer.GetUsername(""),
+		Onlookers:     onlookers,
+		ReadyPlayer:   room.ReadyColor,
+		IsPlaying:     room.IsPlaying,
+		RegretPlayer:  room.RegretColor,
+		TiePlayer:     room.TieColor,
+		Records:       room.Chess.GetRecords(),
+	}
 
-	s.WriteBytes8(room.Chess.GetRecords())
+	log.Printf("sending instruction youjoinroom: %+v", c_you_join_room)
+	data, err := utils.Marshal(c_you_join_room)
+	if err != nil {
+		return err
+	}
 
-	_, err := conn.Write(middleware.c_YouJoinRoom, s.Raw)
+	_, err = conn.Write(middleware.c_YouJoinRoom, data)
 	return err
 }
 

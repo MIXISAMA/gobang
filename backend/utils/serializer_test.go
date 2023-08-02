@@ -17,16 +17,20 @@ type Foo struct {
 	D Char
 	E bool
 	F byte
+	G [][]byte `len_bytes:"1" array_len_bytes:"1"`
+	H []string `len_bytes:"1" array_len_bytes:"2"`
 }
 
 func newFoo() (Foo, []byte) {
 	foo := Foo{
 		A: 123,
-		B: "xxxx",
-		C: []byte("xxxxbbbbbbb"),
+		B: "bbbb",
+		C: []byte("ccccccccccccc"),
 		D: 'x',
 		E: true,
 		F: byte(0xAA),
+		G: [][]byte{[]byte("g1g1g1g1g1"), []byte("g2g2g2g2")},
+		H: []string{"h1h1h1h1", "h2h2h2h2h2"},
 	}
 
 	buf := new(bytes.Buffer)
@@ -39,6 +43,20 @@ func newFoo() (Foo, []byte) {
 	buf.WriteByte(byte(foo.D))
 	buf.WriteByte(0xFF)
 	buf.WriteByte(foo.F)
+
+	// G
+	buf.WriteByte(uint8(len(foo.G)))
+	buf.WriteByte(uint8(len(foo.G[0])))
+	buf.Write(foo.G[0])
+	buf.WriteByte(uint8(len(foo.G[1])))
+	buf.Write(foo.G[1])
+
+	// H
+	binary.Write(buf, binary.LittleEndian, uint16(len(foo.H)))
+	buf.WriteByte(uint8(len(foo.H[0])))
+	buf.Write([]byte(foo.H[0]))
+	buf.WriteByte(uint8(len(foo.H[1])))
+	buf.Write([]byte(foo.H[1]))
 
 	return foo, buf.Bytes()
 }
