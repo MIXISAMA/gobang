@@ -40,13 +40,14 @@ public:
         char role // P|O
     );
 
-    void send_user_info() const;
+    void send_user_info(const std::string& username) const;
     void send_leave_room() const;
+    void send_player_ready() const;
     void send_player_stone(std::byte coor) const;
     void send_player_regret() const;
-    void send_agree_regret() const;
+    void send_agree_regret(bool agree) const;
     void send_player_tie() const;
-    void send_agree_tie() const;
+    void send_agree_tie(bool agree) const;
     void send_give_up() const;
     void send_message(const std::string& message);
     
@@ -90,6 +91,7 @@ private:
         USER_JOIN_ROOM,
         USER_INFO,
         USER_LEAVE,
+        PLAYER_READY,
         PLAYER_STONE,
         PLAYER_REGRET,
         AGREE_REGRET,

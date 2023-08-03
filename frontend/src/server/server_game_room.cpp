@@ -61,6 +61,17 @@ void ServerGameRoom::connect_and_send_join_room(
     );
 }
 
+void ServerGameRoom::send_user_info(const std::string& username) const
+{
+    net::Serializer s;
+    s << username;
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::USER_INFO, s.raw),
+        boost::asio::detached
+    );
+}
+
 void ServerGameRoom::send_leave_room() const
 {
     boost::asio::co_spawn(
@@ -70,9 +81,13 @@ void ServerGameRoom::send_leave_room() const
     );
 }
 
-const std::string& ServerGameRoom::username() const
+void ServerGameRoom::send_player_ready() const
 {
-    return username_;
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::PLAYER_READY, {}),
+        boost::asio::detached
+    );
 }
 
 void ServerGameRoom::send_player_stone(std::byte coor) const
@@ -83,6 +98,55 @@ void ServerGameRoom::send_player_stone(std::byte coor) const
     boost::asio::co_spawn(
         io_context,
         client_.send((u_int16_t)S_Instruction::PLAYER_STONE, s.raw),
+        boost::asio::detached
+    );
+}
+
+void ServerGameRoom::send_player_regret() const
+{
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::PLAYER_REGRET, {}),
+        boost::asio::detached
+    );
+}
+
+void ServerGameRoom::send_agree_regret(bool agree) const
+{
+    net::Serializer s;
+    s << agree;
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::AGREE_REGRET, s.raw),
+        boost::asio::detached
+    );
+}
+
+void ServerGameRoom::send_player_tie() const
+{
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::PLAYER_TIE, {}),
+        boost::asio::detached
+    );
+}
+
+void ServerGameRoom::send_agree_tie(bool agree) const
+{
+    net::Serializer s;
+    s << agree;
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::AGREE_TIE, s.raw),
+        boost::asio::detached
+    );
+}
+
+void ServerGameRoom::send_give_up() const
+{
+    boost::asio::co_spawn(
+        io_context,
+        client_.send((u_int16_t)S_Instruction::GIVE_UP, {}),
         boost::asio::detached
     );
 }
@@ -128,6 +192,11 @@ ReadTryQueue<game::User>& ServerGameRoom::users()
 ReadTryQueue<msg_t>& ServerGameRoom::messages()
 {
     return messages_;
+}
+
+const std::string& ServerGameRoom::username() const
+{
+    return username_;
 }
 
 void ServerGameRoom::on_connected_()

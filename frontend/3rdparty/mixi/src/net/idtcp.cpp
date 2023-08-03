@@ -211,8 +211,14 @@ boost::asio::awaitable<void> IdtcpClient::start_receive_()
         Log::Info(oss.str());
         if (id.first >= distribution_.size()) {
             Log::Error("Instruction out of distribution size!");
-        } else {
+            continue;
+        }
+        try {
             distribution_[id.first](id.second);
+        }
+        catch (const std::exception& e) {
+            Log::Error(e.what());
+            break;
         }
     }
 }
