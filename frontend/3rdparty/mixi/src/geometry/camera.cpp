@@ -10,7 +10,7 @@ Camera::Camera(
     const glm::vec3& world_up
 ) :
     position_(position),
-    world_up_(world_up),
+    world_up_(glm::normalize(world_up)),
     yaw_(-90.0f),
     pitch_(0.0f)
 {
@@ -20,6 +20,11 @@ Camera::Camera(
 glm::mat4 Camera::view_matrix() const
 {
     return glm::lookAt(position_, position_ + front_, up_);
+}
+
+glm::vec3 Camera::world_up() const
+{
+    return world_up_;
 }
 
 glm::vec3 Camera::position() const
@@ -129,7 +134,11 @@ void Camera::update_()
         sin(glm::radians(pitch_)),
         sin(glm::radians(yaw_)) * cos(glm::radians(pitch_))
     );
-    front_ = glm::normalize(front);
+    front_ = glm::rotate(
+        glm::mat4(1.0),
+        glm::angle(glm::vec3(0.0f, 1.0f, 0.0f), world_up_),
+        glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), world_up_)
+    ) * glm::normalize(glm::vec4(front, 1.0f));
     right_ = glm::normalize(glm::cross(front_, world_up_));
     up_    = glm::normalize(glm::cross(right_, front_));
 }

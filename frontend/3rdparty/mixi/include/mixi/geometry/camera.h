@@ -17,7 +17,9 @@ public:
     );
 
     glm::mat4 view_matrix() const;
-    
+
+    glm::vec3 world_up() const;
+
     glm::vec3 position() const;
     void position(const glm::vec3& p);
 
