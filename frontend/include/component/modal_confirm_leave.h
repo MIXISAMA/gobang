@@ -17,13 +17,13 @@ public:
     ModalConfirmLeave(gui::Context& context);
     ~ModalConfirmLeave() = default;
 
-    bool leave();
-
-    void content() override;
+    void on_leave(const std::function<void()>& f);
 
 protected:
 
-    bool leave_;
+    std::function<void()> on_leave_;
+
+    void content() override;
 
 };
 

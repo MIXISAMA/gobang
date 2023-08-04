@@ -23,8 +23,6 @@ protected:
 
     void content() override;
 
-    // bool leave_done();
-
 private:
 
     ServerGameRoom& server_;
@@ -32,10 +30,6 @@ private:
     WindowGame window_game_;
     WindowChat window_chat_;
     WindowDashboard window_dashboard_;
-
-    std::byte role_;
-
-    void on_stone_(int r, int c);
 
 };
     

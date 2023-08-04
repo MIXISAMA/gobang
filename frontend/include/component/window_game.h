@@ -21,7 +21,7 @@ public:
     ~WindowGame();
 
     void role(std::byte role);
-    void on_stone(std::function<void(int, int)> f);
+    void on_stone(const std::function<void(std::byte)>& f);
 
 protected:
 
@@ -44,7 +44,7 @@ private:
     float pickup_radius_;
 
     std::byte role_;
-    std::function<void(int, int)> on_stone_;
+    std::function<void(std::byte)> on_stone_;
 
     ImVec2 read_cursor_in_frame_();
     glm::vec3 read_cursor_world_coor_(

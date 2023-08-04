@@ -7,20 +7,49 @@ namespace gobang {
 
 WindowDashboard::WindowDashboard(
     gui::Context& context,
-    ServerGameRoom& server
+    const ReadFirstBuffer<game::Room>& room
 ) :
     gui::Window(context, gettext("Dashboard")),
-    server_(server),
-    modal_confirm_leave_(context)
+    room_(room),
+    modal_confirm_leave_(context),
+    on_regret_([](){}),
+    on_tie_([](){}),
+    on_give_up_([](){}),
+    on_user_info_([](const std::string&){})
 {
     load_texture_by_image_(tex_exit_, "resource/image/exit.png");
     load_texture_by_image_(tex_window_, "resource/image/exit-full-screen.png");
     load_texture_by_image_(tex_full_screen_, "resource/image/full-screen.png");
 }
 
-WindowDashboard::~WindowDashboard()
+void WindowDashboard::role(std::byte r)
 {
+    role_ = r;
+}
 
+void WindowDashboard::on_leave(const std::function<void()>& f)
+{
+    modal_confirm_leave_.on_leave(f);
+}
+
+void WindowDashboard::on_regret(const std::function<void()>& f)
+{
+    on_regret_ = f;
+}
+
+void WindowDashboard::on_tie(const std::function<void()>& f)
+{
+    on_tie_ = f;
+}
+
+void WindowDashboard::on_give_up(const std::function<void()>& f)
+{
+    on_give_up_ = f;
+}
+
+void WindowDashboard::on_user_info(const std::function<void(const std::string&)>& f)
+{
+    on_user_info_ = f;
 }
 
 void WindowDashboard::content()
@@ -41,8 +70,9 @@ void WindowDashboard::content()
     )) {
         modal_confirm_leave_.open();
     }
+    modal_confirm_leave_.render();
 
-    RfbReader<game::Room> room(server_.room());
+    RfbReader<game::Room> room(room_);
 
     ImGui::Separator();
 
@@ -68,7 +98,21 @@ void WindowDashboard::content()
         ImGui::EndListBox();
     }
 
-    modal_confirm_leave_.render();
+    if (role_ == game::SPACE) {
+        return;
+    }
+
+    if (ImGui::Button(gettext("Regret"), ImVec2(84, 0))) {
+        on_regret_();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(gettext("Tie"), ImVec2(84, 0))) {
+        on_tie_();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(gettext("Give Up"), ImVec2(84, 0))) {
+        on_give_up_();
+    }
 }
 
 void WindowDashboard::load_texture_by_image_(
@@ -83,11 +127,6 @@ void WindowDashboard::load_texture_by_image_(
         gl::Texture2D::Format::RGBA,
         icon.data()
     );
-}
-
-bool WindowDashboard::leave()
-{
-    return modal_confirm_leave_.leave();
 }
 
 } // namespace gobang

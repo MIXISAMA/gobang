@@ -23,7 +23,7 @@ WindowGame::WindowGame(gui::Context& context) :
         gl::Shader("resource/glsl/chesspiece_default.frag", GL_FRAGMENT_SHADER)
     )),
     role_(game::SPACE),
-    on_stone_([](int, int){})
+    on_stone_([](std::byte){})
 {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -51,7 +51,7 @@ void WindowGame::role(std::byte role)
     role_ = role;
 }
 
-void WindowGame::on_stone(std::function<void(int, int)> f)
+void WindowGame::on_stone(const std::function<void(std::byte)>& f)
 {
     on_stone_ = f;
 }
@@ -79,55 +79,30 @@ void WindowGame::content()
         program_chesspiece_->set_projection(projection_);
     }
 
-    /* render frame */
-    gl::Bind bind(frame_buffer_);
-    glViewport(0, 0, width, height);
-    glClearColor(0.1f, 0.0f, 0.2f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    program_chessboard_->prepare_use();
-    vao_chessboard_->draw();
-
-    ImGuiIO& io = ImGui::GetIO();
-
     ImGui::Image(
         (void*)(intptr_t)frame_buffer_.texture().id(),
         content_region_size,
         ImVec2(0, 1), ImVec2(1, 0)
     );
 
+    /* render frame */
+    gl::Bind bind(frame_buffer_);
+    glViewport(0, 0, width, height);
+    glClearColor(0.1f, 0.0f, 0.2f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    /* render chessboard */
+    program_chessboard_->prepare_use();
+    vao_chessboard_->draw();
+
+    /* mouse hovered */
     if (!ImGui::IsItemHovered()) {
         return;
     }
+    ImGuiIO& io = ImGui::GetIO();
 
+    /* camera view */
     ImVec2 cursor_in_frame = read_cursor_in_frame_();
-
-    glm::vec3 cursor_in_world_coor = read_cursor_world_coor_(
-        cursor_in_frame.x, cursor_in_frame.y,
-        width, height
-    );
-
-    int pickup_i = -1;
-    int pickup_j = -1;
-    glm::vec3 piece_coor;
-    for (int i = 0; i < 15; i++) {
-        for (int j = 0; j < 15; j++) {
-            if (glm::length(cursor_in_world_coor - stone_coors_[i][j]) < pickup_radius_) {
-                pickup_i = i;
-                pickup_j = j;
-                break;
-            }
-        }
-    }
-    
-    if (pickup_i != -1) {
-        program_chesspiece_->prepare_use();
-        program_chesspiece_->set_color(glm::vec3(0.07f, 0.07f, 0.07f));
-        program_chesspiece_->set_model(
-            glm::translate(glm::mat4(1.0f), stone_coors_[pickup_i][pickup_j])
-        );
-        vao_chesspiece_->draw();
-    }
 
     float ndc_x =  2.0f * cursor_in_frame.x / width  - 1.0f;
     float ndc_y = -2.0f * cursor_in_frame.y / height + 1.0f;
@@ -155,6 +130,43 @@ void WindowGame::content()
     ) * glm::vec4(0.0f, units * unit_length, 0.0f, 1.0f);
 
     camera_->position(view_pos);
+
+    /* render chesspiece pick up */
+    if (role_ == game::SPACE) {
+        return;
+    }
+
+    glm::vec3 cursor_in_world_coor = read_cursor_world_coor_(
+        cursor_in_frame.x, cursor_in_frame.y,
+        width, height
+    );
+
+    int pickup_i = -1;
+    int pickup_j = -1;
+    glm::vec3 piece_coor;
+    for (int i = 0; i < 15; i++) {
+        for (int j = 0; j < 15; j++) {
+            if (glm::length(cursor_in_world_coor - stone_coors_[i][j]) < pickup_radius_) {
+                pickup_i = i;
+                pickup_j = j;
+                break;
+            }
+        }
+    }
+    
+    if (pickup_i != -1) {
+        program_chesspiece_->prepare_use();
+        program_chesspiece_->set_color(glm::vec3(0.07f, 0.07f, 0.07f));
+        program_chesspiece_->set_model(
+            glm::translate(glm::mat4(1.0f), stone_coors_[pickup_i][pickup_j])
+        );
+        vao_chesspiece_->draw();
+
+        if (io.MouseDown[ImGuiMouseButton_Left]) {
+            on_stone_((std::byte)((pickup_i << 4) | pickup_j));
+        }
+    }
+
 }
 
 ImVec2 WindowGame::read_cursor_in_frame_()

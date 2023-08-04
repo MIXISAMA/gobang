@@ -6,14 +6,9 @@ namespace gobang {
 
 WindowChat::WindowChat(gui::Context& context) :
     gui::Window(context, gettext("Chat")),
-    has_input_(false)
+    on_send_message_([](const std::string&){})
 {
     input_buffer_[0] = '\0';
-}
-
-WindowChat::~WindowChat()
-{
-
 }
 
 void WindowChat::content()
@@ -37,8 +32,7 @@ void WindowChat::content()
             sizeof(input_buffer_),
             ImGuiInputTextFlags_EnterReturnsTrue
     )) {
-        input_.assign(input_buffer_);
-        has_input_ = true;
+        on_send_message_(input_buffer_);
         input_buffer_[0] = '\0';
     }
 }
@@ -51,16 +45,11 @@ void WindowChat::add_message(const std::string& message)
     }
 }
 
-bool WindowChat::has_input()
+void WindowChat::on_send_message(const std::function<void(const std::string&)>& f)
 {
-    return has_input_;
+    on_send_message_ = f;
 }
 
-const std::string& WindowChat::fetch_input()
-{
-    has_input_ = false;
-    return input_;
-}
 
 } // namespace gobang
 } // namespace mixi

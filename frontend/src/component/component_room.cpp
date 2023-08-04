@@ -10,13 +10,22 @@ ComponentRoom::ComponentRoom(gui::Context& context, ServerGameRoom& server) :
     server_(server),
     window_game_(context),
     window_chat_(context),
-    window_dashboard_(context, server)
+    window_dashboard_(context, server_.room())
 {
     RfbReader<game::Room> room(server_.room());
-    window_game_.role(room->role(server.username()));
-    window_game_.on_stone(std::bind(
-        &ComponentRoom::on_stone_, this, std::placeholders::_1, std::placeholders::_2
-    ));
+    std::byte role = room->role(server.username());
+
+    window_game_.role(role);
+    window_game_.on_stone(std::bind(&ServerGameRoom::send_player_stone, &server, std::placeholders::_1));
+
+    window_chat_.on_send_message(std::bind(&ServerGameRoom::send_message, &server, std::placeholders::_1));
+
+    window_dashboard_.role(role);
+    window_dashboard_.on_leave    (std::bind(&ServerGameRoom::send_leave_room,    &server));
+    window_dashboard_.on_regret   (std::bind(&ServerGameRoom::send_player_regret, &server));
+    window_dashboard_.on_tie      (std::bind(&ServerGameRoom::send_player_tie,    &server));
+    window_dashboard_.on_give_up  (std::bind(&ServerGameRoom::send_give_up,       &server));
+    window_dashboard_.on_user_info(std::bind(&ServerGameRoom::send_user_info,     &server, std::placeholders::_1));
 }
 
 void ComponentRoom::content()
@@ -29,28 +38,10 @@ void ComponentRoom::content()
             << " [" << nickname << "]:\n" << text;
         window_chat_.add_message(oss.str());
     }
-    if (window_chat_.has_input()) {
-        const std::string& text = window_chat_.fetch_input();
-        server_.send_message(text);
-    }
 
     window_dashboard_.render();
     window_game_.render();
     window_chat_.render();
-}
-
-// bool ComponentRoom::leave_done()
-// {
-//     if (window_dashboard_.leave()) {
-//         server_game_room_.leave_room();
-//         return true;
-//     }
-//     return false;
-// }
-
-void ComponentRoom::on_stone_(int r, int c)
-{
-    server_.send_player_stone((std::byte)((r << 4) | c));
 }
 
 } // namespace gobang
