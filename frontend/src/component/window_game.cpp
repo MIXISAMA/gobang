@@ -10,7 +10,8 @@ namespace gobang {
 
 WindowGame::WindowGame(gui::Context& context) :
     gui::Window(context, gettext("Gobang Game")),
-    camera_(std::make_shared<geo::Camera>(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f))),
+    datum_view_pos_(0.0f, 2.0f, 1.0f),
+    camera_(std::make_shared<geo::Camera>(datum_view_pos_, glm::vec3(0.0f, 1.0f, -2.25f))),
     program_chessboard_(std::make_shared<ChessboardProgram>(
         camera_,
         gl::Shader("resource/glsl/chessboard_default.vert", GL_VERTEX_SHADER),
@@ -36,7 +37,6 @@ WindowGame::WindowGame(gui::Context& context) :
         aiProcess_FlipUVs
     );
     node_helper_(chesspiece_model.root_node);
-    camera_->pitch(-45.0f);
 
     read_stone_coors_helper_("resource/model/chessboard.obj");
 }
@@ -129,17 +129,32 @@ void WindowGame::content()
         vao_chesspiece_->draw();
     }
 
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        camera_->yaw_right_pitch_up_(
-            io.MouseDelta.x * 0.3f,
-            io.MouseDelta.y * 0.3f
-        );
+    float ndc_x =  2.0f * cursor_in_frame.x / width  - 1.0f;
+    float ndc_y = -2.0f * cursor_in_frame.y / height + 1.0f;
+
+    camera_->yaw  (-ndc_x * 5.0f - 90.0f);
+    camera_->pitch(-ndc_y * 5.0f);
+
+    float unit_length = glm::length(datum_view_pos_) * 2.0f / 50.0f;
+    float units = glm::length(camera_->position()) / unit_length + io.MouseWheel;
+    if (units > 50.0f) {
+        units = 50.0f;
     }
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
-        camera_->move_right(io.MouseDelta.x * 0.01f);
-        camera_->move_up   (io.MouseDelta.y * 0.01f);
+    if (units < 10.0f) {
+        units = 10.0f;
     }
-    camera_->move_forward(io.MouseWheel);
+
+    const glm::vec3 normal_datum_view_pos = glm::normalize(datum_view_pos_);
+    glm::vec3 view_pos = glm::mat4(glm::mat3(
+        glm::vec3(1.0, 0.0f, 0.0f),
+        normal_datum_view_pos,
+        glm::cross(glm::vec3(1.0, 0.0f, 0.0f), normal_datum_view_pos)
+    )) * glm::eulerAngleZX(
+        glm::radians(camera_->yaw() + 90.0f),
+        glm::radians(camera_->pitch())
+    ) * glm::vec4(0.0f, units * unit_length, 0.0f, 1.0f);
+
+    camera_->position(view_pos);
 }
 
 ImVec2 WindowGame::read_cursor_in_frame_()

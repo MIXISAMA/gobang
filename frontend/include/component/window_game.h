@@ -31,6 +31,7 @@ private:
 
     gl::FrameBuffer frame_buffer_;
 
+    const glm::vec3 datum_view_pos_;
     std::shared_ptr<geo::Camera> camera_;
     std::shared_ptr<ChessboardProgram> program_chessboard_;
     std::shared_ptr<ChesspieceProgram> program_chesspiece_;
