@@ -11,7 +11,7 @@ Imgui::Imgui(GLFWwindow* glfw_window) :
     IMGUI_CHECKVERSION();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     io.ConfigWindowsMoveFromTitleBarOnly=true;
     ImGui_ImplGlfw_InitForOpenGL(glfw_window, true);
 #if defined(__APPLE__)

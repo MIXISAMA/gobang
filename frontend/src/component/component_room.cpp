@@ -8,12 +8,13 @@ namespace gobang
 ComponentRoom::ComponentRoom(gui::Context& context, ServerGameRoom& server) :
     gui::Component<ComponentRoom>(context),
     server_(server),
-    window_game_(context),
+    window_game_(context, server_.room()),
     window_chat_(context),
-    window_dashboard_(context, server_.room())
+    window_dashboard_(context, server_.room()),
+    modal_confirm_regret_(context),
+    modal_confirm_tie_   (context)
 {
-    RfbReader<game::Room> room(server_.room());
-    std::byte role = room->role(server.username());
+    std::byte role = RfbReader<game::Room>(server_.room())->role(server_.username());
 
     window_game_.role(role);
     window_game_.on_stone(std::bind(&ServerGameRoom::send_player_stone, &server, std::placeholders::_1));
@@ -26,6 +27,9 @@ ComponentRoom::ComponentRoom(gui::Context& context, ServerGameRoom& server) :
     window_dashboard_.on_tie      (std::bind(&ServerGameRoom::send_player_tie,    &server));
     window_dashboard_.on_give_up  (std::bind(&ServerGameRoom::send_give_up,       &server));
     window_dashboard_.on_user_info(std::bind(&ServerGameRoom::send_user_info,     &server, std::placeholders::_1));
+
+    modal_confirm_regret_.on_agree_regret(std::bind(&ServerGameRoom::send_agree_regret, &server, std::placeholders::_1));
+    modal_confirm_tie_   .on_agree_tie   (std::bind(&ServerGameRoom::send_agree_tie,    &server, std::placeholders::_1));
 }
 
 void ComponentRoom::content()

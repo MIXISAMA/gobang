@@ -30,6 +30,8 @@ private:
     WindowGame window_game_;
     WindowChat window_chat_;
     WindowDashboard window_dashboard_;
+    ModalConfirmRegret modal_confirm_regret_;
+    ModalConfirmTie    modal_confirm_tie_;
 
 };
     

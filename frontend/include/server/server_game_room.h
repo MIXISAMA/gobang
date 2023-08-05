@@ -50,7 +50,7 @@ public:
     void send_agree_tie(bool agree) const;
     void send_give_up() const;
     void send_message(const std::string& message);
-    
+
     boost::signals2::connection
     connect_join_room(const std::function<void(JoinRoomState)>& callback);
     boost::signals2::connection

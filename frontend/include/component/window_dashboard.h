@@ -4,7 +4,7 @@
 #include "mixi/render/opengl/texture.h"
 
 #include "server/server_game_room.h"
-#include "component/modal_confirm_leave.h"
+#include "component/modal_confirm.h"
 
 namespace mixi
 {
@@ -47,7 +47,7 @@ private:
     std::function<void()> on_give_up_;
     std::function<void(const std::string&)> on_user_info_;
 
-    std::byte role_;
+    std::atomic<std::byte> role_;
 
     void load_texture_by_image_(
         gl::Texture2D& tex,

@@ -1,11 +1,13 @@
 #pragma once
 #include "pch.h"
+#include "mixi/core/lock.h"
 #include "mixi/gui/component.h"
 #include "mixi/geometry/camera.h"
 #include "mixi/render/opengl/buffer.h"
 #include "mixi/engine/opengl/model.h"
 #include "drawable/chessboard.h"
 #include "drawable/chesspiece.h"
+#include "game/room.h"
 
 
 namespace mixi
@@ -17,8 +19,10 @@ class WindowGame : public gui::Window
 {
 public:
 
-    WindowGame(gui::Context& context);
-    ~WindowGame();
+    WindowGame(
+        gui::Context& context,
+        const ReadFirstBuffer<game::Room>& room
+    );
 
     void role(std::byte role);
     void on_stone(const std::function<void(std::byte)>& f);
@@ -28,6 +32,8 @@ protected:
     void content() override;
 
 private:
+
+    const ReadFirstBuffer<game::Room>& room_;
 
     gl::FrameBuffer frame_buffer_;
 
@@ -43,7 +49,7 @@ private:
     glm::vec3 stone_coors_[15][15];
     float pickup_radius_;
 
-    std::byte role_;
+    std::atomic<std::byte> role_;
     std::function<void(std::byte)> on_stone_;
 
     ImVec2 read_cursor_in_frame_();

@@ -6,10 +6,12 @@
 namespace mixi {
 namespace gobang {
 
-
-
-WindowGame::WindowGame(gui::Context& context) :
+WindowGame::WindowGame(
+    gui::Context& context,
+    const ReadFirstBuffer<game::Room>& room
+) :
     gui::Window(context, gettext("Gobang Game")),
+    room_(room),
     datum_view_pos_(0.0f, 2.0f, 1.0f),
     camera_(std::make_shared<geo::Camera>(datum_view_pos_, glm::vec3(0.0f, 1.0f, -2.25f))),
     program_chessboard_(std::make_shared<ChessboardProgram>(
@@ -39,11 +41,6 @@ WindowGame::WindowGame(gui::Context& context) :
     node_helper_(chesspiece_model.root_node);
 
     read_stone_coors_helper_("resource/model/chessboard.obj");
-}
-
-WindowGame::~WindowGame()
-{
-
 }
 
 void WindowGame::role(std::byte role)
