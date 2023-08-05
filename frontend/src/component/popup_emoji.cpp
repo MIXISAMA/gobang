@@ -15,13 +15,6 @@ PopupEmoji::PopupEmoji(gui::Context& context) :
 
 void PopupEmoji::content()
 {
-    ImGui::BeginChild(
-        name_.c_str(),
-        ImVec2(40 * 8, 30 * 4),
-        false,
-        ImGuiWindowFlags_HorizontalScrollbar
-    );
-
     ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
     for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
@@ -44,8 +37,6 @@ void PopupEmoji::content()
     else {
         keys_down_ = false;
     }
-
-    ImGui::EndChild();
 }
 
 void PopupEmoji::on_selected(const std::function<void(const char*)>& f)

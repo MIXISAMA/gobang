@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "mixi/gui/component.h"
+#include "component/popup_emoji.h"
 
 namespace mixi
 {
@@ -17,6 +18,8 @@ public:
 
     void on_send_message(const std::function<void(const std::string&)>& f);
 
+protected:
+
     void content() override;
 
 private:
@@ -25,7 +28,11 @@ private:
 
     char input_buffer_[256];
 
+    PopupEmoji popup_emoji_;
+
     std::function<void(const std::string&)> on_send_message_;
+
+    void on_selected_emoji_(const char* emoji);
 
 };
 
