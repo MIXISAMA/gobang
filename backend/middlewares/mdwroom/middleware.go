@@ -82,6 +82,7 @@ func (middleware *Middleware) ProcessDisconnect(
 	payloads idtcp.PayloadMap,
 	processDisconnect func(*idtcp.Conn, idtcp.PayloadMap),
 ) {
+	// TODO: delete user from room when disconnected
 	processDisconnect(conn, payloads)
 }
 

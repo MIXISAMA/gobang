@@ -15,13 +15,14 @@ const (
 	S_JoinRoom     uint16 = 1
 	S_UserInfo     uint16 = 2
 	S_LeaveRoom    uint16 = 3
-	S_PlayerStone  uint16 = 4
-	S_PlayerRegret uint16 = 5
-	S_ReplyRegret  uint16 = 6
-	S_PlayerTie    uint16 = 7
-	S_ReplyTie     uint16 = 8
-	S_GiveUp       uint16 = 9
-	S_Message      uint16 = 10
+	S_Ready        uint16 = 4
+	S_PlayerStone  uint16 = 5
+	S_PlayerRegret uint16 = 6
+	S_ReplyRegret  uint16 = 7
+	S_PlayerTie    uint16 = 8
+	S_ReplyTie     uint16 = 9
+	S_GiveUp       uint16 = 10
+	S_Message      uint16 = 11
 )
 
 func Empty(*idtcp.Request) error {
@@ -33,6 +34,7 @@ var Endpoints = []func(*idtcp.Request) error{
 	S_JoinRoom:     Empty,
 	S_UserInfo:     ReceiveUserInfo,
 	S_LeaveRoom:    Empty,
+	S_Ready:        Empty,
 	S_PlayerStone:  ReceivePlayerStone,
 	S_PlayerRegret: ReceivePlayerRegret,
 	S_ReplyRegret:  Empty,
@@ -89,8 +91,9 @@ func ReceivePlayerStone(req *idtcp.Request) error {
 
 	win := room.Chess.DidYouWin()
 
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		user := i.Value.(*mdwuser.User)
+		log.Printf("sending to user %v", user.Username)
 		err = sendByte(user.Conn, C_Stone, coor)
 		if win {
 			err = sendByte(user.Conn, C_GameOver, who)
