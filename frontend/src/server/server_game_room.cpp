@@ -312,7 +312,7 @@ void ServerGameRoom::receive_you_join_room_(
       >> room->regret_player
       >> room->tie_player
       >> room->records;
-    room->update_board_by_records();
+    room->set_board_by_records();
 
     signal_join_room_(JoinRoomState::JOINED);
 }

@@ -22,12 +22,11 @@ ChessboardProgram::ChessboardProgram(
 
     set_uniform_int(get_uniform_location("uMaterial.diffuse"), 0); // GL_TEXTURE0
     set_uniform_int(get_uniform_location("uMaterial.normals"), 1); // GL_TEXTURE1
-    // set_uniform_float(get_uniform_location("uMaterial.shininess"), 32.0f);
 
-    set_uniform_vec3(get_uniform_location("uLight.position"), glm::vec3(3.0f, 3.0f, 3.0f));
-    set_uniform_vec3(get_uniform_location("uLight.ambient"),  glm::vec3(0.2f, 0.2f, 0.2f));
-    set_uniform_vec3(get_uniform_location("uLight.diffuse"),  glm::vec3(0.6f, 0.6f, 0.6f));
-    set_uniform_vec3(get_uniform_location("uLight.specular"), glm::vec3(0.1f, 0.1f, 0.1f));
+    set_uniform_vec3(get_uniform_location("uLight.position"), glm::vec3(-1.0f, 3.0f, -1.0f));
+    set_uniform_vec3(get_uniform_location("uLight.ambient" ), glm::vec3( 0.4f, 0.4f,  0.4f));
+    set_uniform_vec3(get_uniform_location("uLight.diffuse" ), glm::vec3( 0.5f, 0.5f,  0.5f));
+    set_uniform_vec3(get_uniform_location("uLight.specular"), glm::vec3( 0.1f, 0.1f,  0.1f));
 }
 
 

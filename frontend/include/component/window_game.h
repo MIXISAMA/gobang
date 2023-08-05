@@ -52,6 +52,9 @@ private:
     std::atomic<std::byte> role_;
     std::function<void(std::byte)> on_stone_;
 
+    static const glm::vec3 BlackColor_;
+    static const glm::vec3 WhiteColor_;
+
     ImVec2 read_cursor_in_frame_();
     glm::vec3 read_cursor_world_coor_(
         float x, float y,

@@ -43,6 +43,8 @@ struct Room
     std::byte board[15][15];
     std::vector<std::byte> records;
 
+    Room();
+
     std::byte role(const std::string& username) const;
 
     void user_join(const std::string& username, std::byte role);
@@ -50,7 +52,8 @@ struct Room
 
     void stone(std::byte coor);
 
-    void update_board_by_records();
+    void clear_board();
+    void set_board_by_records();
 
 };
 

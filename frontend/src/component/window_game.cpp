@@ -92,6 +92,30 @@ void WindowGame::content()
     program_chessboard_->prepare_use();
     vao_chessboard_->draw();
 
+    /* render chesspiece */
+    program_chesspiece_->prepare_use();
+    program_chesspiece_->set_color(BlackColor_);
+    RfbReader<game::Room> room(room_);
+    for (int i = 0; i < room->records.size(); i += 2) {
+        std::byte coor = room->records[i];
+        int r = (int)(coor >> 4) & 0x0F;
+        int c = (int)coor & 0x0F;
+        program_chesspiece_->set_model(
+            glm::translate(glm::mat4(1.0f), stone_coors_[r][c])
+        );
+        vao_chesspiece_->draw();
+    }
+    program_chesspiece_->set_color(WhiteColor_);
+    for (int i = 1; i < room->records.size(); i += 2) {
+        std::byte coor = room->records[i];
+        int r = (int)(coor >> 4) & 0x0F;
+        int c = (int)coor & 0x0F;
+        program_chesspiece_->set_model(
+            glm::translate(glm::mat4(1.0f), stone_coors_[r][c])
+        );
+        vao_chesspiece_->draw();
+    }
+
     /* mouse hovered */
     if (!ImGui::IsItemHovered()) {
         return;
@@ -143,6 +167,9 @@ void WindowGame::content()
     glm::vec3 piece_coor;
     for (int i = 0; i < 15; i++) {
         for (int j = 0; j < 15; j++) {
+            if (room->board[i][j] != game::SPACE) {
+                continue;
+            }
             if (glm::length(cursor_in_world_coor - stone_coors_[i][j]) < pickup_radius_) {
                 pickup_i = i;
                 pickup_j = j;
@@ -150,16 +177,16 @@ void WindowGame::content()
             }
         }
     }
-    
+
     if (pickup_i != -1) {
         program_chesspiece_->prepare_use();
-        program_chesspiece_->set_color(glm::vec3(0.07f, 0.07f, 0.07f));
+        const glm::vec3& color = role_ == game::BLACK ? BlackColor_ : WhiteColor_;
+        program_chesspiece_->set_color(color);
         program_chesspiece_->set_model(
             glm::translate(glm::mat4(1.0f), stone_coors_[pickup_i][pickup_j])
         );
         vao_chesspiece_->draw();
-
-        if (io.MouseDown[ImGuiMouseButton_Left]) {
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
             on_stone_((std::byte)((pickup_i << 4) | pickup_j));
         }
     }
@@ -257,6 +284,9 @@ void WindowGame::read_stone_coors_helper_(const std::filesystem::path& filepath)
     }
     pickup_radius_ = glm::length(vx) * 0.5;
 }
+
+const glm::vec3 WindowGame::BlackColor_ = glm::vec3(0.10f, 0.10f, 0.10f);
+const glm::vec3 WindowGame::WhiteColor_ = glm::vec3(0.90f, 0.90f, 0.90f);
 
 } // namespace gobang
 } // namespace mixi
