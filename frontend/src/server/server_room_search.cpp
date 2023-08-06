@@ -89,10 +89,10 @@ boost::asio::awaitable<void> ServerRoomSearch::send_search_room_(const boost::as
 
 bool ConciseRoom::operator < (const ConciseRoom& other) const
 {
-    if (this->version == other.version) {
+    if (this->endpoint == other.endpoint) {
         return this->room_id < other.room_id;
     }
-    return this->version < other.version;
+    return this->endpoint < other.endpoint;
 }
 
 } // namespace gobang

@@ -25,6 +25,12 @@ struct ConciseRoom
     bool operator < (const ConciseRoom& other) const;
 };
 
+inline bool concise_room_sp_cmp(
+    const std::shared_ptr<ConciseRoom>& a,
+    const std::shared_ptr<ConciseRoom>& b
+) {
+    return *a < *b;
+}
 
 class ServerRoomSearch
 {

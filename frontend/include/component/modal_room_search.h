@@ -31,7 +31,7 @@ private:
 
     boost::signals2::connection join_room_connection_;
 
-    std::set<std::shared_ptr<ConciseRoom>> rooms_;
+    std::set<std::shared_ptr<ConciseRoom>, decltype(concise_room_sp_cmp)*> rooms_;
     std::shared_ptr<ConciseRoom> selected_room_;
 
     boost::asio::ip::address_v4::bytes_type search_ip_;

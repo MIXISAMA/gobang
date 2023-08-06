@@ -9,10 +9,11 @@ namespace gobang
 ModalRoomSearch::ModalRoomSearch(gui::Context& context, ServerGameRoom& server_game_room) :
     PopupModal(context, gettext("Search Room"), ImGuiWindowFlags_AlwaysAutoResize),
     popup_emoji_(context),
-    search_ip_{0xFF, 0xFF, 0xFF, 0xFF},
-    search_port_(52039),
     server_room_search_(server_game_room.io_context),
     server_game_room_(server_game_room),
+    rooms_(concise_room_sp_cmp),
+    search_ip_{0xFF, 0xFF, 0xFF, 0xFF},
+    search_port_(52039),
     hint_(Hint_Search_)
 {
     popup_emoji_.selectable_flags(ImGuiSelectableFlags_DontClosePopups);
@@ -192,7 +193,6 @@ void ModalRoomSearch::update_rooms_()
 
 void ModalRoomSearch::on_search_()
 {
-    rooms_.clear(); // todo: custom comparison function
     boost::asio::ip::address_v4 address = boost::asio::ip::make_address_v4(search_ip_);
     server_room_search_.search_room(boost::asio::ip::udp::endpoint(address, search_port_));
 }
