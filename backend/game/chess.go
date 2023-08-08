@@ -101,7 +101,7 @@ func (chess *Chess) GetRecords() []byte {
 	return chess.record[:chess.cursor]
 }
 
-func parseCoor(coor byte) (x int, y int) {
+func parseCoor(coor byte) (r int, c int) {
 	return int(coor & 0x0F), int((coor >> 4) & 0x0F)
 }
 
