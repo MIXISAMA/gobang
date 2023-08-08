@@ -40,7 +40,7 @@ func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
 		if otherUser == user {
 			continue
 		}
-		_ = middleware.sendOtherJoinRoom(otherUser.Conn, otherUser.Username)
+		_ = middleware.sendOtherJoinRoom(otherUser.Conn, otherUser.Username, i_join_room.Role)
 		// TODO
 	}
 
@@ -101,10 +101,16 @@ func (middleware *Middleware) sendYouJoinRoom(
 	return err
 }
 
-func (middleware *Middleware) sendOtherJoinRoom(conn *idtcp.Conn, username string) error {
-	var s utils.Serializer
-	s.WriteString8(username)
-	_, err := conn.Write(middleware.c_OtherJoinRoom, s.Raw)
+func (middleware *Middleware) sendOtherJoinRoom(conn *idtcp.Conn, username string, role utils.Char) error {
+	type OtherJoinRoom struct {
+		Username string `len_bytes:"1"`
+		Role     utils.Char
+	}
+	data, err := utils.Marshal(OtherJoinRoom{Username: username, Role: role})
+	if err != nil {
+		return err
+	}
+	_, err = conn.Write(middleware.c_OtherJoinRoom, data)
 	return err
 }
 
