@@ -29,7 +29,6 @@ func (chess *Chess) WhoseTurn() byte {
 }
 
 func (chess *Chess) Stone(move int, coor byte) error {
-
 	if move != chess.cursor {
 		return errors.New("move number is wrong")
 	}

@@ -35,7 +35,7 @@ func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
 		return err
 	}
 
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		otherUser := i.Value.(*mdwuser.User)
 		if otherUser == user {
 			continue
@@ -118,7 +118,7 @@ func (middleware *Middleware) receiveUserLeaveRoom(req *idtcp.Request) error {
 			return err
 		}
 	}
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		user := i.Value.(*mdwuser.User)
 		_, err := user.Conn.Write(middleware.c_UserLeaveRoom, make([]byte, 0))
 		if err != nil {

@@ -34,7 +34,7 @@ func NewRoom(name string, maxUser int) *Room {
 }
 
 func (room *Room) FindUser(username string) *mdwuser.User {
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		user := i.Value.(*mdwuser.User)
 		if user.Username == username {
 			return user
@@ -69,7 +69,7 @@ func (room *Room) leave(user *mdwuser.User) error {
 		return err
 	}
 
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		if i.Value == user {
 			room.Users.Remove(i)
 			break

@@ -31,6 +31,11 @@ func NewRoom() *Room {
 	return &room
 }
 
+func (room *Room) Start() {
+	room.Chess.Init()
+	room.IsPlaying = true
+}
+
 func (room *Room) Join(player Player) error {
 	if room.BlackPlayer == nil {
 		room.BlackPlayer = player
@@ -66,24 +71,24 @@ func (room *Room) Leave(player Player) error {
 	return nil
 }
 
-func (room *Room) Ready(player Player) (bool, error) {
+func (room *Room) Ready(player Player) (byte, bool, error) {
 	if player == room.BlackPlayer {
 		if room.ReadyColor == WHITE {
 			room.ReadyColor = SPACE
-			return true, nil
+			return BLACK, true, nil
 		}
 		room.ReadyColor = BLACK
-		return false, nil
+		return BLACK, false, nil
 	}
 	if player == room.WhitePlayer {
 		if room.ReadyColor == BLACK {
 			room.ReadyColor = SPACE
-			return true, nil
+			return WHITE, true, nil
 		}
 		room.ReadyColor = WHITE
-		return false, nil
+		return WHITE, false, nil
 	}
-	return false, errors.New("wrong player")
+	return SPACE, false, ErrNotPlayer
 }
 
 func (room *Room) Regret(player Player) error {
@@ -105,7 +110,7 @@ func (room *Room) ReplyRegret(player Player, agree bool) error {
 		room.RegretColor = SPACE
 		return room.Chess.Regret(WHITE)
 	}
-	return errors.New("not player")
+	return ErrNotPlayer
 }
 
 func (room *Room) Tie(player Player) error {
@@ -125,7 +130,7 @@ func (room *Room) Opponent(player Player) (Player, error) {
 	if room.WhitePlayer == player {
 		return room.BlackPlayer, nil
 	}
-	return nil, errors.New("not player")
+	return nil, ErrNotPlayer
 }
 
 func (room *Room) PlayerCount() int {
