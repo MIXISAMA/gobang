@@ -23,6 +23,7 @@ func (chess *Chess) Init() {
 	}
 }
 
+// 0 will be black's turn, 1 will be white's
 func (chess *Chess) WhoseTurn() byte {
 	return byte(chess.cursor % 2)
 }

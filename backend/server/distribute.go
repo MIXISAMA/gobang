@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 
 	"github.com/MIXISAMA/gobang/backend/game"
@@ -71,6 +72,7 @@ func ReceiveLeaveRoom(req *idtcp.Request) error {
 
 func ReceivePlayerStone(req *idtcp.Request) error {
 	room := req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
+	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
 
 	s := utils.MakeSerializer(req.Data)
 	move, err := s.ReadUint8()
@@ -83,6 +85,12 @@ func ReceivePlayerStone(req *idtcp.Request) error {
 	}
 
 	who := room.Chess.WhoseTurn()
+	if user == room.BlackPlayer && who == game.WHITE {
+		return errors.New("not black's turn")
+	}
+	if user == room.BlackPlayer && who == game.WHITE {
+		return errors.New("not white's turn")
+	}
 
 	err = room.Chess.Stone(int(move), coor)
 	if err != nil {

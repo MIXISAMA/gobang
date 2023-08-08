@@ -113,7 +113,7 @@ func (middleware *Middleware) receiveUserLeaveRoom(req *idtcp.Request) error {
 	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
 	if color := room.PlayerColor(user); color != game.SPACE {
 
-		err := room.leaveAsPlayer(user)
+		err := room.leave(user)
 		if err != nil {
 			return err
 		}

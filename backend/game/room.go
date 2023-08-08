@@ -16,6 +16,8 @@ type Room struct {
 	Chess       Chess
 }
 
+var ErrNotPlayer = errors.New("the user is not a player")
+
 func NewRoom() *Room {
 	room := Room{
 		WhitePlayer: nil,
@@ -49,7 +51,7 @@ func (room *Room) Leave(player Player) error {
 		room.WhitePlayer = nil
 		color = WHITE
 	} else {
-		return errors.New("wrong player")
+		return ErrNotPlayer
 	}
 	if room.RegretColor == color {
 		room.RegretColor = SPACE

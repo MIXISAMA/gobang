@@ -3,6 +3,7 @@ package mdwroom
 import (
 	"container/list"
 	"errors"
+	"log"
 
 	"github.com/MIXISAMA/gobang/backend/game"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
@@ -59,11 +60,15 @@ func (room *Room) joinAsOnlooker(user *mdwuser.User) error {
 	return nil
 }
 
-func (room *Room) leaveAsPlayer(user *mdwuser.User) error {
+func (room *Room) leave(user *mdwuser.User) error {
+	log.Printf("user %v is leaving", user.Username)
 	err := room.Leave(user)
-	if err != nil {
+	switch err {
+	case game.ErrNotPlayer: // do nothing
+	default:
 		return err
 	}
+
 	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
 		if i.Value == user {
 			room.Users.Remove(i)

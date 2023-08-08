@@ -2,6 +2,7 @@ package mdwroom
 
 import (
 	"github.com/MIXISAMA/gobang/backend/idtcp"
+	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
 )
 
 var MaxRooms = 200
@@ -83,6 +84,9 @@ func (middleware *Middleware) ProcessDisconnect(
 	processDisconnect func(*idtcp.Conn, idtcp.PayloadMap),
 ) {
 	// TODO: delete user from room when disconnected
+	room := payloads[&Key].(*Payload).Room
+	user := payloads[&mdwuser.Key].(*mdwuser.Payload).User
+	room.leave(user)
 	processDisconnect(conn, payloads)
 }
 

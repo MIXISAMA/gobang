@@ -95,6 +95,9 @@ func NewServer(
 		}
 
 		err := server.distributeList[req.Instruction](req)
+		if err != nil {
+			log.Println(err)
+		}
 		return err
 	}
 
