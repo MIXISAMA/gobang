@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pch.h"
+#include "game/user.h"
 #include "game/room.h"
 
 #include "mixi/core/lock.h"

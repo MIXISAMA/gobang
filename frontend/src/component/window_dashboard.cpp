@@ -7,11 +7,14 @@ namespace gobang {
 
 WindowDashboard::WindowDashboard(
     gui::Context& context,
-    const ReadFirstBuffer<game::Room>& room
+    const ReadFirstBuffer<game::Room>& room,
+    ReadTryQueue<game::User>& user_queue
 ) :
     gui::Window(context, gettext("Dashboard")),
     room_(room),
+    user_queue_(user_queue),
     modal_confirm_leave_(context),
+    on_ready_([](){}),
     on_regret_([](){}),
     on_tie_([](){}),
     on_give_up_([](){}),
@@ -35,6 +38,11 @@ void WindowDashboard::on_leave(const std::function<void()>& f)
 void WindowDashboard::on_regret(const std::function<void()>& f)
 {
     on_regret_ = f;
+}
+
+void WindowDashboard::on_ready(const std::function<void()>& f)
+{
+    on_ready_ = f;
 }
 
 void WindowDashboard::on_tie(const std::function<void()>& f)
@@ -79,13 +87,17 @@ void WindowDashboard::content()
     ImGui::Text("%s", room->name.c_str());
     ImGui::NewLine();
 
+    bool hovered = false;
+
     ImGui::Text("%s:", gettext("Black"));
     ImGui::SameLine(100);
     ImGui::Text("%s", room->black_player.c_str());
+    hovered |= user_info_tool_tips_helper_(room->black_player);
 
     ImGui::Text("%s:", gettext("White"));
     ImGui::SameLine(100);
     ImGui::Text("%s", room->white_player.c_str());
+    hovered |= user_info_tool_tips_helper_(room->white_player);
 
     ImGui::Text("%s:", gettext("Onlookers"));
     if (ImGui::BeginListBox(
@@ -94,24 +106,47 @@ void WindowDashboard::content()
     )) {
         for (const std::string& onlooker : room->onlookers) {
             ImGui::Selectable(onlooker.c_str());
+            hovered |= user_info_tool_tips_helper_(onlooker);
         }
         ImGui::EndListBox();
+    }
+
+    hovered_ = hovered;
+
+    RtqReader<game::User> user_queue(user_queue_);
+    if (user_queue.locked() && !user_queue.empty()) {
+        game::User user = user_queue.pop();
+        users_[user.username] = user;
     }
 
     if (role_ == game::SPACE) {
         return;
     }
 
-    if (ImGui::Button(gettext("Regret"), ImVec2(84, 0))) {
+    float width = ImGui::GetContentRegionAvail().x;
+    if (room->is_playering && room->ready_player == role_) {
+        ImGui::BeginDisabled();
+    }
+    if (ImGui::Button(gettext("Ready"), ImVec2(width, 0))) {
+        on_ready_();
+    }
+    if (room->is_playering && room->ready_player == role_) {
+        ImGui::EndDisabled();
+    }
+    if (!room->is_playering) {
+        ImGui::BeginDisabled();
+    }
+    if (ImGui::Button(gettext("Regret"), ImVec2(width, 0))) {
         on_regret_();
     }
-    ImGui::SameLine();
-    if (ImGui::Button(gettext("Tie"), ImVec2(84, 0))) {
+    if (ImGui::Button(gettext("Tie"), ImVec2(width, 0))) {
         on_tie_();
     }
-    ImGui::SameLine();
-    if (ImGui::Button(gettext("Give Up"), ImVec2(84, 0))) {
+    if (ImGui::Button(gettext("Give Up"), ImVec2(width, 0))) {
         on_give_up_();
+    }
+    if (!room->is_playering) {
+        ImGui::EndDisabled();
     }
 }
 
@@ -127,6 +162,33 @@ void WindowDashboard::load_texture_by_image_(
         gl::Texture2D::Format::RGBA,
         icon.data()
     );
+}
+
+bool WindowDashboard::user_info_tool_tips_helper_(
+    const std::string& username
+) {
+    if (!ImGui::IsItemHovered()) {
+        return false;
+    }
+    if (!hovered_) {
+        on_user_info_(username);
+    }
+
+    ImGui::BeginTooltip();
+
+    std::map<std::string, game::User>::iterator iter = users_.find(username);
+    if (iter != users_.end()) {
+        ImGui::Text("%s:", gettext("Username"));
+        ImGui::SameLine(100);
+        ImGui::Text("%s", iter->second.username.c_str());
+    }
+    else {
+        ImGui::Text("...");
+    }
+
+    ImGui::EndTooltip();
+
+    return true;
 }
 
 } // namespace gobang

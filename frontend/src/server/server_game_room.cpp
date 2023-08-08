@@ -2,7 +2,6 @@
 
 #include "mixi/core/log.h"
 #include "mixi/net/serializer.h"
-#include "game/chess.h"
 
 namespace mixi
 {

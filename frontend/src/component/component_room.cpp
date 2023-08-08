@@ -10,7 +10,7 @@ ComponentRoom::ComponentRoom(gui::Context& context, ServerGameRoom& server) :
     server_(server),
     window_game_(context, server_.room()),
     window_chat_(context),
-    window_dashboard_(context, server_.room()),
+    window_dashboard_(context, server_.room(), server_.users()),
     modal_confirm_regret_(context),
     modal_confirm_tie_   (context)
 {
@@ -23,6 +23,7 @@ ComponentRoom::ComponentRoom(gui::Context& context, ServerGameRoom& server) :
 
     window_dashboard_.role(role);
     window_dashboard_.on_leave    (std::bind(&ServerGameRoom::send_leave_room,    &server));
+    window_dashboard_.on_ready    (std::bind(&ServerGameRoom::send_player_ready,  &server));
     window_dashboard_.on_regret   (std::bind(&ServerGameRoom::send_player_regret, &server));
     window_dashboard_.on_tie      (std::bind(&ServerGameRoom::send_player_tie,    &server));
     window_dashboard_.on_give_up  (std::bind(&ServerGameRoom::send_give_up,       &server));
