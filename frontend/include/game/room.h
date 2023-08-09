@@ -1,6 +1,5 @@
 #pragma once
 #include "pch.h"
-#include "game/chess.h"
 
 namespace mixi
 {
@@ -12,16 +11,6 @@ namespace game
 const std::byte BLACK{0x00};
 const std::byte WHITE{0x01};
 const std::byte SPACE{0xFF};
-
-struct User
-{
-    std::string username;
-    uint32_t number_of_wins;
-    uint32_t number_of_ties;
-    uint32_t number_of_losses;
-    uint32_t number_of_matches;
-    uint64_t game_duration;
-};
 
 struct Room
 {

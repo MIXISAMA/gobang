@@ -1,5 +1,4 @@
 #include "game/room.h"
-#include "game/exception.h"
 
 namespace mixi
 {

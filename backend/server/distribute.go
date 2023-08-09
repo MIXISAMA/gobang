@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 
 	"github.com/MIXISAMA/gobang/backend/game"
@@ -34,7 +35,7 @@ var Endpoints = []func(*idtcp.Request) error{
 	S_JoinRoom:     Empty,
 	S_UserInfo:     ReceiveUserInfo,
 	S_LeaveRoom:    Empty,
-	S_Ready:        Empty,
+	S_Ready:        ReceiveReady,
 	S_PlayerStone:  ReceivePlayerStone,
 	S_PlayerRegret: ReceivePlayerRegret,
 	S_ReplyRegret:  Empty,
@@ -43,6 +44,10 @@ var Endpoints = []func(*idtcp.Request) error{
 	S_GiveUp:       Empty,
 	S_Message:      ReceiveMessage,
 }
+
+var (
+	ErrGameNotStart = errors.New("game not start")
+)
 
 func ReceiveUserInfo(req *idtcp.Request) error {
 	room := req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
@@ -58,6 +63,22 @@ func ReceiveUserInfo(req *idtcp.Request) error {
 	return SendUserInfo(req.Conn, user)
 }
 
+func ReceiveReady(req *idtcp.Request) error {
+	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
+	room := req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
+
+	color, ready, err := room.Ready(user)
+	if err != nil {
+		return err
+	}
+	if ready {
+		broadcastMessage(room, C_GameStart, []byte(room.BlackPlayer.(*mdwuser.User).Username))
+		room.Room.Start()
+	}
+	broadcastMessage(room, C_PlayerReady, []byte{color})
+	return nil
+}
+
 func ReceiveLeaveRoom(req *idtcp.Request) error {
 	var (
 		room = req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
@@ -71,6 +92,7 @@ func ReceiveLeaveRoom(req *idtcp.Request) error {
 
 func ReceivePlayerStone(req *idtcp.Request) error {
 	room := req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
+	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
 
 	s := utils.MakeSerializer(req.Data)
 	move, err := s.ReadUint8()
@@ -82,7 +104,17 @@ func ReceivePlayerStone(req *idtcp.Request) error {
 		return err
 	}
 
+	if !room.Room.IsPlaying {
+		return ErrGameNotStart
+	}
+
 	who := room.Chess.WhoseTurn()
+	if user == room.BlackPlayer && who == game.WHITE {
+		return errors.New("not black's turn")
+	}
+	if user == room.BlackPlayer && who == game.WHITE {
+		return errors.New("not white's turn")
+	}
 
 	err = room.Chess.Stone(int(move), coor)
 	if err != nil {
@@ -114,7 +146,7 @@ func ReceivePlayerRegret(req *idtcp.Request) error {
 	if err != nil {
 		return err
 	}
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		user := i.Value.(*mdwuser.User)
 		err = sendByte(user.Conn, C_PlayerRegret, room.RegretColor)
 		if err != nil {
@@ -153,7 +185,7 @@ func ReceiveReplyRegret(req *idtcp.Request) error {
 	}
 	sendBoolean(opp.(*mdwuser.User).Conn, C_AgreeRegret, agree)
 
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		user := i.Value.(*mdwuser.User)
 		if agree {
 			err = SendMessage(user.Conn, mdwuser.ServerUsername, "agree")
@@ -179,7 +211,7 @@ func ReceiveMessage(req *idtcp.Request) error {
 		return err
 	}
 
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		user := i.Value.(*mdwuser.User)
 		err := SendMessage(user.Conn, sender.Username, text)
 		if err != nil {

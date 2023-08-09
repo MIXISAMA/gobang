@@ -23,12 +23,12 @@ func (chess *Chess) Init() {
 	}
 }
 
+// 0 will be black's turn, 1 will be white's
 func (chess *Chess) WhoseTurn() byte {
 	return byte(chess.cursor % 2)
 }
 
 func (chess *Chess) Stone(move int, coor byte) error {
-
 	if move != chess.cursor {
 		return errors.New("move number is wrong")
 	}
@@ -100,7 +100,7 @@ func (chess *Chess) GetRecords() []byte {
 	return chess.record[:chess.cursor]
 }
 
-func parseCoor(coor byte) (x int, y int) {
+func parseCoor(coor byte) (r int, c int) {
 	return int(coor & 0x0F), int((coor >> 4) & 0x0F)
 }
 

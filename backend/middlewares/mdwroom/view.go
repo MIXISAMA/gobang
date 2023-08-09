@@ -35,12 +35,12 @@ func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
 		return err
 	}
 
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		otherUser := i.Value.(*mdwuser.User)
 		if otherUser == user {
 			continue
 		}
-		_ = middleware.sendOtherJoinRoom(otherUser.Conn, otherUser.Username)
+		_ = middleware.sendOtherJoinRoom(otherUser.Conn, otherUser.Username, i_join_room.Role)
 		// TODO
 	}
 
@@ -101,10 +101,16 @@ func (middleware *Middleware) sendYouJoinRoom(
 	return err
 }
 
-func (middleware *Middleware) sendOtherJoinRoom(conn *idtcp.Conn, username string) error {
-	var s utils.Serializer
-	s.WriteString8(username)
-	_, err := conn.Write(middleware.c_OtherJoinRoom, s.Raw)
+func (middleware *Middleware) sendOtherJoinRoom(conn *idtcp.Conn, username string, role utils.Char) error {
+	type OtherJoinRoom struct {
+		Username string `len_bytes:"1"`
+		Role     utils.Char
+	}
+	data, err := utils.Marshal(OtherJoinRoom{Username: username, Role: role})
+	if err != nil {
+		return err
+	}
+	_, err = conn.Write(middleware.c_OtherJoinRoom, data)
 	return err
 }
 
@@ -113,12 +119,12 @@ func (middleware *Middleware) receiveUserLeaveRoom(req *idtcp.Request) error {
 	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
 	if color := room.PlayerColor(user); color != game.SPACE {
 
-		err := room.leaveAsPlayer(user)
+		err := room.leave(user)
 		if err != nil {
 			return err
 		}
 	}
-	for i := room.Users.Front(); i != room.Users.Back(); i = i.Next() {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
 		user := i.Value.(*mdwuser.User)
 		_, err := user.Conn.Write(middleware.c_UserLeaveRoom, make([]byte, 0))
 		if err != nil {

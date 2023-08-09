@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/MIXISAMA/gobang/backend/idtcp"
+	"github.com/MIXISAMA/gobang/backend/middlewares/mdwroom"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
 	"github.com/MIXISAMA/gobang/backend/utils"
 )
@@ -23,6 +24,18 @@ const (
 	C_GameOver      uint16 = 13
 	C_Message       uint16 = 14
 )
+
+func broadcastMessage(room *mdwroom.Room, instruction uint16, data []byte) error {
+	for i := room.Users.Front(); i != nil; i = i.Next() {
+		user := i.Value.(*mdwuser.User)
+		_, err := user.Conn.Write(instruction, data)
+		if err != nil {
+			user.Conn.Close()
+			continue
+		}
+	}
+	return nil
+}
 
 func sendVoid(conn *idtcp.Conn, instruction uint16) error {
 	_, err := conn.Write(instruction, make([]byte, 0))

@@ -17,13 +17,15 @@ public:
 
     WindowDashboard(
         gui::Context& context,
-        const ReadFirstBuffer<game::Room>& room
+        const ReadFirstBuffer<game::Room>& room,
+        ReadTryQueue<game::User>& user_queue
     );
 
     void role(std::byte r);
 
     void on_leave    (const std::function<void()>& f);
     void on_regret   (const std::function<void()>& f);
+    void on_ready    (const std::function<void()>& f);
     void on_tie      (const std::function<void()>& f);
     void on_give_up  (const std::function<void()>& f);
     void on_user_info(const std::function<void(const std::string&)>& f);
@@ -35,6 +37,7 @@ protected:
 private:
 
     const ReadFirstBuffer<game::Room>& room_;
+    ReadTryQueue<game::User>& user_queue_;
 
     gl::Texture2D tex_exit_;
     gl::Texture2D tex_window_;
@@ -42,6 +45,7 @@ private:
 
     ModalConfirmLeave modal_confirm_leave_;
 
+    std::function<void()> on_ready_;
     std::function<void()> on_regret_;
     std::function<void()> on_tie_;
     std::function<void()> on_give_up_;
@@ -49,9 +53,16 @@ private:
 
     std::atomic<std::byte> role_;
 
+    bool hovered_;
+    std::map<std::string, game::User> users_;
+
     void load_texture_by_image_(
         gl::Texture2D& tex,
         const std::filesystem::path& filepath
+    );
+
+    bool user_info_tool_tips_helper_(
+        const std::string& username
     );
 
 };
