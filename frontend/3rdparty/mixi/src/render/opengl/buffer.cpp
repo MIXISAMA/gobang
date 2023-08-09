@@ -31,6 +31,18 @@ void Buffer::unbind() const
     glBindBuffer(target_, 0);
 }
 
+VertexBuffer::Descriptor::Descriptor(
+    const std::string& name,
+    GLint size,
+    GLenum type,
+    GLboolean normalized
+) :
+    name(name),
+    size(size),
+    type(type),
+    normalized(normalized)
+{}
+
 VertexBuffer::VertexBuffer(
     GLsizeiptr bytes,
     void* data,

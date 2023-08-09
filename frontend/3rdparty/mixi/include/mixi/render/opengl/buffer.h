@@ -51,6 +51,12 @@ public:
         GLint size;
         GLenum type;
         GLboolean normalized;
+        Descriptor(
+            const std::string& name,
+            GLint size,
+            GLenum type,
+            GLboolean normalized
+        );
     };
 
     VertexBuffer(

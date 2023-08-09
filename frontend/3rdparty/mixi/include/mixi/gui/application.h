@@ -21,11 +21,6 @@ public:
 
     Context(GlfwWindow& glfw_window);
 
-    template <TBaseComponent T>
-    T* get_shared(const std::string& shared_name) {
-        return static_cast<T*>(components_[shared_name]);
-    }
-
 private:
 
     // boost::asio::io_context& io_context;

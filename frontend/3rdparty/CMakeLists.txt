@@ -66,6 +66,16 @@ add_subdirectory(boost EXCLUDE_FROM_ALL)
 # add_subdirectory(boost)
 
 # === boost ===
+# === intl ===
+
+if (APPLE)
+  set(CMAKE_FIND_FRAMEWORK NEVER)
+endif()
+
+find_package(Gettext REQUIRED)
+find_package(Intl REQUIRED)
+
+# === intl ===
 # === mixi ===
 
 
@@ -81,6 +91,7 @@ target_include_directories(
     PUBLIC glm/
     PUBLIC assimp/include/
     PUBLIC stb/
+    PUBLIC ${Intl_INCLUDE_DIR}
 )
 
 
