@@ -178,9 +178,48 @@ bool WindowDashboard::user_info_tool_tips_helper_(
 
     std::map<std::string, game::User>::iterator iter = users_.find(username);
     if (iter != users_.end()) {
-        ImGui::Text("%s:", gettext("Username"));
-        ImGui::SameLine(100);
+
         ImGui::Text("%s", iter->second.username.c_str());
+
+        ImGui::BeginTable("User-Info-Table", 2,
+            ImGuiTableFlags_BordersV
+          | ImGuiTableFlags_BordersOuterH
+          | ImGuiTableFlags_RowBg
+          | ImGuiTableFlags_ContextMenuInBody
+          | ImGuiTableFlags_NoHostExtendX
+        );
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", gettext("Number of Wins"));
+        ImGui::TableNextColumn();
+        ImGui::Text("%u", iter->second.number_of_wins);
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", gettext("Number of Ties"));
+        ImGui::TableNextColumn();
+        ImGui::Text("%u", iter->second.number_of_ties);
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", gettext("Number of Losses"));
+        ImGui::TableNextColumn();
+        ImGui::Text("%u", iter->second.number_of_losses);
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", gettext("Number of Matches"));
+        ImGui::TableNextColumn();
+        ImGui::Text("%u", iter->second.number_of_matches);
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", gettext("Game Duration"));
+        ImGui::TableNextColumn();
+        ImGui::Text("%u Hours", iter->second.game_duration / 3600u);
+
+        ImGui::EndTable();
     }
     else {
         ImGui::Text("...");

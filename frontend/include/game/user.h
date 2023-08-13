@@ -15,7 +15,7 @@ struct User
     uint32_t number_of_ties;
     uint32_t number_of_losses;
     uint32_t number_of_matches;
-    uint64_t game_duration;
+    uint32_t game_duration;
 };
 
 } // namespace game
