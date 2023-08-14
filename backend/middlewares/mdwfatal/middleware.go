@@ -24,7 +24,7 @@ func NewMiddleware(
 	}
 }
 
-var Key = new(idtcp.MiddlewareKey)
+var Key int
 
 type Execution struct {
 	conn    *idtcp.Conn
@@ -52,13 +52,8 @@ type Payload struct {
 	Executions *list.List
 }
 
-func (middleware *Middleware) ProcessConnect(
-	payloads idtcp.PayloadMap,
-	processConnect func(idtcp.PayloadMap) (*idtcp.Conn, error),
-) (*idtcp.Conn, error) {
-	payload := &Payload{Executions: list.New()}
-	payloads[&Key] = payload
-	conn, err := processConnect(payloads)
+func (middleware *Middleware) ProcessConnect(ctx *idtcp.ConnectContext) (*idtcp.Conn, error) {
+	conn, err := ctx.Next()
 	if err != nil {
 		log.Printf("an error occurred: %v", err)
 	}
@@ -66,26 +61,19 @@ func (middleware *Middleware) ProcessConnect(
 	case *Execution:
 		middleware.processExecution(e)
 	}
-	middleware.processExecutions(payload.Executions)
+	middleware.processExecutions(ctx.Payloads[Key].(*Payload).Executions)
 	return conn, err
 }
 
-func (middleware *Middleware) ProcessDisconnect(
-	conn *idtcp.Conn,
-	payloads idtcp.PayloadMap,
-	processDisconnect func(*idtcp.Conn, idtcp.PayloadMap),
-) {
-	processDisconnect(conn, payloads)
+func (middleware *Middleware) ProcessDisconnect(ctx *idtcp.DisconnectContext) {
+	ctx.Next()
 }
 
-func (middleware *Middleware) ProcessDistribute(
-	request *idtcp.Request,
-	processDistribute func(*idtcp.Request) error,
-) error {
-	if request.Instruction == middleware.s_FatalError {
-		receiveFatalError(request.Conn, request.Data)
+func (middleware *Middleware) ProcessDistribute(ctx *idtcp.DistributeContext) error {
+	if ctx.Instruction == middleware.s_FatalError {
+		receiveFatalError(ctx.Conn, ctx.Data)
 	}
-	err := processDistribute(request)
+	err := ctx.Next()
 	if err != nil {
 		log.Printf("an error occurred: %v", err)
 	}
@@ -93,7 +81,7 @@ func (middleware *Middleware) ProcessDistribute(
 	case *Execution:
 		middleware.processExecution(e)
 	}
-	middleware.processExecutions(request.Payloads[&Key].(*Payload).Executions)
+	middleware.processExecutions(ctx.Payloads[Key].(*Payload).Executions)
 	return err
 }
 
@@ -128,4 +116,12 @@ func receiveFatalError(conn *idtcp.Conn, data []byte) {
 		return
 	}
 	log.Println(NewExecution(conn, errorId, message).Error())
+}
+
+func (middleware *Middleware) SetMdwKey(val int) {
+	Key = val
+}
+
+func (middleware *Middleware) NewPayload() interface{} {
+	return &Payload{Executions: list.New()}
 }

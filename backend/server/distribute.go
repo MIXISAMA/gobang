@@ -50,7 +50,7 @@ var (
 )
 
 func ReceiveUserInfo(req *idtcp.Request) error {
-	room := req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
+	room := req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
 	s := utils.MakeSerializer(req.Data)
 	username, err := s.ReadString8()
 	if err != nil {
@@ -64,8 +64,8 @@ func ReceiveUserInfo(req *idtcp.Request) error {
 }
 
 func ReceiveReady(req *idtcp.Request) error {
-	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
-	room := req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
+	user := req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
+	room := req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
 
 	color, ready, err := room.Ready(user)
 	if err != nil {
@@ -81,8 +81,8 @@ func ReceiveReady(req *idtcp.Request) error {
 
 func ReceiveLeaveRoom(req *idtcp.Request) error {
 	var (
-		room = req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
-		user = req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
+		room = req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
+		user = req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	)
 	if color := room.PlayerColor(user); color != game.SPACE && room.IsPlaying {
 		return SendGameOver(req.Conn, color^0x01)
@@ -91,8 +91,8 @@ func ReceiveLeaveRoom(req *idtcp.Request) error {
 }
 
 func ReceivePlayerStone(req *idtcp.Request) error {
-	room := req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
-	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
+	room := req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
+	user := req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 
 	s := utils.MakeSerializer(req.Data)
 	move, err := s.ReadUint8()
@@ -139,8 +139,8 @@ func ReceivePlayerStone(req *idtcp.Request) error {
 
 func ReceivePlayerRegret(req *idtcp.Request) error {
 	var (
-		room = req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
-		user = req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
+		room = req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
+		user = req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	)
 	err := room.Regret(user)
 	if err != nil {
@@ -164,8 +164,8 @@ func ReceivePlayerRegret(req *idtcp.Request) error {
 
 func ReceiveReplyRegret(req *idtcp.Request) error {
 	var (
-		room = req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
-		user = req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
+		room = req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
+		user = req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	)
 
 	s := utils.MakeSerializer(req.Data)
@@ -201,8 +201,8 @@ func ReceiveReplyRegret(req *idtcp.Request) error {
 
 func ReceiveMessage(req *idtcp.Request) error {
 	var (
-		room   = req.Payloads[&mdwroom.Key].(*mdwroom.Payload).Room
-		sender = req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
+		room   = req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
+		sender = req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	)
 
 	s := utils.MakeSerializer(req.Data)

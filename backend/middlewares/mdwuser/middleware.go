@@ -44,7 +44,7 @@ func NewMiddleware(
 	}, nil
 }
 
-var Key = new(idtcp.MiddlewareKey)
+var Key int
 
 type Payload struct {
 	User *User
@@ -57,53 +57,38 @@ type InstructionJoinRoom struct {
 	Role     utils.Char
 }
 
-func (middleware *Middleware) ProcessConnect(
-	payloads idtcp.PayloadMap,
-	processConnect func(idtcp.PayloadMap) (*idtcp.Conn, error),
-) (*idtcp.Conn, error) {
-	payloads[&Key] = &Payload{
-		User: nil,
-	}
-
-	conn, err := processConnect(payloads)
-	if err != nil {
-		return conn, err
-	}
-
-	return conn, err
+func (middleware *Middleware) ProcessConnect(ctx *idtcp.ConnectContext) (*idtcp.Conn, error) {
+	ctx.Payloads[Key] = &Payload{User: nil}
+	return ctx.Next()
 }
 
-func (middleware *Middleware) ProcessDisconnect(
-	conn *idtcp.Conn,
-	payloads idtcp.PayloadMap,
-	processDisconnect func(*idtcp.Conn, idtcp.PayloadMap),
-) {
-	processDisconnect(conn, payloads)
+func (middleware *Middleware) ProcessDisconnect(ctx *idtcp.DisconnectContext) {
+	ctx.Next()
 }
 
-func (middleware *Middleware) ProcessDistribute(
-	request *idtcp.Request,
-	processDistribute func(*idtcp.Request) error,
-) error {
+func (middleware *Middleware) ProcessDistribute(ctx *idtcp.DistributeContext) error {
 
-	if request.Instruction == middleware.s_JoinRoom {
-		user, err := middleware.authenticate(request)
+	if ctx.Instruction == middleware.s_JoinRoom {
+		user, err := middleware.authenticate(ctx.Conn, ctx.Data)
 		if err != nil {
-			middleware.sendAuthenticationFailed(request.Conn, middleware.c_YouJoinRoom)
+			middleware.sendAuthenticationFailed(ctx.Conn, middleware.c_YouJoinRoom)
 			return err
 		}
-		request.Payloads[&Key].(*Payload).User = user
+		ctx.Payloads[Key].(*Payload).User = user
 	}
 
-	user := request.Payloads[&Key].(*Payload).User
+	user := ctx.Payloads[Key].(*Payload).User
 	if user == nil {
-		return mdwfatal.NewExecution(request.Conn, 0, "user has not passed the authentication")
+		return mdwfatal.NewExecution(ctx.Conn, 0, "user has not passed the authentication")
 	}
 
-	err := processDistribute(request)
-	if err != nil {
-		return err
-	}
+	return ctx.Next()
+}
 
-	return nil
+func (middleware *Middleware) SetMdwKey(val int) {
+	Key = val
+}
+
+func (middleware *Middleware) NewPayload() interface{} {
+	return &Payload{User: nil}
 }

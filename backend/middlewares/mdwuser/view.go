@@ -16,9 +16,9 @@ func (middleware *Middleware) sendAuthenticationFailed(conn *idtcp.Conn, instruc
 	return err
 }
 
-func (middleware *Middleware) authenticate(request *idtcp.Request) (*User, error) {
+func (middleware *Middleware) authenticate(conn *idtcp.Conn, data []byte) (*User, error) {
 	i_join_room := new(InstructionJoinRoom)
-	err := utils.Unmarshal(request.Data, i_join_room)
+	err := utils.Unmarshal(data, i_join_room)
 	if err != nil {
 		return nil, err
 	}
@@ -33,5 +33,5 @@ func (middleware *Middleware) authenticate(request *idtcp.Request) (*User, error
 		return nil, err
 	}
 
-	return middleware.database.getUser(request.Conn, i_join_room.Username)
+	return middleware.database.getUser(conn, i_join_room.Username)
 }

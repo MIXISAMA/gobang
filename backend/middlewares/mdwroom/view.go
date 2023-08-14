@@ -10,9 +10,14 @@ import (
 	"github.com/MIXISAMA/gobang/backend/utils"
 )
 
-func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
+func (middleware *Middleware) receiveJoinRoom(
+	conn *idtcp.Conn,
+	data []byte,
+	payloads []interface{},
+) error {
+
 	i_join_room := new(mdwuser.InstructionJoinRoom)
-	err := utils.Unmarshal(req.Data, i_join_room)
+	err := utils.Unmarshal(data, i_join_room)
 	if err != nil {
 		return err
 	}
@@ -22,7 +27,7 @@ func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
 	}
 	room := middleware.Rooms[i_join_room.RoomID]
 
-	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
+	user := payloads[mdwuser.Key].(*mdwuser.Payload).User
 
 	if i_join_room.Role == 'P' {
 		err = room.joinAsPlayer(user)
@@ -44,12 +49,12 @@ func (middleware *Middleware) receiveJoinRoom(req *idtcp.Request) error {
 		// TODO
 	}
 
-	err = middleware.sendYouJoinRoom(req.Conn, true, room)
+	err = middleware.sendYouJoinRoom(conn, true, room)
 	if err != nil {
 		return err
 	}
 
-	req.Payloads[&Key].(*Payload).Room = room
+	payloads[Key].(*Payload).Room = room
 	return nil
 }
 
@@ -114,9 +119,9 @@ func (middleware *Middleware) sendOtherJoinRoom(conn *idtcp.Conn, username strin
 	return err
 }
 
-func (middleware *Middleware) receiveUserLeaveRoom(req *idtcp.Request) error {
-	room := req.Payloads[&Key].(*Payload).Room
-	user := req.Payloads[&mdwuser.Key].(*mdwuser.Payload).User
+func (middleware *Middleware) receiveUserLeaveRoom(payloads []interface{}) error {
+	room := payloads[Key].(*Payload).Room
+	user := payloads[mdwuser.Key].(*mdwuser.Payload).User
 	if color := room.PlayerColor(user); color != game.SPACE {
 
 		err := room.leave(user)

@@ -7,29 +7,17 @@ import (
 	"sync"
 )
 
-type Middleware interface {
-	ProcessConnect(PayloadMap, func(PayloadMap) (*Conn, error)) (*Conn, error)
-	ProcessDisconnect(*Conn, PayloadMap, func(*Conn, PayloadMap))
-	ProcessDistribute(*Request, func(*Request) error) error
-}
-
-type MiddlewareKey struct{}
-type PayloadMap map[**MiddlewareKey]interface{}
-
 type Request struct {
 	Instruction uint16
 	Data        []byte
 	Conn        *Conn
-	Payloads    PayloadMap
+	Payloads    []interface{}
 }
 
 type Server struct {
 	listener       *net.TCPListener
 	distributeList []func(request *Request) error
 	middlewareList []Middleware
-	connectPipe    func(connPayload PayloadMap) (*Conn, error)
-	disconnectPipe func(conn *Conn, connPayload PayloadMap)
-	distributePipe func(request *Request) error
 	connectionSet  sync.Map
 	listenerMutex  sync.Mutex
 	connWaitGroup  sync.WaitGroup
@@ -58,55 +46,8 @@ func NewServer(
 		middlewareList: middlewareList,
 	}
 
-	server.connectPipe = func(connPayloads PayloadMap) (*Conn, error) {
-		tcpConn, err := server.listener.AcceptTCP()
-		conn := &Conn{TCPConn: tcpConn}
-		if err != nil {
-			return conn, err
-		}
-		log.Printf("%-21s TCP Connected\n", conn.RemoteAddr().String())
-		return conn, nil
-	}
-
-	for i := len(middlewareList) - 1; i >= 0; i-- {
-		ii := i
-		pipe := server.connectPipe
-		server.connectPipe = func(connPayload PayloadMap) (*Conn, error) {
-			return middlewareList[ii].ProcessConnect(connPayload, pipe)
-		}
-	}
-
-	server.disconnectPipe = func(conn *Conn, connPayload PayloadMap) {
-		conn.Close()
-		log.Printf("%-21s TCP Disconnected\n", conn.RemoteAddr().String())
-	}
-
-	for i := len(middlewareList) - 1; i >= 0; i-- {
-		ii := i
-		pipe := server.disconnectPipe
-		server.disconnectPipe = func(conn *Conn, connPayload PayloadMap) {
-			middlewareList[ii].ProcessDisconnect(conn, connPayload, pipe)
-		}
-	}
-
-	server.distributePipe = func(req *Request) error {
-		if int(req.Instruction) >= len(server.distributeList) {
-			return fmt.Errorf("wrong instruction: %d", req.Instruction)
-		}
-
-		err := server.distributeList[req.Instruction](req)
-		if err != nil {
-			log.Println(err)
-		}
-		return err
-	}
-
-	for i := len(middlewareList) - 1; i >= 0; i-- {
-		ii := i
-		pipe := server.distributePipe
-		server.distributePipe = func(req *Request) error {
-			return middlewareList[ii].ProcessDistribute(req, pipe)
-		}
+	for i := 0; i < len(middlewareList); i++ {
+		middlewareList[i].SetMdwKey(i)
 	}
 
 	return &server
@@ -118,9 +59,12 @@ func (server *Server) Run() {
 	log.Println("Server Started")
 
 	for {
-		payloads := make(PayloadMap)
+		payloads := make([]interface{}, len(server.middlewareList))
+		for i := 0; i < len(server.middlewareList); i++ {
+			payloads[i] = server.middlewareList[i].NewPayload()
+		}
 		server.listenerMutex.Lock()
-		conn, err := server.connectPipe(payloads)
+		conn, err := newConnectContext(server, payloads).Next()
 		if err != nil {
 			log.Println(err.Error())
 			if err == net.ErrClosed {
@@ -138,26 +82,24 @@ func (server *Server) Run() {
 
 }
 
-func (server *Server) requestPipe(conn *Conn, payloads PayloadMap) {
+func (server *Server) requestPipe(conn *Conn, payloads []interface{}) {
 	defer func() {
 		server.connectionSet.Delete(conn)
 		server.connWaitGroup.Done()
 	}()
 
 	for {
-		var req = Request{
-			Conn:     conn,
-			Payloads: payloads,
-		}
-		_, err := conn.Read(&req.Instruction, &req.Data)
-		log.Printf("received instruction %v", req.Instruction)
+		var instruction uint16
+		var data []byte
+		_, err := conn.Read(&instruction, &data)
+		log.Printf("received instruction %v", instruction)
 		if err != nil {
 			log.Printf("%-21s TCP ERR: %s", conn.RemoteAddr().String(), err.Error())
 			break
 		}
 
 		server.pipelineMutex.Lock()
-		err = server.distributePipe(&req)
+		err = newDistributeContext(server, payloads, conn, instruction, data).Next()
 		server.pipelineMutex.Unlock()
 		if err != nil {
 			log.Printf("%-21s TCP ERR: %s", conn.RemoteAddr().String(), err.Error())
@@ -166,7 +108,7 @@ func (server *Server) requestPipe(conn *Conn, payloads PayloadMap) {
 	}
 
 	server.pipelineMutex.Lock()
-	server.disconnectPipe(conn, payloads)
+	newDisconnectContext(server, payloads, conn).Next()
 	server.pipelineMutex.Unlock()
 }
 
@@ -179,4 +121,31 @@ func (server *Server) CloseAll() {
 		return true
 	})
 	server.listenerMutex.Unlock()
+}
+
+func (server *Server) connect() (*Conn, error) {
+	tcpConn, err := server.listener.AcceptTCP()
+	conn := &Conn{TCPConn: tcpConn}
+	if err != nil {
+		return conn, err
+	}
+	log.Printf("%-21s TCP Connected\n", conn.RemoteAddr().String())
+	return conn, nil
+}
+
+func (server *Server) disconnect(conn *Conn) {
+	conn.Close()
+	log.Printf("%-21s TCP Disconnected\n", conn.RemoteAddr().String())
+}
+
+func (server *Server) distribute(req *Request) error {
+	if int(req.Instruction) >= len(server.distributeList) {
+		return fmt.Errorf("wrong instruction: %d", req.Instruction)
+	}
+
+	err := server.distributeList[req.Instruction](req)
+	if err != nil {
+		log.Println(err)
+	}
+	return err
 }

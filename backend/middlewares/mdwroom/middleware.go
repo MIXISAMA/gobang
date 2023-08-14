@@ -64,53 +64,50 @@ func NewMiddleware(
 	return &middleware
 }
 
-var Key = new(idtcp.MiddlewareKey)
+var Key int
 
 type Payload struct {
 	Room *Room
 }
 
-func (middleware *Middleware) ProcessConnect(
-	payloads idtcp.PayloadMap,
-	processConnect func(idtcp.PayloadMap) (*idtcp.Conn, error),
-) (*idtcp.Conn, error) {
-	payloads[&Key] = &Payload{Room: nil}
-	return processConnect(payloads)
+func (middleware *Middleware) ProcessConnect(ctx *idtcp.ConnectContext) (*idtcp.Conn, error) {
+	return ctx.Next()
 }
 
-func (middleware *Middleware) ProcessDisconnect(
-	conn *idtcp.Conn,
-	payloads idtcp.PayloadMap,
-	processDisconnect func(*idtcp.Conn, idtcp.PayloadMap),
-) {
+func (middleware *Middleware) ProcessDisconnect(ctx *idtcp.DisconnectContext) {
 	// TODO: delete user from room when disconnected
-	room := payloads[&Key].(*Payload).Room
-	user := payloads[&mdwuser.Key].(*mdwuser.Payload).User
+	room := ctx.Payloads[Key].(*Payload).Room
+	user := ctx.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	room.leave(user)
-	processDisconnect(conn, payloads)
+	ctx.Next()
 }
 
-func (middleware *Middleware) ProcessDistribute(
-	request *idtcp.Request,
-	processDistribute func(*idtcp.Request) error,
-) error {
+func (middleware *Middleware) ProcessDistribute(ctx *idtcp.DistributeContext) error {
 
-	if request.Instruction == middleware.s_JoinRoom {
-		err := middleware.receiveJoinRoom(request)
+	if ctx.Instruction == middleware.s_JoinRoom {
+		err := middleware.receiveJoinRoom(ctx.Conn, ctx.Data, ctx.Payloads)
 		if err != nil {
 			return err
 		}
 	}
 
-	_ = processDistribute(request)
+	_ = ctx.Next()
 	// TODO
 
-	if request.Instruction == middleware.s_LeaveRoom {
-		err := middleware.receiveUserLeaveRoom(request)
+	if ctx.Instruction == middleware.s_LeaveRoom {
+		err := middleware.receiveUserLeaveRoom(ctx.Payloads)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (middleware *Middleware) SetMdwKey(val int) {
+	Key = val
+}
+
+func (middleware *Middleware) NewPayload() interface{} {
+	return &Payload{Room: nil}
 }
