@@ -55,7 +55,7 @@ func (ctx *DisconnectContext) Next() {
 	ctx.disconnect(ctx.Conn)
 }
 
-func newDistributeContext(
+func NewDistributeContext(
 	distribute func(*Request) error,
 	mdwList []func(*DistributeContext) error,
 	payloads []interface{},
@@ -76,7 +76,7 @@ func newDistributeContext(
 	}
 }
 
-func newConnectContext(
+func NewConnectContext(
 	connect func() (*Conn, error),
 	mdwList []func(*ConnectContext) (*Conn, error),
 	payloads []interface{},
@@ -89,7 +89,7 @@ func newConnectContext(
 	}
 }
 
-func newDisconnectContext(
+func NewDisconnectContext(
 	disconnect func(*Conn),
 	mdwList []func(*DisconnectContext),
 	payloads []interface{},

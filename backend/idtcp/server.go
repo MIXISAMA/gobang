@@ -78,7 +78,7 @@ func (server *Server) Run() {
 			payloads[i] = server.middlewareList[i].NewPayload()
 		}
 		server.listenerMutex.Lock()
-		conn, err := newConnectContext(
+		conn, err := NewConnectContext(
 			server.connect,
 			server.mdwConnectList,
 			payloads,
@@ -117,7 +117,7 @@ func (server *Server) requestPipe(conn *Conn, payloads []interface{}) {
 		}
 
 		server.pipelineMutex.Lock()
-		err = newDistributeContext(
+		err = NewDistributeContext(
 			server.distribute,
 			server.mdwDistributeList,
 			payloads,
@@ -133,7 +133,7 @@ func (server *Server) requestPipe(conn *Conn, payloads []interface{}) {
 	}
 
 	server.pipelineMutex.Lock()
-	newDisconnectContext(
+	NewDisconnectContext(
 		server.disconnect,
 		server.mdwDisconnectList,
 		payloads,

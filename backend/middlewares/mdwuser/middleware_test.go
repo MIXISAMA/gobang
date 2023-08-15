@@ -36,37 +36,37 @@ func newMiddleware(t *testing.T) *Middleware {
 	return userMiddleware
 }
 
-func newRequest(instruction uint16, data []byte) (*idtcp.Request, *net.TCPConn) {
-	var server *net.TCPConn
+func newTestClient() *idtcp.Conn {
+
+	serverTcpAddr, _ := net.ResolveTCPAddr("tcp", ":28080")
+	ln, _ := net.ListenTCP("tcp", serverTcpAddr)
 	go func() {
-		serverTcpAddr, _ := net.ResolveTCPAddr("tcp", ":28080")
-		ln, _ := net.ListenTCP("tcp", serverTcpAddr)
+		conn, _ := ln.AcceptTCP()
+		buffer := make([]byte, 1024)
 		for {
-			server, _ = ln.AcceptTCP()
+			_, err := conn.Read(buffer)
+			if err != nil {
+				break
+			}
 		}
+		conn.Close()
+		ln.Close()
 	}()
 
 	client, _ := net.Dial("tcp", "localhost:28080")
 	conn := idtcp.Conn{TCPConn: client.(*net.TCPConn)}
 
-	payloads := make(idtcp.PayloadMap)
-	payloads[&Key] = &Payload{
-		User: nil,
-	}
-
-	request := idtcp.Request{
-		Instruction: instruction,
-		Data:        data,
-		Conn:        &conn,
-		Payloads:    payloads,
-	}
-	return &request, server
+	return &conn
 }
 
 func TestAuthentication(t *testing.T) {
 	assert := assert.New(t)
 
+	conn := newTestClient()
+	defer conn.Close()
+
 	m := newMiddleware(t)
+	m.SetMdwKey(0)
 
 	i_join_room := InstructionJoinRoom{
 		RoomID:   0,
@@ -76,10 +76,18 @@ func TestAuthentication(t *testing.T) {
 	}
 	data, err := utils.Marshal(i_join_room)
 	assert.Nil(err)
-	request, _ := newRequest(S_JoinRoom, data)
 
-	m.ProcessDistribute(request, func(*idtcp.Request) error { return nil })
+	ctx := idtcp.NewDistributeContext(
+		func(*idtcp.Request) error { return nil },
+		[]func(*idtcp.DistributeContext) error{m.ProcessDistribute},
+		[]interface{}{m.NewPayload()},
+		conn,
+		S_JoinRoom,
+		data,
+	)
 
-	assert.NotNil(request.Payloads[&Key].(*Payload).User)
-	assert.Equal("foo", request.Payloads[&Key].(*Payload).User.Username)
+	m.ProcessDistribute(ctx)
+
+	assert.NotNil(ctx.Payloads[Key].(*Payload).User)
+	assert.Equal("foo", ctx.Payloads[Key].(*Payload).User.Username)
 }
