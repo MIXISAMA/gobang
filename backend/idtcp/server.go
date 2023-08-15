@@ -17,11 +17,16 @@ type Request struct {
 type Server struct {
 	listener       *net.TCPListener
 	distributeList []func(request *Request) error
-	middlewareList []Middleware
-	connectionSet  sync.Map
-	listenerMutex  sync.Mutex
-	connWaitGroup  sync.WaitGroup
-	pipelineMutex  sync.Mutex
+
+	middlewareList    []Middleware
+	mdwDistributeList []func(*DistributeContext) error
+	mdwConnectList    []func(*ConnectContext) (*Conn, error)
+	mdwDisconnectList []func(*DisconnectContext)
+
+	connectionSet sync.Map
+	listenerMutex sync.Mutex
+	connWaitGroup sync.WaitGroup
+	pipelineMutex sync.Mutex
 }
 
 func NewServer(
@@ -40,14 +45,23 @@ func NewServer(
 		panic(err.Error())
 	}
 
+	var mdwNum = len(middlewareList)
+
 	var server = Server{
 		listener:       tcpListener,
 		distributeList: distributeList,
-		middlewareList: middlewareList,
+
+		middlewareList:    middlewareList,
+		mdwDistributeList: make([]func(*DistributeContext) error, mdwNum),
+		mdwConnectList:    make([]func(*ConnectContext) (*Conn, error), mdwNum),
+		mdwDisconnectList: make([]func(*DisconnectContext), mdwNum),
 	}
 
-	for i := 0; i < len(middlewareList); i++ {
+	for i := 0; i < mdwNum; i++ {
 		middlewareList[i].SetMdwKey(i)
+		server.mdwDistributeList[i] = middlewareList[i].ProcessDistribute
+		server.mdwConnectList[i] = middlewareList[i].ProcessConnect
+		server.mdwDisconnectList[i] = middlewareList[i].ProcessDisconnect
 	}
 
 	return &server
@@ -64,7 +78,11 @@ func (server *Server) Run() {
 			payloads[i] = server.middlewareList[i].NewPayload()
 		}
 		server.listenerMutex.Lock()
-		conn, err := newConnectContext(server, payloads).Next()
+		conn, err := newConnectContext(
+			server.connect,
+			server.mdwConnectList,
+			payloads,
+		).Next()
 		if err != nil {
 			log.Println(err.Error())
 			if err == net.ErrClosed {
@@ -99,7 +117,14 @@ func (server *Server) requestPipe(conn *Conn, payloads []interface{}) {
 		}
 
 		server.pipelineMutex.Lock()
-		err = newDistributeContext(server, payloads, conn, instruction, data).Next()
+		err = newDistributeContext(
+			server.distribute,
+			server.mdwDistributeList,
+			payloads,
+			conn,
+			instruction,
+			data,
+		).Next()
 		server.pipelineMutex.Unlock()
 		if err != nil {
 			log.Printf("%-21s TCP ERR: %s", conn.RemoteAddr().String(), err.Error())
@@ -108,7 +133,12 @@ func (server *Server) requestPipe(conn *Conn, payloads []interface{}) {
 	}
 
 	server.pipelineMutex.Lock()
-	newDisconnectContext(server, payloads, conn).Next()
+	newDisconnectContext(
+		server.disconnect,
+		server.mdwDisconnectList,
+		payloads,
+		conn,
+	).Next()
 	server.pipelineMutex.Unlock()
 }
 

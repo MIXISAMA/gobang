@@ -8,101 +8,98 @@ type Middleware interface {
 	NewPayload() interface{}
 }
 
-type middlewareContext struct {
-	Payloads []interface{}
-	server   *Server
-	mdwIdx   int
-}
-
 type DistributeContext struct {
-	middlewareContext
-	Conn        *Conn
-	Instruction uint16
-	Data        []byte
+	Request
+	distribute func(*Request) error
+	mdwList    []func(*DistributeContext) error
+	mdwIdx     int
 }
 
 type ConnectContext struct {
-	middlewareContext
+	Payloads []interface{}
+	connect  func() (*Conn, error)
+	mdwList  []func(*ConnectContext) (*Conn, error)
+	mdwIdx   int
 }
 
 type DisconnectContext struct {
-	middlewareContext
-	Conn *Conn
+	Payloads   []interface{}
+	disconnect func(*Conn)
+	mdwList    []func(*DisconnectContext)
+	mdwIdx     int
+	Conn       *Conn
 }
 
 func (ctx *DistributeContext) Next() error {
 	ctx.mdwIdx++
-	if ctx.mdwIdx < len(ctx.server.middlewareList) {
-		return ctx.server.middlewareList[ctx.mdwIdx].ProcessDistribute(ctx)
+	if ctx.mdwIdx < len(ctx.mdwList) {
+		return ctx.mdwList[ctx.mdwIdx](ctx)
 	}
-	return ctx.server.distribute(&Request{
-		Instruction: ctx.Instruction,
-		Data:        ctx.Data,
-		Conn:        ctx.Conn,
-		Payloads:    ctx.Payloads,
-	})
+	return ctx.distribute(&ctx.Request)
 }
 
 func (ctx *ConnectContext) Next() (*Conn, error) {
 	ctx.mdwIdx++
-	if ctx.mdwIdx < len(ctx.server.middlewareList) {
-		return ctx.server.middlewareList[ctx.mdwIdx].ProcessConnect(ctx)
+	if ctx.mdwIdx < len(ctx.mdwList) {
+		return ctx.mdwList[ctx.mdwIdx](ctx)
 	}
-	return ctx.server.connect()
+	return ctx.connect()
 }
 
 func (ctx *DisconnectContext) Next() {
 	ctx.mdwIdx++
-	if ctx.mdwIdx < len(ctx.server.middlewareList) {
-		ctx.server.middlewareList[ctx.mdwIdx].ProcessDisconnect(ctx)
+	if ctx.mdwIdx < len(ctx.mdwList) {
+		ctx.mdwList[ctx.mdwIdx](ctx)
 		return
 	}
-	ctx.server.disconnect(ctx.Conn)
+	ctx.disconnect(ctx.Conn)
 }
 
 func newDistributeContext(
-	server *Server,
+	distribute func(*Request) error,
+	mdwList []func(*DistributeContext) error,
 	payloads []interface{},
 	conn *Conn,
 	instruction uint16,
 	data []byte,
 ) *DistributeContext {
 	return &DistributeContext{
-		middlewareContext: middlewareContext{
-			Payloads: payloads,
-			server:   server,
-			mdwIdx:   -1,
+		Request: Request{
+			Instruction: instruction,
+			Data:        data,
+			Conn:        conn,
+			Payloads:    payloads,
 		},
-		Conn:        conn,
-		Instruction: instruction,
-		Data:        data,
+		mdwIdx:     -1,
+		distribute: distribute,
+		mdwList:    mdwList,
 	}
 }
 
 func newConnectContext(
-	server *Server,
+	connect func() (*Conn, error),
+	mdwList []func(*ConnectContext) (*Conn, error),
 	payloads []interface{},
 ) *ConnectContext {
 	return &ConnectContext{
-		middlewareContext: middlewareContext{
-			Payloads: payloads,
-			server:   server,
-			mdwIdx:   -1,
-		},
+		Payloads: payloads,
+		connect:  connect,
+		mdwList:  mdwList,
+		mdwIdx:   -1,
 	}
 }
 
 func newDisconnectContext(
-	server *Server,
+	disconnect func(*Conn),
+	mdwList []func(*DisconnectContext),
 	payloads []interface{},
 	conn *Conn,
 ) *DisconnectContext {
 	return &DisconnectContext{
-		middlewareContext: middlewareContext{
-			Payloads: payloads,
-			server:   server,
-			mdwIdx:   -1,
-		},
-		Conn: conn,
+		Payloads:   payloads,
+		disconnect: disconnect,
+		mdwList:    mdwList,
+		mdwIdx:     -1,
+		Conn:       conn,
 	}
 }
