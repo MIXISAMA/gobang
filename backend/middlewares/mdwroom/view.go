@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 
-	"github.com/MIXISAMA/gobang/backend/game"
 	"github.com/MIXISAMA/gobang/backend/idtcp"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
 	"github.com/MIXISAMA/gobang/backend/utils"
@@ -82,7 +81,7 @@ func (middleware *Middleware) sendYouJoinRoom(
 		onlookers = append(onlookers, user.Username)
 	}
 
-	c_you_join_room := InstructionClientYouJoinRoom{
+	c_you_join_room := utils.C_YouJoinRoom{
 		IsSuccess:     isSuccess,
 		RoomName:      room.Name,
 		MaxUsers:      uint8(room.MaxUsers),
@@ -107,11 +106,7 @@ func (middleware *Middleware) sendYouJoinRoom(
 }
 
 func (middleware *Middleware) sendOtherJoinRoom(conn *idtcp.Conn, username string, role utils.Char) error {
-	type OtherJoinRoom struct {
-		Username string `len_bytes:"1"`
-		Role     utils.Char
-	}
-	data, err := utils.Marshal(OtherJoinRoom{Username: username, Role: role})
+	data, err := utils.Marshal(utils.C_OtherJoinRoom{Username: username, Role: role})
 	if err != nil {
 		return err
 	}
@@ -119,22 +114,27 @@ func (middleware *Middleware) sendOtherJoinRoom(conn *idtcp.Conn, username strin
 	return err
 }
 
-func (middleware *Middleware) receiveUserLeaveRoom(payloads []interface{}) error {
+func (middleware *Middleware) processUserLeave(payloads []any) {
 	room := payloads[Key].(*Payload).Room
 	user := payloads[mdwuser.Key].(*mdwuser.Payload).User
-	if color := room.PlayerColor(user); color != game.SPACE {
+	if room != nil && user != nil {
+		log.Printf("user %v is leaving", user.Username)
 
-		err := room.leave(user)
-		if err != nil {
-			return err
+		for i := room.Users.Front(); i != nil; i = i.Next() {
+			// broadcast user leave
+			other := i.Value.(*mdwuser.User)
+			i := utils.S_LeaveRoom{Username: other.Username}
+			data, err := utils.Marshal(i)
+			if err != nil {
+				user.Conn.Close()
+				continue
+			}
+			_, err = user.Conn.Write(middleware.c_UserLeaveRoom, data)
+			if err != nil {
+				user.Conn.Close()
+			}
 		}
+
+		room.leave(user)
 	}
-	for i := room.Users.Front(); i != nil; i = i.Next() {
-		user := i.Value.(*mdwuser.User)
-		_, err := user.Conn.Write(middleware.c_UserLeaveRoom, make([]byte, 0))
-		if err != nil {
-			user.Conn.Close()
-		}
-	}
-	return nil
 }

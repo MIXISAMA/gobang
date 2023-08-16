@@ -15,7 +15,8 @@ type Room struct {
 	game.Room
 	Name     string
 	MaxUsers int
-	Users    *list.List
+	// all users in the room, including onlookers and players
+	Users *list.List
 }
 
 func NewRoom(name string, maxUser int) *Room {
@@ -61,7 +62,6 @@ func (room *Room) joinAsOnlooker(user *mdwuser.User) error {
 }
 
 func (room *Room) leave(user *mdwuser.User) error {
-	log.Printf("user %v is leaving", user.Username)
 	err := room.Leave(user)
 	switch err {
 	case game.ErrNotPlayer: // do nothing
@@ -70,7 +70,8 @@ func (room *Room) leave(user *mdwuser.User) error {
 	}
 
 	for i := room.Users.Front(); i != nil; i = i.Next() {
-		if i.Value == user {
+		if i.Value.(*mdwuser.User) == user {
+			log.Printf("removing %v from room %v", user.Username, room.Name)
 			room.Users.Remove(i)
 			break
 		}

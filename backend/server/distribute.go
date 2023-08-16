@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/MIXISAMA/gobang/backend/game"
@@ -31,9 +32,11 @@ func Empty(*idtcp.Request) error {
 }
 
 var Endpoints = []func(*idtcp.Request) error{
-	S_FatalError:   Empty,
-	S_JoinRoom:     Empty,
-	S_UserInfo:     ReceiveUserInfo,
+	S_FatalError: Empty,
+	// we do nothing here, as user will be processed by mdwuser
+	S_JoinRoom: Empty,
+	S_UserInfo: ReceiveUserInfo,
+	// we do nothing here, as user will be processed by mdwuser when disconnecting
 	S_LeaveRoom:    Empty,
 	S_Ready:        ReceiveReady,
 	S_PlayerStone:  ReceivePlayerStone,
@@ -63,6 +66,10 @@ func ReceiveUserInfo(req *idtcp.Request) error {
 	return SendUserInfo(req.Conn, user)
 }
 
+type IGameStart struct {
+	BlackPlayerName string `len_bytes:"1"`
+}
+
 func ReceiveReady(req *idtcp.Request) error {
 	user := req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	room := req.Payloads[mdwroom.Key].(*mdwroom.Payload).Room
@@ -72,10 +79,17 @@ func ReceiveReady(req *idtcp.Request) error {
 		return err
 	}
 	if ready {
-		broadcastMessage(room, C_GameStart, []byte(room.BlackPlayer.(*mdwuser.User).Username))
+		i := IGameStart{room.BlackPlayer.(*mdwuser.User).Username}
+		data, err := utils.Marshal(i)
+		if err != nil {
+			return err
+		}
+
+		broadcastMessage(room, C_GameStart, data)
 		room.Room.Start()
+	} else {
+		broadcastMessage(room, C_PlayerReady, []byte{color})
 	}
-	broadcastMessage(room, C_PlayerReady, []byte{color})
 	return nil
 }
 
@@ -109,11 +123,14 @@ func ReceivePlayerStone(req *idtcp.Request) error {
 	}
 
 	who := room.Chess.WhoseTurn()
-	if user == room.BlackPlayer && who == game.WHITE {
+	if user == room.BlackPlayer && who == game.BLACK {
 		return errors.New("not black's turn")
 	}
-	if user == room.BlackPlayer && who == game.WHITE {
+	if user == room.WhitePlayer && who == game.WHITE {
 		return errors.New("not white's turn")
+	}
+	if user != room.BlackPlayer && user != room.WhitePlayer {
+		return fmt.Errorf("user %v is not player, can't stone", user.Username)
 	}
 
 	err = room.Chess.Stone(int(move), coor)
@@ -205,15 +222,15 @@ func ReceiveMessage(req *idtcp.Request) error {
 		sender = req.Payloads[mdwuser.Key].(*mdwuser.Payload).User
 	)
 
-	s := utils.MakeSerializer(req.Data)
-	text, err := s.ReadString16()
+	m := new(utils.C_Message)
+	err := utils.Unmarshal(req.Data, m)
 	if err != nil {
 		return err
 	}
 
 	for i := room.Users.Front(); i != nil; i = i.Next() {
 		user := i.Value.(*mdwuser.User)
-		err := SendMessage(user.Conn, sender.Username, text)
+		err := SendMessage(user.Conn, sender.Username, m.Message)
 		if err != nil {
 			continue
 		}

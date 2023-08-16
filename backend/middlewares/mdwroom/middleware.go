@@ -2,7 +2,6 @@ package mdwroom
 
 import (
 	"github.com/MIXISAMA/gobang/backend/idtcp"
-	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
 )
 
 var MaxRooms = 200
@@ -20,20 +19,6 @@ type Middleware struct {
 type ConfigRoom struct {
 	Name     string
 	MaxUsers int
-}
-
-type InstructionClientYouJoinRoom struct {
-	IsSuccess     bool
-	RoomName      string `len_bytes:"1"`
-	MaxUsers      uint8
-	BlackUsername string   `len_bytes:"1"`
-	WhileUsername string   `len_bytes:"1"`
-	Onlookers     []string `len_bytes:"1" array_len_bytes:"1"`
-	ReadyPlayer   byte
-	IsPlaying     bool
-	RegretPlayer  byte
-	TiePlayer     byte
-	Records       []byte `len_bytes:"1"`
 }
 
 func NewMiddleware(
@@ -75,10 +60,8 @@ func (middleware *Middleware) ProcessConnect(ctx *idtcp.ConnectContext) (*idtcp.
 }
 
 func (middleware *Middleware) ProcessDisconnect(ctx *idtcp.DisconnectContext) {
-	// TODO: delete user from room when disconnected
-	room := ctx.Payloads[Key].(*Payload).Room
-	user := ctx.Payloads[mdwuser.Key].(*mdwuser.Payload).User
-	room.leave(user)
+	// delete user from room when disconnected
+	middleware.processUserLeave(ctx.Payloads)
 	ctx.Next()
 }
 
@@ -92,13 +75,9 @@ func (middleware *Middleware) ProcessDistribute(ctx *idtcp.DistributeContext) er
 	}
 
 	_ = ctx.Next()
-	// TODO
 
 	if ctx.Instruction == middleware.s_LeaveRoom {
-		err := middleware.receiveUserLeaveRoom(ctx.Payloads)
-		if err != nil {
-			return err
-		}
+		middleware.processUserLeave(ctx.Payloads)
 	}
 
 	return nil

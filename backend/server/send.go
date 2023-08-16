@@ -1,6 +1,8 @@
 package server
 
 import (
+	"time"
+
 	"github.com/MIXISAMA/gobang/backend/idtcp"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwroom"
 	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
@@ -37,6 +39,7 @@ func broadcastMessage(room *mdwroom.Room, instruction uint16, data []byte) error
 	return nil
 }
 
+//lint:ignore U1000 we want to keep the old api
 func sendVoid(conn *idtcp.Conn, instruction uint16) error {
 	_, err := conn.Write(instruction, make([]byte, 0))
 	return err
@@ -86,12 +89,15 @@ func SendGameOver(conn *idtcp.Conn, color byte) error {
 }
 
 func SendMessage(conn *idtcp.Conn, username string, text string) error {
+	t := time.Now()
 
-	var s utils.Serializer
+	i := utils.S_Message{Timestamp: uint64(t.Unix()), Username: username, Message: text}
 
-	s.WriteString8(username)
-	s.WriteString16(text)
+	data, err := utils.Marshal(i)
+	if err != nil {
+		return err
+	}
 
-	_, err := conn.Write(C_Message, s.Raw)
+	_, err = conn.Write(C_Message, data)
 	return err
 }

@@ -153,6 +153,7 @@ void ServerGameRoom::send_give_up() const
 void ServerGameRoom::send_message(const std::string& message)
 {
     net::Serializer s;
+    s.head16();
     s << message;
     boost::asio::co_spawn(
         io_context,
@@ -435,7 +436,7 @@ void ServerGameRoom::receive_message_(
     std::string message;
     net::Serializer s(data);
     s.head8();
-    s >> username >> datetime;
+    s >> datetime >> username;
     s.head16();
     s >> message;
     RtqWriter<msg_t> messages(messages_);

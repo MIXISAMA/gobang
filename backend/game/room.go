@@ -2,6 +2,9 @@ package game
 
 import (
 	"errors"
+	"log"
+
+	"github.com/MIXISAMA/gobang/backend/middlewares/mdwuser"
 )
 
 type Player interface{}
@@ -34,6 +37,9 @@ func NewRoom() *Room {
 func (room *Room) Start() {
 	room.Chess.Init()
 	room.IsPlaying = true
+	log.Println("game start")
+	log.Printf("blackplayer is %v, white player is %v",
+		room.BlackPlayer.(*mdwuser.User).Username, room.WhitePlayer.(*mdwuser.User).Username)
 }
 
 func (room *Room) Join(player Player) error {
