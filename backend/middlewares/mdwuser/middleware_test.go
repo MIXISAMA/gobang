@@ -85,8 +85,7 @@ func TestAuthentication(t *testing.T) {
 		S_JoinRoom,
 		data,
 	)
-
-	m.ProcessDistribute(ctx)
+	ctx.Next()
 
 	assert.NotNil(ctx.Payloads[Key].(*Payload).User)
 	assert.Equal("foo", ctx.Payloads[Key].(*Payload).User.Username)
